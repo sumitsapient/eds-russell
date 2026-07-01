@@ -147,10 +147,43 @@ async function loadEager(doc) {
 }
 
 /**
+ * Adds a skip-to-content link for accessibility.
+ */
+function addSkipLink() {
+  const skip = document.createElement('a');
+  skip.href = '#main-content';
+  skip.className = 'skip-to-content';
+  skip.textContent = 'Skip to main content';
+  document.body.prepend(skip);
+  document.querySelector('main')?.setAttribute('id', 'main-content');
+}
+
+/**
+ * Sets up Intersection Observer for section scroll animations.
+ */
+function observeSectionAnimations() {
+  const sections = document.querySelectorAll('.section');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.setAttribute('data-animate', '');
+        requestAnimationFrame(() => entry.target.classList.add('visible'));
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  sections.forEach((section, index) => {
+    if (index > 0) observer.observe(section); // skip first section (eager)
+  });
+}
+
+/**
  * Loads everything that doesn't need to be delayed.
  * @param {Element} doc The container element
  */
 async function loadLazy(doc) {
+  addSkipLink();
   loadHeader(doc.querySelector('header'));
 
   const main = doc.querySelector('main');
@@ -164,6 +197,7 @@ async function loadLazy(doc) {
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();
+  observeSectionAnimations();
 }
 
 /**

@@ -1,0 +1,74 @@
+/* === Video Embed Block === */
+
+.video-embed {
+  max-width: var(--max-width-content);
+}
+
+.video-embed .video-embed-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Iframe (YouTube/Vimeo) */
+.video-embed .video-embed-wrapper iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Native video */
+.video-embed .video-embed-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Click-to-play placeholder */
+.video-embed .video-embed-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.video-embed .video-embed-placeholder img,
+.video-embed .video-embed-placeholder picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-embed .video-embed-placeholder picture {
+  position: absolute;
+  inset: 0;
+}
+
+/* Play button */
+.video-embed .video-embed-play {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 48px;
+  transition: transform var(--duration-fast) var(--easing-default);
+}
+
+.video-embed .video-embed-placeholder:hover .video-embed-play {
+  transform: scale(1.1);
+}
+
+.video-embed .video-embed-placeholder:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+

@@ -1,0 +1,119 @@
+/* === Accordion Block === */
+
+.accordion {
+  max-width: var(--max-width-content);
+}
+
+.accordion .accordion-items {
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.accordion .accordion-item {
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.accordion .accordion-header {
+  margin: 0;
+  font-size: var(--body-font-size-m);
+}
+
+.accordion .accordion-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--spacing-l) var(--spacing-s);
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+  cursor: pointer;
+  gap: var(--spacing-m);
+  transition: background-color var(--duration-fast) var(--easing-default);
+}
+
+.accordion .accordion-trigger:hover {
+  background-color: var(--color-surface);
+}
+
+.accordion .accordion-trigger:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: -3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Chevron icon */
+.accordion .accordion-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: relative;
+}
+
+.accordion .accordion-icon::before,
+.accordion .accordion-icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 2px;
+  background-color: var(--color-text);
+  transition: transform var(--duration-normal) var(--easing-default);
+}
+
+.accordion .accordion-icon::before {
+  left: 1px;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.accordion .accordion-icon::after {
+  right: 1px;
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+.accordion .accordion-trigger[aria-expanded="true"] .accordion-icon::before {
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+.accordion .accordion-trigger[aria-expanded="true"] .accordion-icon::after {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+/* Panel */
+.accordion .accordion-panel {
+  overflow: hidden;
+}
+
+.accordion .accordion-content {
+  padding: 0 var(--spacing-s) var(--spacing-l);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-loose);
+}
+
+.accordion .accordion-content p {
+  margin-top: 0;
+}
+
+/* Variant: bordered */
+.accordion.bordered .accordion-item {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-s);
+}
+
+/* Variant: dark (in dark sections) */
+.section.dark .accordion .accordion-trigger {
+  color: var(--color-text-inverse);
+}
+
+.section.dark .accordion .accordion-icon::before,
+.section.dark .accordion .accordion-icon::after {
+  background-color: var(--color-text-inverse);
+}
+
+.section.dark .accordion .accordion-trigger:hover {
+  background-color: rgb(255 255 255 / 10%);
+}
+

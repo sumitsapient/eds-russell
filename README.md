@@ -29,3 +29,13 @@ npm i
 ```sh
 npm run lint
 ```
+Development Steps:
+
+1. create your repository using the Boilerplate GitHub repository as a template.
+https://github.com/adobe/aem-boilerplate
+2. install the AEM Code Sync GitHub App on your repository by visiting this link: https://github.com/apps/aem-code-sync/installations/new
+3. Install Sidekick - To interact with AEM as an author across environments we strongly recommend installing the Sidekick Chrome extension. Find the Chrome extension in the Chrome Web Store.
+4. Install the AEM Command Line Interface (CLI) - npm install -g @adobe/aem-cli
+5. Run `aem up` in code.This opens http://localhost:3000/
+
+

@@ -1,1 +1,83 @@
 /* add global styles that can be loaded post LCP here */
+
+/* === SKIP TO CONTENT === */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: var(--spacing-m);
+  z-index: 10000;
+  padding: var(--spacing-s) var(--spacing-m);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  transition: top var(--duration-fast) var(--easing-out);
+}
+
+.skip-to-content:focus {
+  top: var(--spacing-s);
+}
+
+/* === SCROLL ANIMATIONS === */
+.section[data-animate] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--duration-slow) var(--easing-out),
+    transform var(--duration-slow) var(--easing-out);
+}
+
+.section[data-animate].visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .section[data-animate] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* === DARK MODE === */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #1a1a2e;
+    --color-surface: #16213e;
+    --color-surface-alt: #0f3460;
+    --color-text: #e8e8e8;
+    --color-text-muted: #9ca3af;
+    --color-text-inverse: #1a1a2e;
+    --color-border: #374151;
+    --color-border-strong: #4b5563;
+    --color-primary-light: #93b4ff;
+  }
+}
+
+/* === FOCUS VISIBLE === */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* === SMOOTH SCROLLING === */
+html {
+  scroll-behavior: smooth;
+}
+
+/* === SELECTION === */
+::selection {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}

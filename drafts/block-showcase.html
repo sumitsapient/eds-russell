@@ -1,0 +1,330 @@
+<html>
+<head>
+  <title>Block Showcase - All Blocks Test</title>
+  <meta name="description" content="Test page for all enterprise blocks">
+</head>
+<body>
+  <header></header>
+  <main>
+    <div>
+      <h1>Enterprise EDS Block Showcase</h1>
+      <p>This page demonstrates all blocks implemented in Phase 1 &amp; 2. Use this to verify each block works correctly.</p>
+    </div>
+    <hr>
+
+    <!-- SECTION: Breadcrumb -->
+    <div>
+      <div class="breadcrumb">
+        <div>
+          <div><a href="/">Home</a> / <a href="/drafts">Drafts</a> / Block Showcase</div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Hero (existing block) -->
+    <div>
+      <div class="hero">
+        <div>
+          <div>
+            <picture>
+              <img src="https://placehold.co/1200x500/3b63fb/ffffff?text=Hero+Image" alt="Hero background" width="1200" height="500">
+            </picture>
+          </div>
+          <div>
+            <h1>Welcome to Our Enterprise Site</h1>
+            <p>Built with Adobe Edge Delivery Services for blazing fast performance.</p>
+            <p><strong><a href="/about">Learn More</a></strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Accordion (default) -->
+    <div>
+      <h2>Accordion Block (Default)</h2>
+      <div class="accordion">
+        <div>
+          <div>What is Edge Delivery Services?</div>
+          <div><p>Edge Delivery Services (EDS) is Adobe's modern web delivery platform that serves content from the CDN edge, achieving exceptional performance scores. It uses a document-based authoring model with vanilla JavaScript and CSS.</p></div>
+        </div>
+        <div>
+          <div>How does the three-phase loading work?</div>
+          <div><p><strong>Eager Phase:</strong> Loads only what's needed for LCP — first section, critical CSS.</p><p><strong>Lazy Phase:</strong> Loads remaining sections, header, footer, non-critical styles.</p><p><strong>Delayed Phase:</strong> Analytics, martech, and other non-essential scripts load after 3 seconds.</p></div>
+        </div>
+        <div>
+          <div>What are Content Fragments?</div>
+          <div><p>Content Fragments are structured, headless content items managed in AEM. They have a defined schema (CF Model) and can be queried via GraphQL API. Blocks can fetch and render CF data dynamically, enabling catalog pages, article listings, and more.</p></div>
+        </div>
+        <div>
+          <div>How do I create a new block?</div>
+          <div><p>Create a folder in <code>blocks/</code> with the block name, add a <code>.js</code> and <code>.css</code> file with the same name, and export a default <code>decorate(block)</code> function. The EDS framework auto-loads the block when it appears on a page.</p></div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Accordion (single open, bordered) -->
+    <div>
+      <h2>Accordion Block (Single Open + Bordered)</h2>
+      <div class="accordion single bordered">
+        <div>
+          <div>Only one panel opens at a time</div>
+          <div><p>When you open this panel, any other open panel will automatically close. This is controlled by the <code>single</code> CSS class variant.</p></div>
+        </div>
+        <div>
+          <div>Bordered variant adds visual separation</div>
+          <div><p>The <code>bordered</code> variant wraps each item in a border with rounded corners and spacing between items.</p></div>
+        </div>
+        <div>
+          <div>Keyboard accessible</div>
+          <div><p>Use <strong>Arrow Up/Down</strong> to move between headers, <strong>Enter/Space</strong> to toggle, <strong>Home/End</strong> to jump to first/last.</p></div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Tabs (default) -->
+    <div>
+      <h2>Tabs Block (Default)</h2>
+      <div class="tabs">
+        <div>
+          <div>Overview</div>
+          <div><p>Edge Delivery Services combines the authoring power of AEM with blazing-fast delivery. Pages are served from the CDN edge with automatic optimization.</p><p>The architecture ensures sub-second load times while maintaining rich authoring capabilities through Universal Editor.</p></div>
+        </div>
+        <div>
+          <div>Features</div>
+          <div><p>Key features include:</p><ul><li>Three-phase progressive loading</li><li>Automatic code splitting per block</li><li>Built-in Real User Monitoring (RUM)</li><li>Content Fragment integration</li><li>Universal Editor for WYSIWYG authoring</li></ul></div>
+        </div>
+        <div>
+          <div>Performance</div>
+          <div><p>Target metrics:</p><ul><li><strong>LCP:</strong> &lt; 1.5 seconds</li><li><strong>CLS:</strong> &lt; 0.05</li><li><strong>INP:</strong> &lt; 100ms</li><li><strong>Lighthouse:</strong> 100 across all categories</li></ul></div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Tabs (pills variant) -->
+    <div>
+      <h2>Tabs Block (Pills Variant)</h2>
+      <div class="tabs pills">
+        <div>
+          <div>JavaScript</div>
+          <div><p>Vanilla ES6+ with no build step. Each block is a self-contained module loaded on demand.</p></div>
+        </div>
+        <div>
+          <div>CSS</div>
+          <div><p>Modern CSS with custom properties, Grid, Flexbox. Mobile-first with <code>min-width</code> breakpoints.</p></div>
+        </div>
+        <div>
+          <div>HTML</div>
+          <div><p>Semantic HTML5 markup generated by AEM backend, decorated by block JavaScript.</p></div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: CTA Banner -->
+    <div>
+      <h2>CTA Banner Block</h2>
+      <div class="cta-banner">
+        <div>
+          <div>
+            <picture>
+              <img src="https://placehold.co/1400x400/1a1a2e/ffffff?text=CTA+Background" alt="CTA background" width="1400" height="400">
+            </picture>
+          </div>
+          <div>
+            <h2>Ready to Get Started?</h2>
+            <p>Transform your digital experience with enterprise-grade Edge Delivery Services.</p>
+            <p><strong><a href="/contact">Contact Us Today</a></strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: CTA Banner (solid variant, no image) -->
+    <div>
+      <h2>CTA Banner (Solid Variant)</h2>
+      <div class="cta-banner solid">
+        <div>
+          <div></div>
+          <div>
+            <h2>Subscribe to Our Newsletter</h2>
+            <p>Stay updated with the latest features and best practices.</p>
+            <p><strong><a href="/subscribe">Sign Up Free</a></strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Video Embed (YouTube) -->
+    <div>
+      <h2>Video Embed Block (YouTube)</h2>
+      <p>Click the play button to load the YouTube player (lazy-loaded for performance):</p>
+      <div class="video-embed">
+        <div>
+          <div>https://www.youtube.com/watch?v=dQw4w9WgXcQ</div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Video Embed with poster -->
+    <div>
+      <h2>Video Embed Block (With Custom Poster)</h2>
+      <div class="video-embed">
+        <div>
+          <div>
+            <picture>
+              <img src="https://placehold.co/800x450/ff6b35/ffffff?text=Custom+Poster" alt="Video poster" width="800" height="450">
+            </picture>
+          </div>
+        </div>
+        <div>
+          <div>https://www.youtube.com/watch?v=dQw4w9WgXcQ</div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Cards (existing block) -->
+    <div>
+      <h2>Cards Block (Existing)</h2>
+      <div class="cards">
+        <div>
+          <div>
+            <picture>
+              <img src="https://placehold.co/400x300/10b981/ffffff?text=Card+1" alt="Card 1" width="400" height="300">
+            </picture>
+          </div>
+          <div>
+            <h3>Performance First</h3>
+            <p>Every decision optimized for Core Web Vitals and user experience.</p>
+          </div>
+        </div>
+        <div>
+          <div>
+            <picture>
+              <img src="https://placehold.co/400x300/3b63fb/ffffff?text=Card+2" alt="Card 2" width="400" height="300">
+            </picture>
+          </div>
+          <div>
+            <h3>Author Friendly</h3>
+            <p>Universal Editor provides WYSIWYG authoring with real-time preview.</p>
+          </div>
+        </div>
+        <div>
+          <div>
+            <picture>
+              <img src="https://placehold.co/400x300/ff6b35/ffffff?text=Card+3" alt="Card 3" width="400" height="300">
+            </picture>
+          </div>
+          <div>
+            <h3>Enterprise Ready</h3>
+            <p>Built for scale with multi-site, i18n, and Content Fragment support.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Section Variants Demo -->
+    <div>
+      <div class="section-metadata">
+        <div>
+          <div>style</div>
+          <div>dark, centered</div>
+        </div>
+      </div>
+      <h2>Dark Section Variant</h2>
+      <p>This section uses <code>style: dark, centered</code> section metadata. Text and links adapt to dark background.</p>
+      <p><em><a href="#">Secondary Button</a></em></p>
+    </div>
+    <hr>
+
+    <div>
+      <div class="section-metadata">
+        <div>
+          <div>style</div>
+          <div>accent, centered</div>
+        </div>
+      </div>
+      <h2>Accent Section Variant</h2>
+      <p>This section uses <code>style: accent, centered</code> — brand color background with inverse text.</p>
+      <p><strong><a href="#">Primary Button</a></strong></p>
+    </div>
+    <hr>
+
+    <div>
+      <div class="section-metadata">
+        <div>
+          <div>style</div>
+          <div>highlight</div>
+        </div>
+      </div>
+      <h2>Highlight/Light Section Variant</h2>
+      <p>This section uses <code>style: highlight</code> — subtle light gray background for visual separation.</p>
+    </div>
+    <hr>
+
+    <!-- SECTION: Columns (existing block) -->
+    <div>
+      <h2>Columns Block (Existing)</h2>
+      <div class="columns">
+        <div>
+          <div>
+            <h3>Left Column</h3>
+            <p>Columns provide side-by-side layout for content. This is the existing block from the boilerplate.</p>
+          </div>
+          <div>
+            <h3>Right Column</h3>
+            <p>On mobile, columns stack vertically. On desktop, they sit side by side.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Modal trigger + Modal block -->
+    <div>
+      <h2>Modal Block</h2>
+      <p>Click the button below to open a modal dialog:</p>
+      <p><strong><a href="#demo-modal">Open Demo Modal</a></strong></p>
+      <div class="modal" data-id="demo-modal">
+        <div>
+          <div>
+            <h3>This is a Modal</h3>
+            <p>Modal content supports rich text, images, buttons — anything you can author in a block.</p>
+            <p>Try pressing <strong>Escape</strong> to close, or click the backdrop. Tab key is trapped inside the modal.</p>
+            <p><strong><a href="#">Got It</a></strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION: Design Tokens Reference -->
+    <div>
+      <div class="section-metadata">
+        <div>
+          <div>style</div>
+          <div>narrow</div>
+        </div>
+      </div>
+      <h2>Design Token Verification</h2>
+      <p>This section uses <code>style: narrow</code> (800px max-width instead of 1200px).</p>
+      <h3>Button Variants</h3>
+      <p><strong><a href="#">Primary Button</a></strong></p>
+      <p><em><a href="#">Secondary Button</a></em></p>
+      <p><strong><em><a href="#">Accent Button</a></em></strong></p>
+    </div>
+
+  </main>
+  <footer></footer>
+</body>
+</html>
+

@@ -1,0 +1,118 @@
+/* === CTA Banner Block === */
+
+.cta-banner {
+  margin: 0;
+}
+
+.cta-banner .cta-banner-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  overflow: hidden;
+}
+
+/* Background image */
+.cta-banner .cta-banner-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.cta-banner .cta-banner-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgb(0 0 0 / 70%) 0%,
+    rgb(0 0 0 / 40%) 100%
+  );
+}
+
+.cta-banner .cta-banner-bg picture,
+.cta-banner .cta-banner-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Content */
+.cta-banner .cta-banner-content {
+  position: relative;
+  z-index: 1;
+  max-width: var(--max-width-narrow);
+  padding: var(--spacing-xxl) var(--content-padding-inline);
+  color: var(--color-text-inverse);
+  text-align: center;
+}
+
+.cta-banner .cta-banner-content h1,
+.cta-banner .cta-banner-content h2,
+.cta-banner .cta-banner-content h3 {
+  color: var(--color-text-inverse);
+  margin-top: 0;
+}
+
+.cta-banner .cta-banner-content p {
+  color: rgb(255 255 255 / 90%);
+  font-size: var(--body-font-size-s);
+}
+
+.cta-banner .cta-banner-content a.button {
+  margin-top: var(--spacing-m);
+}
+
+.cta-banner .cta-banner-content a.button.primary {
+  background-color: var(--color-text-inverse);
+  border-color: var(--color-text-inverse);
+  color: var(--color-text);
+}
+
+.cta-banner .cta-banner-content a.button.primary:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-surface);
+}
+
+/* Responsive */
+@media (min-width: 600px) {
+  .cta-banner .cta-banner-inner {
+    min-height: 350px;
+  }
+
+  .cta-banner .cta-banner-content {
+    padding: var(--spacing-xxxl) var(--spacing-xl);
+  }
+}
+
+@media (min-width: 900px) {
+  .cta-banner .cta-banner-inner {
+    min-height: 400px;
+  }
+}
+
+/* Variant: left-aligned */
+.cta-banner.left .cta-banner-inner {
+  justify-content: flex-start;
+}
+
+.cta-banner.left .cta-banner-content {
+  text-align: left;
+}
+
+/* Variant: compact */
+.cta-banner.compact .cta-banner-inner {
+  min-height: 200px;
+}
+
+/* Variant: no-image (solid bg) */
+.cta-banner.solid .cta-banner-inner {
+  background-color: var(--color-primary);
+}
+
+.cta-banner.solid .cta-banner-content a.button.primary {
+  background-color: var(--color-text-inverse);
+  color: var(--color-primary);
+}
+
