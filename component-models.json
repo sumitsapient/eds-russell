@@ -203,15 +203,13 @@
         "component": "text",
         "name": "title",
         "label": "Question / Title",
-        "valueType": "string",
-        "required": true
+        "valueType": "string"
       },
       {
         "component": "richtext",
         "name": "description",
         "label": "Answer / Content",
-        "valueType": "string",
-        "required": true
+        "valueType": "string"
       }
     ]
   },

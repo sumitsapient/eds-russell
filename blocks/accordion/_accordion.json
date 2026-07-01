@@ -10,14 +10,22 @@
             "template": {
               "name": "Accordion",
               "model": "accordion",
-              "classes": "",
-              "accordion": {
-                "sling:resourceType": "core/franklin/components/block/v1/block/item",
-                "name": "",
-                "model": "accordion-item",
-                "title": "",
-                "description": ""
-              }
+              "filter": "accordion"
+            }
+          }
+        }
+      }
+    },
+    {
+      "title": "Accordion Item",
+      "id": "accordion-item",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block/item",
+            "template": {
+              "name": "Accordion Item",
+              "model": "accordion-item"
             }
           }
         }
@@ -49,19 +57,24 @@
           "component": "text",
           "name": "title",
           "label": "Question / Title",
-          "valueType": "string",
-          "required": true
+          "valueType": "string"
         },
         {
           "component": "richtext",
           "name": "description",
           "label": "Answer / Content",
-          "valueType": "string",
-          "required": true
+          "valueType": "string"
         }
       ]
     }
   ],
-  "filters": []
+  "filters": [
+    {
+      "id": "accordion",
+      "components": [
+        "accordion-item"
+      ]
+    }
+  ]
 }
 
