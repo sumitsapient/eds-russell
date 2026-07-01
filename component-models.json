@@ -171,32 +171,6 @@
     ]
   },
   {
-    "id": "accordion",
-    "fields": [
-      {
-        "component": "select",
-        "name": "classes",
-        "value": "",
-        "label": "Accordion Variant",
-        "valueType": "string",
-        "options": [
-          {
-            "name": "Default",
-            "value": ""
-          },
-          {
-            "name": "Single Open",
-            "value": "single"
-          },
-          {
-            "name": "Bordered",
-            "value": "bordered"
-          }
-        ]
-      }
-    ]
-  },
-  {
     "id": "accordion-item",
     "fields": [
       {
