@@ -1,8 +1,10 @@
+import { moveInstrumentation } from '../../scripts/scripts.js';
+
 /**
- * Accordion block — expandable content panels with full accessibility.
+ * Accordion block â€” expandable content panels with full accessibility.
  * Supports Content Fragment data source [CF].
  *
- * Authored structure (each row = one panel):
+ * Authored structure (each row = one accordion item):
  * | Accordion          |
  * | --- | --- |
  * | Question / Title 1 | Answer / Content 1 |
@@ -16,7 +18,6 @@ export default function decorate(block) {
   accordion.className = 'accordion-items';
   accordion.setAttribute('role', 'presentation');
 
-  // Allow all-open or single-open via variant class
   const singleOpen = block.classList.contains('single');
 
   rows.forEach((row, index) => {
@@ -26,6 +27,9 @@ export default function decorate(block) {
     const item = document.createElement('div');
     item.className = 'accordion-item';
 
+    // Move Universal Editor instrumentation from row â†’ item
+    moveInstrumentation(row, item);
+
     // Header / trigger
     const header = document.createElement('h3');
     header.className = 'accordion-header';
@@ -34,8 +38,19 @@ export default function decorate(block) {
     button.setAttribute('aria-expanded', 'false');
     button.setAttribute('aria-controls', `accordion-panel-${index}`);
     button.id = `accordion-header-${index}`;
-    button.innerHTML = `<span class="accordion-title">${titleCell.innerHTML}</span>
-      <span class="accordion-icon" aria-hidden="true"></span>`;
+
+    // Title span â€” move the actual titleCell children to preserve UE attributes
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'accordion-title';
+    // Move instrumentation from titleCell to titleSpan, then move its children
+    moveInstrumentation(titleCell, titleSpan);
+    while (titleCell.firstChild) titleSpan.append(titleCell.firstChild);
+
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'accordion-icon';
+    iconSpan.setAttribute('aria-hidden', 'true');
+
+    button.append(titleSpan, iconSpan);
     header.append(button);
 
     // Panel / content
@@ -49,7 +64,9 @@ export default function decorate(block) {
     const panelContent = document.createElement('div');
     panelContent.className = 'accordion-content';
     if (contentCell) {
-      panelContent.innerHTML = contentCell.innerHTML;
+      // Move instrumentation from contentCell to panelContent, then move children
+      moveInstrumentation(contentCell, panelContent);
+      while (contentCell.firstChild) panelContent.append(contentCell.firstChild);
     }
     panel.append(panelContent);
 
@@ -57,7 +74,6 @@ export default function decorate(block) {
     button.addEventListener('click', () => {
       const isExpanded = button.getAttribute('aria-expanded') === 'true';
 
-      // If single-open mode, close all others
       if (singleOpen && !isExpanded) {
         accordion.querySelectorAll('.accordion-trigger[aria-expanded="true"]').forEach((openBtn) => {
           openBtn.setAttribute('aria-expanded', 'false');
@@ -95,4 +111,3 @@ export default function decorate(block) {
   block.textContent = '';
   block.append(accordion);
 }
-
