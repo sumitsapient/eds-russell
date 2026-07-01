@@ -959,6 +959,134 @@ Local Dev → Push Branch → Feature Preview → PR to main → Production
 
 ---
 
+## Universal Editor Authoring Guide
+
+### How It Works
+
+Universal Editor connects to your AEM as a Cloud Service instance and reads the component models from three JSON files at the root of your repo:
+
+| File | Purpose |
+|------|---------|
+| `component-definition.json` | Defines what blocks exist and their resource types |
+| `component-models.json` | Defines the fields authors fill in for each block |
+| `component-filters.json` | Defines which blocks are allowed in which containers (sections) |
+
+These are **aggregated** from partial files (`_blockname.json` in each block folder + `models/` folder) by running:
+
+```bash
+npm run build:json
+```
+
+### Currently Registered Blocks (for authoring)
+
+| Block | Variants (classes) | Fields |
+|-------|-------------------|--------|
+| **Accordion** | default, `single`, `bordered` | title, description (per item) |
+| **Tabs** | default, `pills`, `vertical` | label, content (per item) |
+| **CTA Banner** | default, `solid`, `left`, `compact` | backgroundImage, heading, description, ctaLabel, ctaLink |
+| **Modal** | default, `large`, `fullscreen` | modalId, content |
+| **Video Embed** | — | poster, videoUrl |
+| **Breadcrumb** | — | autoGenerate (boolean) |
+| **Hero** | (from boilerplate) | image, content |
+| **Cards** | (from boilerplate) | image, content (per card) |
+| **Columns** | (from boilerplate) | content per column |
+
+### Section Styles Available to Authors
+
+In Universal Editor, authors select section styles from a multiselect:
+
+| Style | Effect |
+|-------|--------|
+| Highlight | Light gray background |
+| Dark | Dark background with light text |
+| Accent | Brand primary color background |
+| Centered | Text-align center |
+| Narrow | 800px max-width |
+| Full Width | No max-width constraint |
+| Spacious | Extra vertical padding |
+| Compact | Reduced vertical padding |
+
+### Authoring a Block in Universal Editor
+
+1. **Open Universal Editor** — Navigate to your page in the AEM authoring environment
+2. **Add a Section** — Click "+" in the content tree, select "Section"
+3. **Add a Block** — Inside the section, click "+", choose from available blocks (Accordion, Tabs, etc.)
+4. **Configure the Block** — Click the block, use the right-side panel to fill in fields
+5. **Set Variants** — Select variant/style from the dropdown in the properties panel
+6. **Preview** — Use the preview URL to see how it renders
+
+### How Blocks Get Their Content
+
+When an author fills in fields in Universal Editor, AEM generates HTML like this:
+
+```html
+<!-- Author creates an Accordion block with 2 items -->
+<div class="accordion single">
+  <div>
+    <div>Question text goes here</div>
+    <div><p>Answer content goes here</p></div>
+  </div>
+  <div>
+    <div>Second question</div>
+    <div><p>Second answer</p></div>
+  </div>
+</div>
+```
+
+Your `decorate(block)` function receives this DOM and transforms it into the final interactive UI.
+
+### Header & Footer (Fragment-based)
+
+The header and footer are NOT directly authored on each page. They are **fragment pages**:
+
+- **Nav fragment**: Authored at `/nav` (or custom path via `nav` metadata)
+- **Footer fragment**: Authored at `/footer` (or custom path via `footer` metadata)
+
+These fragment pages are loaded once and shared across all pages.
+
+#### Nav Page Structure (3 sections)
+
+| Section | Purpose | Example Content |
+|---------|---------|-----------------|
+| 1st | Brand/Logo | Logo image or site name link |
+| 2nd | Navigation Links | Nested `<ul>` lists — top level = main nav, nested = dropdowns |
+| 3rd | Tools/CTA | Search, login button, or primary CTA |
+
+#### Footer Page Structure (2+ sections)
+
+| Section | Purpose | Example Content |
+|---------|---------|-----------------|
+| 1st | Footer columns | Headings + link lists (Products, Company, Resources, etc.) |
+| 2nd+ | Bottom bar | Copyright text, legal links |
+
+### Adding a New Block to Universal Editor
+
+When you create a new block, follow this checklist:
+
+1. ✅ Create `blocks/{name}/{name}.js` with `export default function decorate(block)`
+2. ✅ Create `blocks/{name}/{name}.css` with scoped styles
+3. ✅ Create `blocks/{name}/_{name}.json` with definitions, models, and filters
+4. ✅ Run `npm run build:json` to aggregate
+5. ✅ Add the block ID to `models/_section.json` → filters → section → components array
+6. ✅ Run `npm run build:json` again
+7. ✅ Commit and push — Universal Editor picks up changes automatically
+
+### Testing Without Universal Editor
+
+For local testing without AEM, use the `drafts/` folder with static HTML:
+
+```bash
+# Start dev server serving drafts as pages
+aem up --html-folder drafts
+
+# Open in browser
+# http://localhost:3000/drafts/block-showcase
+```
+
+The HTML in drafts must follow the EDS markup structure (blocks as `<div class="blockname">` with row/cell children).
+
+---
+
 ## Testing & Verification Guide
 
 ### Starting the Dev Server

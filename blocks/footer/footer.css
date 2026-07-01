@@ -1,20 +1,101 @@
+/* === Enterprise Footer === */
 footer {
-  background-color: var(--light-color);
+  background-color: var(--color-text);
+  color: var(--color-text-inverse);
   font-size: var(--body-font-size-xs);
+}
+
+footer a:any-link {
+  color: rgb(255 255 255 / 70%);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--easing-default);
+}
+
+footer a:hover {
+  color: var(--color-text-inverse);
+  text-decoration: underline;
 }
 
 footer .footer > div {
   margin: auto;
-  max-width: 1200px;
-  padding: 40px 24px 24px;
+  max-width: var(--max-width-content);
+  padding: var(--spacing-xxl) var(--content-padding-inline) var(--spacing-l);
 }
 
 footer .footer p {
+  margin: 0 0 var(--spacing-s);
+}
+
+/* Multi-column footer layout */
+footer .footer > div > .default-content-wrapper {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  border-bottom: var(--border-width) solid rgb(255 255 255 / 15%);
+  margin-bottom: var(--spacing-l);
+}
+
+@media (min-width: 600px) {
+  footer .footer > div > .default-content-wrapper {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  footer .footer > div > .default-content-wrapper {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+footer .footer h2,
+footer .footer h3,
+footer .footer h4 {
+  color: var(--color-text-inverse);
+  font-size: var(--body-font-size-s);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--spacing-m);
+}
+
+footer .footer ul {
+  list-style: none;
+  padding: 0;
   margin: 0;
+}
+
+footer .footer ul li {
+  margin-bottom: var(--spacing-s);
+}
+
+/* Footer bottom bar (copyright, legal) */
+footer .footer > div > .default-content-wrapper:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-m);
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  color: rgb(255 255 255 / 50%);
+  font-size: var(--body-font-size-xs);
+}
+
+/* Social icons in footer */
+footer .footer .icon {
+  width: 20px;
+  height: 20px;
+  filter: invert(1);
+  opacity: 0.7;
+  transition: opacity var(--duration-fast) var(--easing-default);
+}
+
+footer .footer .icon:hover {
+  opacity: 1;
 }
 
 @media (width >= 900px) {
   footer .footer > div {
-    padding: 40px 32px 24px;
+    padding: var(--spacing-xxl) var(--spacing-xl) var(--spacing-l);
   }
 }

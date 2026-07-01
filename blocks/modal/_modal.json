@@ -1,0 +1,56 @@
+{
+  "definitions": [
+    {
+      "title": "Modal",
+      "id": "modal",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block",
+            "template": {
+              "name": "Modal",
+              "model": "modal",
+              "classes": ""
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "modal",
+      "fields": [
+        {
+          "component": "text",
+          "name": "modalId",
+          "label": "Modal ID",
+          "valueType": "string",
+          "required": true,
+          "description": "Unique ID for this modal. Link to it with href='#this-id'"
+        },
+        {
+          "component": "richtext",
+          "name": "content",
+          "label": "Modal Content",
+          "valueType": "string",
+          "required": true
+        },
+        {
+          "component": "select",
+          "name": "classes",
+          "value": "",
+          "label": "Modal Size",
+          "valueType": "string",
+          "options": [
+            { "name": "Default", "value": "" },
+            { "name": "Large", "value": "large" },
+            { "name": "Fullscreen (Mobile)", "value": "fullscreen" }
+          ]
+        }
+      ]
+    }
+  ],
+  "filters": []
+}
+

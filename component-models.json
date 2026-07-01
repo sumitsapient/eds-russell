@@ -132,12 +132,98 @@
         "component": "multiselect",
         "name": "style",
         "label": "Style",
+        "description": "Visual style applied to this section",
         "options": [
           {
             "name": "Highlight",
             "value": "highlight"
+          },
+          {
+            "name": "Dark",
+            "value": "dark"
+          },
+          {
+            "name": "Accent",
+            "value": "accent"
+          },
+          {
+            "name": "Centered",
+            "value": "centered"
+          },
+          {
+            "name": "Narrow",
+            "value": "narrow"
+          },
+          {
+            "name": "Full Width",
+            "value": "full-width"
+          },
+          {
+            "name": "Spacious",
+            "value": "spacious"
+          },
+          {
+            "name": "Compact",
+            "value": "compact"
           }
         ]
+      }
+    ]
+  },
+  {
+    "id": "accordion",
+    "fields": [
+      {
+        "component": "select",
+        "name": "classes",
+        "value": "",
+        "label": "Accordion Variant",
+        "valueType": "string",
+        "options": [
+          {
+            "name": "Default",
+            "value": ""
+          },
+          {
+            "name": "Single Open",
+            "value": "single"
+          },
+          {
+            "name": "Bordered",
+            "value": "bordered"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "accordion-item",
+    "fields": [
+      {
+        "component": "text",
+        "name": "title",
+        "label": "Question / Title",
+        "valueType": "string",
+        "required": true
+      },
+      {
+        "component": "richtext",
+        "name": "description",
+        "label": "Answer / Content",
+        "valueType": "string",
+        "required": true
+      }
+    ]
+  },
+  {
+    "id": "breadcrumb",
+    "fields": [
+      {
+        "component": "boolean",
+        "name": "autoGenerate",
+        "label": "Auto-generate from URL",
+        "valueType": "boolean",
+        "description": "When enabled, breadcrumb is generated from the page path. When disabled, provide manual links."
       }
     ]
   },
@@ -180,6 +266,68 @@
     ]
   },
   {
+    "id": "cta-banner",
+    "fields": [
+      {
+        "component": "reference",
+        "name": "backgroundImage",
+        "label": "Background Image",
+        "valueType": "string",
+        "description": "The background image for the banner"
+      },
+      {
+        "component": "text",
+        "name": "heading",
+        "label": "Heading",
+        "valueType": "string",
+        "required": true
+      },
+      {
+        "component": "richtext",
+        "name": "description",
+        "label": "Description",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "ctaLabel",
+        "label": "Button Text",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "ctaLink",
+        "label": "Button Link",
+        "valueType": "string"
+      },
+      {
+        "component": "select",
+        "name": "classes",
+        "value": "",
+        "label": "Banner Variant",
+        "valueType": "string",
+        "options": [
+          {
+            "name": "Default (Image)",
+            "value": ""
+          },
+          {
+            "name": "Solid Color",
+            "value": "solid"
+          },
+          {
+            "name": "Left Aligned",
+            "value": "left"
+          },
+          {
+            "name": "Compact",
+            "value": "compact"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "fragment",
     "fields": [
       {
@@ -212,6 +360,112 @@
         "value": "",
         "label": "Text",
         "valueType": "string"
+      }
+    ]
+  },
+  {
+    "id": "modal",
+    "fields": [
+      {
+        "component": "text",
+        "name": "modalId",
+        "label": "Modal ID",
+        "valueType": "string",
+        "required": true,
+        "description": "Unique ID for this modal. Link to it with href='#this-id'"
+      },
+      {
+        "component": "richtext",
+        "name": "content",
+        "label": "Modal Content",
+        "valueType": "string",
+        "required": true
+      },
+      {
+        "component": "select",
+        "name": "classes",
+        "value": "",
+        "label": "Modal Size",
+        "valueType": "string",
+        "options": [
+          {
+            "name": "Default",
+            "value": ""
+          },
+          {
+            "name": "Large",
+            "value": "large"
+          },
+          {
+            "name": "Fullscreen (Mobile)",
+            "value": "fullscreen"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tabs",
+    "fields": [
+      {
+        "component": "select",
+        "name": "classes",
+        "value": "",
+        "label": "Tabs Variant",
+        "valueType": "string",
+        "options": [
+          {
+            "name": "Default",
+            "value": ""
+          },
+          {
+            "name": "Pills",
+            "value": "pills"
+          },
+          {
+            "name": "Vertical",
+            "value": "vertical"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tabs-item",
+    "fields": [
+      {
+        "component": "text",
+        "name": "label",
+        "label": "Tab Label",
+        "valueType": "string",
+        "required": true
+      },
+      {
+        "component": "richtext",
+        "name": "content",
+        "label": "Tab Content",
+        "valueType": "string",
+        "required": true
+      }
+    ]
+  },
+  {
+    "id": "video-embed",
+    "fields": [
+      {
+        "component": "reference",
+        "name": "poster",
+        "label": "Poster Image",
+        "valueType": "string",
+        "description": "Optional poster image shown before video plays"
+      },
+      {
+        "component": "text",
+        "name": "videoUrl",
+        "label": "Video URL",
+        "valueType": "string",
+        "required": true,
+        "description": "YouTube, Vimeo, or direct MP4/WebM URL"
       }
     ]
   }

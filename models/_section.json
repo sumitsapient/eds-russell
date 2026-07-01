@@ -29,11 +29,16 @@
           "component": "multiselect",
           "name": "style",
           "label": "Style",
+          "description": "Visual style applied to this section",
           "options": [
-            {
-              "name": "Highlight",
-              "value": "highlight"
-            }
+            { "name": "Highlight", "value": "highlight" },
+            { "name": "Dark", "value": "dark" },
+            { "name": "Accent", "value": "accent" },
+            { "name": "Centered", "value": "centered" },
+            { "name": "Narrow", "value": "narrow" },
+            { "name": "Full Width", "value": "full-width" },
+            { "name": "Spacious", "value": "spacious" },
+            { "name": "Compact", "value": "compact" }
           ]
         }
       ]
@@ -50,7 +55,13 @@
         "hero",
         "cards",
         "columns",
-        "fragment"
+        "fragment",
+        "accordion",
+        "tabs",
+        "cta-banner",
+        "modal",
+        "video-embed",
+        "breadcrumb"
       ]
     }
   ]

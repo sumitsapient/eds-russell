@@ -15,7 +15,13 @@
       "hero",
       "cards",
       "columns",
-      "fragment"
+      "fragment",
+      "accordion",
+      "tabs",
+      "cta-banner",
+      "modal",
+      "video-embed",
+      "breadcrumb"
     ]
   },
   {
