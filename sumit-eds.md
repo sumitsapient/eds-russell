@@ -17,6 +17,21 @@
 2. [Debugging & Fixes](#debugging--fixes)
    - [Fix 1: Block CSS Not Applying](#fix-1-block-css-not-applying)
    - [Fix 2: Wrong Block Folder Name](#fix-2-wrong-block-folder-name--the-naming-rule)
+3. [Complete Block Loading Journey](#complete-block-loading-journey)
+   - [Layer 1: Authoring](#layer-1-authoring-universal-editor)
+   - [Layer 2: Content Delivery](#layer-2-content-delivery-aem--edge-cdn)
+   - [Layer 3: Browser Receives Page](#layer-3-browser-receives-the-page)
+   - [Layer 4: Eager Phase](#layer-4-eager-phase--critical-path-lcp)
+   - [Layer 5: Lazy Phase](#layer-5-lazy-phase--everything-else)
+   - [Layer 6: Loading the Block](#layer-6-loading-the-hello-world-block)
+   - [Layer 7: decorate() Runs](#layer-7-your-decorate-runs)
+   - [Layer 8: Final DOM](#layer-8-final-rendered-dom)
+   - [Layer 9: Delayed Phase](#layer-9-delayed-phase-3-seconds-later)
+4. [AEM Admin API — How Content Reaches the CDN](#aem-admin-api--how-content-reaches-the-cdn)
+   - [The Two Actions](#the-two-actions)
+   - [How to Verify](#how-to-verify--3-methods)
+   - [Preview vs Live CDNs](#preview-vs-live--two-separate-cdns)
+   - [Debugging with the API](#why-this-matters-for-debugging)
    - [File 1: helloworld.js](#file-1-helloworldjs)
    - [File 2: helloworld.css](#file-2-helloworldcss)
    - [File 3: _helloworld.json](#file-3-_helloworldjson)
@@ -527,6 +542,438 @@ const descriptionCell = rows[1]?.children[0]; // row 2, cell 1 = description
 | `blocks/helloworld/_helloworld.json` | `blocks/hello-world/_hello-world.json` |
 | `"id": "helloworld"` in JSON | `"id": "hello-world"` |
 | `"helloworld"` in section filter | `"hello-world"` |
+
+---
+
+## Complete Block Loading Journey
+
+> "How does the Hello World block load on my page?" — every layer explained.
+
+---
+
+### Layer 1: Authoring (Universal Editor)
+
+Author opens the page in Universal Editor and adds a "Hello World" block.
+
+```
+Author clicks "+" → selects "Hello World"
+         ↓
+UE reads component-definition.json
+  → finds definition with id: "hello-world"
+  → resourceType: "core/franklin/components/block/v1/block"
+  → template name: "Hello World"
+         ↓
+UE creates a JCR node in the AEM repository:
+  /content/eds-site/home/jcr:content/root/section/hello-world
+    @sling:resourceType = "core/franklin/components/block/v1/block"
+    @name              = "Hello World"
+    @title             = "Hello World"      ← default from template
+    @description       = "Welcome..."       ← default from template
+```
+
+Author edits fields → UE reads `component-models.json` → shows Title + Description inputs → author types → saves to JCR.
+
+---
+
+### Layer 2: Content Delivery (AEM → Edge CDN)
+
+When the page is **previewed or published**, AEM renders the JCR content into plain HTML and pushes it to the CDN edge.
+
+```
+AEM reads JCR node /content/.../hello-world
+         ↓
+Renders as a block table in HTML:
+
+<div class="hello-world block"
+     data-block-name="hello-world"
+     data-aue-resource="urn:aemconnection:/content/.../hello-world"
+     data-aue-type="component">
+  <div>                                       ← row 1 (title field)
+    <div data-aue-prop="title"
+         data-aue-type="text">
+      <p>Hello World</p>
+    </div>
+  </div>
+  <div>                                       ← row 2 (description field)
+    <div data-aue-prop="description"
+         data-aue-type="text">
+      <p>Welcome to my eds site.</p>
+    </div>
+  </div>
+</div>
+         ↓
+This HTML is cached on the CDN edge (Fastly)
+Served instantly to every visitor worldwide
+```
+
+---
+
+### Layer 3: Browser Receives the Page
+
+User visits `https://main--repo--owner.aem.page/home`
+
+```
+Browser sends HTTP GET /home
+         ↓
+CDN edge responds with the full HTML page (from cache)
+  → <head> contains link to styles/styles.css and scripts/scripts.js
+  → <main> contains all sections and blocks in raw un-decorated form
+  → browser starts parsing HTML immediately
+```
+
+---
+
+### Layer 4: Eager Phase — Critical Path (LCP)
+
+`scripts.js` runs immediately on parse. Its only job here: get to LCP as fast as possible.
+
+```javascript
+async function loadEager(doc) {
+  decorateTemplateAndTheme();            // reads metadata, applies theme to <body>
+  const main = doc.querySelector('main');
+  decorateMain(main);                    // decorates ALL sections and blocks in DOM
+  document.body.classList.add('appear'); // unhides the page (was display:none)
+  await loadSection(                     // loads ONLY the first section's blocks
+    main.querySelector('.section'),
+    waitForFirstImage                    // waits for LCP image before proceeding
+  );
+}
+```
+
+`decorateMain()` does this work in sequence:
+
+```
+decorateIcons(main)      → converts :icon-name: spans to <img> SVG tags
+buildAutoBlocks(main)    → creates any auto-generated blocks (if configured)
+decorateSections(main)   → wraps content between <hr> into .section divs
+decorateBlocks(main)     → finds every .block div, records it for loading
+decorateButtons(main)    → converts formatted links into .button elements
+```
+
+`decorateBlocks()` scans the DOM, finds `<div class="hello-world block">` and records it — but does NOT load it yet if it's not in the first section.
+
+---
+
+### Layer 5: Lazy Phase — Everything Else
+
+After LCP is achieved, `loadLazy()` runs:
+
+```javascript
+async function loadLazy(doc) {
+  loadHeader(doc.querySelector('header'));   // loads header block
+  await loadSections(main);                  // loads ALL remaining sections
+  loadFooter(doc.querySelector('footer'));   // loads footer block
+  loadCSS('styles/lazy-styles.css');         // non-critical global styles
+  loadFonts();                               // loads font files
+  observeSectionAnimations();                // sets up scroll animations
+}
+```
+
+`loadSections(main)` finds all sections and calls `loadSection()` on each. Inside each section, it calls `loadBlock()` for every block — including Hello World.
+
+---
+
+### Layer 6: Loading the Hello World Block
+
+`loadBlock()` is inside `aem.js` (Adobe's core — never modify). Here's what it does:
+
+```
+loadBlock(helloWorldElement)
+         ↓
+Step 1: Read block name from class list
+  "hello-world block" → block name = "hello-world"
+         ↓
+Step 2: Load CSS (non-blocking, in parallel)
+  fetch: /blocks/hello-world/hello-world.css
+  → browser downloads and applies styles immediately
+         ↓
+Step 3: Load JS module
+  import('/blocks/hello-world/hello-world.js')
+  → browser downloads and parses the ES module
+         ↓
+Step 4: Call the default export
+  const { default: decorate } = await import(...)
+  decorate(helloWorldElement)   ← YOUR CODE RUNS HERE
+         ↓
+Step 5: Mark as loaded
+  helloWorldElement.dataset.blockStatus = 'loaded'
+```
+
+---
+
+### Layer 7: Your `decorate()` Runs
+
+```javascript
+export default function decorate(block) {
+  // block = <div class="hello-world block" data-aue-resource="...">
+
+  const rows = [...block.children]; // [row1, row2]
+
+  const titleCell = rows[0]?.children[0];
+  //  = <div data-aue-prop="title"><p>Hello World</p></div>
+
+  const descriptionCell = rows[1]?.children[0];
+  //  = <div data-aue-prop="description"><p>Welcome...</p></div>
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'hello-world-content';
+
+  const heading = document.createElement('h2');
+  heading.className = 'hello-world-title';
+
+  // moveInstrumentation transfers data-aue-prop="title" onto the <h2>
+  // so Universal Editor can still edit it after decoration
+  moveInstrumentation(titleCell, heading);
+  while (titleCell.firstChild) heading.append(titleCell.firstChild);
+
+  const description = document.createElement('p');
+  description.className = 'hello-world-description';
+  moveInstrumentation(descriptionCell, description);
+  while (descriptionCell.firstChild) description.append(descriptionCell.firstChild);
+
+  wrapper.append(heading, description);
+
+  block.textContent = ''; // wipe the original rows
+  block.append(wrapper);  // insert the new semantic structure
+}
+```
+
+---
+
+### Layer 8: Final Rendered DOM
+
+After `decorate()` runs, the browser DOM is:
+
+```html
+<div class="hello-world block" data-block-status="loaded" data-aue-resource="...">
+  <div class="hello-world-content">
+    <h2 class="hello-world-title" data-aue-prop="title">
+      <p>Hello World</p>
+    </h2>
+    <p class="hello-world-description" data-aue-prop="description">
+      Welcome to my eds site.
+    </p>
+  </div>
+</div>
+```
+
+CSS from `hello-world.css` is already applied (loaded in parallel in Layer 6):
+- ✅ Blue left border
+- ✅ Gray background
+- ✅ Padding
+- ✅ Blue heading color
+
+---
+
+### Layer 9: Delayed Phase (3 seconds later)
+
+```javascript
+function loadDelayed() {
+  window.setTimeout(() => import('./delayed.js'), 3000);
+}
+```
+
+Analytics, chat widgets, martech load here. Never blocks Hello World or any other block.
+
+---
+
+### Complete Flow Summary
+
+```
+AUTHOR
+  └─ Types in Universal Editor fields
+  └─ UE saves to JCR node in AEM repository
+
+AEM
+  └─ Renders JCR → plain HTML with data-aue-* attributes
+  └─ Pushes HTML to CDN edge cache
+
+CDN EDGE
+  └─ Caches the HTML globally
+  └─ Serves it in <50ms to any user
+
+BROWSER — EAGER (LCP critical)
+  └─ Receives HTML, parses it
+  └─ styles.css loads (render-blocking, kept minimal)
+  └─ scripts.js runs → decorateMain() → finds all blocks
+  └─ First section blocks load immediately → LCP achieved
+
+BROWSER — LAZY (below fold)
+  └─ loadSections() finds Hello World block
+  └─ loadBlock() called:
+       ├─ Fetches hello-world.css   → browser applies styles
+       └─ Imports hello-world.js    → decorate(block) runs
+            ├─ Reads 2 rows from block DOM
+            ├─ Creates <h2> + <p> elements
+            ├─ moveInstrumentation() preserves data-aue-* attrs
+            ├─ Moves content nodes into new elements
+            └─ Replaces block content with new structure
+
+BROWSER — DELAYED (3 seconds later)
+  └─ Analytics, martech loads
+  └─ Zero impact on Hello World block
+```
+
+---
+
+### Why This Architecture is Fast
+
+EDS achieves Lighthouse 100 because of strict phase separation:
+
+| Phase | What loads | Why it matters |
+|-------|-----------|----------------|
+| **Eager** | `styles.css` + first section only | Minimum to show above-fold content → fast LCP |
+| **Lazy** | Everything else, block by block | Each block's JS+CSS only loads when that block is on the page |
+| **Delayed** | Analytics, chat, martech | Never blocks rendering or interactivity |
+
+The Hello World block JS + CSS (~2KB total) only downloads when a page **actually has** that block. If a page has no Hello World block, those files are **never requested**.
+
+---
+
+## AEM Admin API — How Content Reaches the CDN
+
+> "When the page is previewed or published, AEM pushes it to the CDN" — here's how to verify that.
+
+When you click **Preview** or **Publish** in Universal Editor (or the Sidekick browser extension), it makes a real HTTP API call to the **AEM Admin API** (also called the Helix Admin API).
+
+---
+
+### The Two Actions
+
+| Button | API Called | CDN Updated | URL |
+|--------|-----------|-------------|-----|
+| **Preview** (▶ play icon) | `POST /preview/...` | Preview CDN | `*.aem.page` |
+| **Publish** (🌐 globe icon) | `POST /live/...` | Production CDN | `*.aem.live` |
+
+---
+
+### API Endpoint Pattern
+
+```
+https://admin.hlx.page/{action}/{owner}/{repo}/{branch}/{path}
+```
+
+For this project (`sumitsapient/eds-russell`):
+
+```bash
+# Preview a page (same as clicking ▶ in Universal Editor)
+POST https://admin.hlx.page/preview/sumitsapient/eds-russell/main/home
+
+# Publish a page (same as clicking Publish)
+POST https://admin.hlx.page/live/sumitsapient/eds-russell/main/home
+
+# Check status of any page
+GET  https://admin.hlx.page/status/sumitsapient/eds-russell/main/home
+```
+
+---
+
+### How to Verify — 3 Methods
+
+#### Method 1: Watch it in DevTools (easiest)
+
+1. Open page in Universal Editor
+2. Open DevTools → **Network tab** → filter by `admin.hlx.page`
+3. Click the **Preview button** (▶)
+4. See a `POST` request fire to `admin.hlx.page/preview/...`
+5. Response body confirms what happened:
+
+```json
+{
+  "webPath": "/home",
+  "resourcePath": "/content/eds-site/home",
+  "preview": {
+    "url": "https://main--eds-russell--sumitsapient.aem.page/home",
+    "status": 200,
+    "lastModified": "2026-07-02T10:00:00.000Z"
+  },
+  "live": {
+    "url": "https://main--eds-russell--sumitsapient.aem.live/home",
+    "status": 200,
+    "lastModified": "2026-07-02T10:00:00.000Z"
+  }
+}
+```
+
+#### Method 2: Open the Status API in your browser
+
+Paste this URL directly into any browser tab:
+
+```
+https://admin.hlx.page/status/sumitsapient/eds-russell/main/home
+```
+
+Returns JSON showing the current CDN state of the page — last modified time, cache status, URLs for both preview and live.
+
+#### Method 3: Call manually with curl
+
+```bash
+# Check page status
+curl "https://admin.hlx.page/status/sumitsapient/eds-russell/main/home"
+
+# Manually trigger preview
+curl -X POST "https://admin.hlx.page/preview/sumitsapient/eds-russell/main/home"
+
+# Manually trigger publish
+curl -X POST "https://admin.hlx.page/live/sumitsapient/eds-russell/main/home"
+```
+
+---
+
+### What Happens Internally on Preview
+
+```
+You click ▶ Preview in Universal Editor
+         ↓
+Browser calls:
+POST https://admin.hlx.page/preview/sumitsapient/eds-russell/main/home
+         ↓
+Admin API receives request → fetches content from AEM author:
+  GET https://author-p146753-e1506305.adobeaemcloud.com/content/eds-site/home
+  → AEM renders JCR content → returns plain HTML with data-aue-* attributes
+         ↓
+Admin API stores the rendered HTML on the Preview CDN (Fastly)
+  → available at: https://main--eds-russell--sumitsapient.aem.page/home
+         ↓
+Admin API returns JSON response: status 200 + URLs + timestamps
+         ↓
+Universal Editor shows confirmation, preview URL is now updated
+```
+
+---
+
+### Preview vs Live — Two Separate CDNs
+
+```
+AUTHOR ENVIRONMENT
+  author-p146753-e1506305.adobeaemcloud.com
+        ↓                                  ↓
+  ▶ Preview button               🌐 Publish button
+        ↓                                  ↓
+  PREVIEW CDN                       LIVE CDN
+  *.aem.page                        *.aem.live
+  For authors/stakeholders          For real end users
+  Updates immediately               Requires explicit Publish
+  Content = latest preview          Content = approved/published only
+```
+
+---
+
+### Why This Matters for Debugging
+
+If your block changes aren't showing on the preview URL, check these in order:
+
+| Issue | Symptom | Fix |
+|-------|---------|-----|
+| **Code not synced** | Old JS/CSS still running | Push to GitHub → wait for AEM Code Sync bot |
+| **Content not re-previewed** | Old content showing | Click ▶ Preview again in UE to re-render JCR → HTML |
+| **CDN cache** | Changes visible on one device but not another | Hard refresh `Ctrl+Shift+R` or add `?nocache=1` to URL |
+| **Wrong branch** | Code changes on feature branch, content on main | Check preview URL uses your branch name |
+
+**Quick check URL** — paste in browser to see what's cached right now:
+```
+https://admin.hlx.page/status/sumitsapient/eds-russell/main/home
+```
 
 ---
 

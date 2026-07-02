@@ -310,6 +310,35 @@
     ]
   },
   {
+    "id": "hello-world-with-child",
+    "fields": [
+      {
+        "component": "text",
+        "name": "title",
+        "label": "Section Title",
+        "valueType": "string",
+        "value": "Our Features"
+      }
+    ]
+  },
+  {
+    "id": "hello-world-with-child-item",
+    "fields": [
+      {
+        "component": "text",
+        "name": "title",
+        "label": "Item Title",
+        "valueType": "string"
+      },
+      {
+        "component": "reference",
+        "name": "image",
+        "label": "Image",
+        "valueType": "string"
+      }
+    ]
+  },
+  {
     "id": "hello-world",
     "fields": [
       {

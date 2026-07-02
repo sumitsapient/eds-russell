@@ -22,7 +22,8 @@
       "modal",
       "video-embed",
       "breadcrumb",
-      "hello-world"
+      "hello-world",
+      "hello-world-with-child"
     ]
   },
   {
@@ -50,6 +51,12 @@
       "image",
       "button",
       "title"
+    ]
+  },
+  {
+    "id": "hello-world-with-child",
+    "components": [
+      "hello-world-with-child-item"
     ]
   }
 ]

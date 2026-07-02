@@ -62,7 +62,8 @@
         "modal",
         "video-embed",
         "breadcrumb",
-        "hello-world"
+        "hello-world",
+        "hello-world-with-child"
       ]
     }
   ]
