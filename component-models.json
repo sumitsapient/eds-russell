@@ -310,7 +310,7 @@
     ]
   },
   {
-    "id": "helloworld",
+    "id": "hello-world",
     "fields": [
       {
         "component": "text",

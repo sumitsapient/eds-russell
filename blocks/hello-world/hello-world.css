@@ -1,23 +1,23 @@
-/* All selectors MUST be scoped to .helloworld */
+/* All selectors scoped to .hello-world */
 
-.helloworld {
+.hello-world {
   padding: var(--spacing-xl, 32px);
   background-color: var(--color-surface, #f8f8f8);
   border-radius: var(--radius-md, 8px);
   border-left: 4px solid var(--color-primary, #3b63fb);
 }
 
-.helloworld .helloworld-content {
+.hello-world .hello-world-content {
   max-width: var(--max-width-narrow, 800px);
 }
 
-.helloworld .helloworld-title {
+.hello-world .hello-world-title {
   margin: 0 0 var(--spacing-m, 16px);
   color: var(--color-primary, #3b63fb);
   font-size: var(--heading-font-size-l, 34px);
 }
 
-.helloworld .helloworld-description {
+.hello-world .hello-world-description {
   margin: 0;
   color: var(--color-text-muted, #6b7280);
   font-size: var(--body-font-size-s, 19px);
