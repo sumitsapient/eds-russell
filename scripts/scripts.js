@@ -59,12 +59,144 @@ async function loadFonts() {
 }
 
 /**
+ * Creates a block element with the given block name and content.
+ * Used by buildAutoBlocks to programmatically create blocks.
+ * @param {string} blockName The block CSS class (e.g. 'video-embed')
+ * @param {string|Element} content The content to put inside the block
+ * @returns {Element} The constructed block element
+ */
+function buildBlock(blockName, content) {
+  const table = [Array.isArray(content) ? content : [content]];
+  const blockEl = document.createElement('div');
+  blockEl.classList.add(blockName, 'block');
+
+  table.forEach((row) => {
+    const rowEl = document.createElement('div');
+    row.forEach((col) => {
+      const colEl = document.createElement('div');
+      if (col instanceof Element) {
+        colEl.append(col);
+      } else {
+        colEl.innerHTML = col;
+      }
+      rowEl.append(colEl);
+    });
+    blockEl.append(rowEl);
+  });
+
+  return blockEl;
+}
+
+/**
+ * Checks if a URL is a video URL (YouTube, Vimeo, MP4, WebM).
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isVideoUrl(url) {
+  try {
+    const u = new URL(url);
+    return (
+      u.hostname.includes('youtube.com')
+      || u.hostname.includes('youtu.be')
+      || u.hostname.includes('vimeo.com')
+      || u.pathname.endsWith('.mp4')
+      || u.pathname.endsWith('.webm')
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * AUTO BLOCK: Video Embed
+ * Detects standalone video URLs (YouTube/Vimeo/MP4) on their own paragraph
+ * and wraps them in a video-embed block automatically.
+ *
+ * Trigger: <p><a href="https://www.youtube.com/...">https://...</a></p>
+ * Result:  <div class="video-embed block"><div><div>https://...</div></div></div>
+ *
+ * @param {Element} main
+ */
+function buildVideoEmbeds(main) {
+  main.querySelectorAll('p a[href]').forEach((a) => {
+    const p = a.closest('p');
+    if (!p) return;
+
+    // Only process links that are the ONLY content in the paragraph
+    // and where the link text IS the URL (i.e. author pasted the raw URL)
+    if (p.textContent.trim() !== a.href && p.textContent.trim() !== a.textContent.trim()) return;
+    if (!isVideoUrl(a.href)) return;
+
+    // Build a video-embed block with the URL as content
+    const videoBlock = buildBlock('video-embed', a.href);
+
+    // Replace the paragraph with the video block, wrapped in a section
+    const section = p.closest('.section') || p.parentElement;
+    p.replaceWith(videoBlock);
+
+    // Let aem.js know this is a block that needs loading
+    videoBlock.dataset.blockName = 'video-embed';
+    videoBlock.dataset.blockStatus = 'initialized';
+
+    // Manually trigger block decoration (aem.js won't auto-detect this)
+    import('./aem.js').then(({ decorateBlock, loadBlock }) => {
+      decorateBlock(videoBlock);
+      loadBlock(videoBlock);
+    });
+
+    // eslint-disable-next-line no-console
+    console.debug(`[AutoBlock] video-embed created for: ${a.href} in section`, section);
+  });
+}
+
+/**
+ * AUTO BLOCK: Breadcrumb
+ * Automatically inserts a breadcrumb block at the top of the main content
+ * on pages that are 2+ levels deep (e.g. /blog/my-post, /products/category/item).
+ *
+ * Trigger: Page path has 2+ segments
+ * Result:  breadcrumb block inserted as first block in first section
+ *
+ * @param {Element} main
+ */
+function buildBreadcrumb(main) {
+  const pathSegments = window.location.pathname.split('/').filter(Boolean);
+
+  // Only add breadcrumb on pages 2+ levels deep
+  // Skip home (/), top-level pages (/about), and fragment pages (/nav, /footer)
+  const skipPaths = ['nav', 'footer', 'header'];
+  if (pathSegments.length < 2) return;
+  if (skipPaths.includes(pathSegments[0])) return;
+
+  // Don't add if a breadcrumb block already exists (authored manually)
+  if (main.querySelector('.breadcrumb')) return;
+
+  // Build an empty breadcrumb block â€” decorate() will auto-generate from URL
+  const breadcrumbBlock = buildBlock('breadcrumb', '');
+  breadcrumbBlock.dataset.blockName = 'breadcrumb';
+  breadcrumbBlock.dataset.blockStatus = 'initialized';
+
+  // Insert at the very start of the first section
+  const firstSection = main.querySelector('.section');
+  if (firstSection) {
+    firstSection.prepend(breadcrumbBlock);
+
+    import('./aem.js').then(({ decorateBlock, loadBlock }) => {
+      decorateBlock(breadcrumbBlock);
+      loadBlock(breadcrumbBlock);
+    });
+  }
+}
+
+/**
  * Builds all synthetic blocks in a container element.
+ * Called during decorateMain() in the Eager phase.
  * @param {Element} main The container element
  */
-function buildAutoBlocks() {
+function buildAutoBlocks(main) {
   try {
-    // TODO: add auto block, if needed
+    buildVideoEmbeds(main);
+    buildBreadcrumb(main);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Auto Blocking failed', error);
@@ -239,7 +371,7 @@ function decorateSectionMetadata(main) {
       section.classList.add('has-background');
     }
 
-    // Custom ID for anchor linking (e.g. data-id="about-us" Ã¢â€ â€™ id="about-us")
+    // Custom ID for anchor linking (e.g. data-id="about-us" ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ id="about-us")
     const sectionId = section.dataset.id;
     if (sectionId) {
       section.id = sectionId;
