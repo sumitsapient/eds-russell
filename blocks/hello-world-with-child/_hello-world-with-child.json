@@ -44,6 +44,18 @@
           "label": "Section Title",
           "valueType": "string",
           "value": "Our Features"
+        },
+        {
+          "component": "select",
+          "name": "classes",
+          "label": "Layout Variant",
+          "description": "Choose how the items are displayed",
+          "valueType": "string",
+          "options": [
+            { "name": "Grid (default)", "value": "" },
+            { "name": "List (image left, title right)", "value": "list" },
+            { "name": "Featured (first item large)", "value": "featured" }
+          ]
         }
       ]
     },

@@ -32,6 +32,10 @@
    - [How to Verify](#how-to-verify--3-methods)
    - [Preview vs Live CDNs](#preview-vs-live--two-separate-cdns)
    - [Debugging with the API](#why-this-matters-for-debugging)
+5. [Hello World With Child Block](#hello-world-with-child-block)
+   - [Block Structure](#block-structure)
+   - [How picture tag is formed](#how-the-picture-tag-is-formed)
+   - [Dynamic Media URLs](#why-the-url-is-adobedynamicmediadeliver-not-contentdam)
    - [File 1: helloworld.js](#file-1-helloworldjs)
    - [File 2: helloworld.css](#file-2-helloworldcss)
    - [File 3: _helloworld.json](#file-3-_helloworldjson)
@@ -974,6 +978,153 @@ If your block changes aren't showing on the preview URL, check these in order:
 ```
 https://admin.hlx.page/status/sumitsapient/eds-russell/main/home
 ```
+
+---
+
+## Hello World With Child Block
+
+A block that has **its own parent field** (title) AND **repeatable child items** (each with title + image). This teaches the pattern for any block that needs a container title plus a dynamic list of items.
+
+---
+
+### Block Structure
+
+**Files created:**
+
+| File | Purpose |
+|------|---------|
+| `blocks/hello-world-with-child/hello-world-with-child.js` | Logic — separates parent fields from child items, builds card grid |
+| `blocks/hello-world-with-child/hello-world-with-child.css` | Responsive CSS Grid (1→2→3 columns), card hover effects |
+| `blocks/hello-world-with-child/_hello-world-with-child.json` | Parent model (title) + child item model (title + image) + filter |
+
+**JSON model pattern — parent with both `model` AND `filter`:**
+
+```json
+"definitions": [
+  {
+    "id": "hello-world-with-child",
+    "template": {
+      "name": "Hello World With Child",
+      "model": "hello-world-with-child",    ← parent's own editable fields
+      "filter": "hello-world-with-child"   ← what children can be added inside
+    }
+  },
+  {
+    "id": "hello-world-with-child-item",
+    "plugins": { "xwalk": { "page": {
+      "resourceType": "core/franklin/components/block/v1/block/item",  ← ITEM not block
+      "template": { "model": "hello-world-with-child-item" }
+    }}}
+  }
+]
+```
+
+**AEM-generated HTML structure:**
+```html
+<div class="hello-world-with-child block">
+
+  <!-- Parent's own field row — NO data-aue-resource -->
+  <div>
+    <div data-aue-prop="title">Our Features</div>
+  </div>
+
+  <!-- Child item rows — HAVE data-aue-resource (separate JCR nodes) -->
+  <div data-aue-resource="urn:aemconnection:.../item0" data-aue-type="component">
+    <div data-aue-prop="title">Item One</div>
+    <div data-aue-prop="image"><picture><img src="..."/></picture></div>
+  </div>
+
+  <div data-aue-resource="urn:aemconnection:.../item1" data-aue-type="component">
+    ...
+  </div>
+</div>
+```
+
+**Key technique — separating parent rows from child item rows:**
+
+```javascript
+// Child item rows have data-aue-resource (they are separate JCR nodes)
+// Parent field rows do NOT have data-aue-resource
+const parentRows = rows.filter((row) => !row.dataset.aueResource);
+const itemRows   = rows.filter((row) =>  row.dataset.aueResource);
+```
+
+**Variable shadowing fix (ESLint `no-shadow` rule):**
+Both the parent and child items have a `title` field. Using `const titleCell` in the outer scope AND inside `forEach` causes ESLint to throw a shadowing error. Fix: name the outer one descriptively.
+```javascript
+// Outer scope — parent's title
+const parentTitleCell = parentRows[0]?.children[0]; // ✅ not 'titleCell'
+
+// Inside forEach — item's title
+const [titleCell, imageCell] = [...row.children];   // ✅ no conflict
+```
+
+---
+
+### How the `<picture>` Tag is Formed
+
+The `<picture>` element is **NOT created by your JavaScript**. Your `decorate()` only moves it. Here's the full chain:
+
+```
+1. MODEL defines field as "component": "reference"
+         ↓
+2. AUTHOR picks asset in DAM via Asset Picker in Universal Editor
+   JCR saves: @image = "/content/dam/eds-site/banner.png"  (just a path string)
+         ↓
+3. AEM PREVIEW RENDER converts DAM path → Dynamic Media URL
+   and wraps it in <picture>:
+
+   <div data-aue-prop="image" data-aue-type="media">
+     <picture>
+       <img src="/adobe/dynamicmedia/deliver/dm-aid--UUID/banner.png
+                 ?quality=85&width=1280&preferwebp=true"
+            data-aue-prop="image"
+            data-aue-type="media"
+            loading="eager">
+     </picture>
+   </div>
+         ↓
+4. OUR decorate() MOVES it (does NOT create it):
+   moveInstrumentation(imageCell, imgWrapper);
+   while (imageCell.firstChild) imgWrapper.append(imageCell.firstChild);
+         ↓
+5. OPTIONAL: createOptimizedPicture() can replace it with responsive srcset
+```
+
+| Element | Created by |
+|---------|-----------|
+| `<picture>` and `<img>` | AEM rendering the `reference` field |
+| Dynamic Media URL | AEM + Dynamic Media CDN (auto-converted from `/content/dam/...`) |
+| `data-aue-prop="image"` | AEM (from model field `name: "image"`) |
+| `data-aue-type="media"` | AEM (from model field `component: "reference"`) |
+| `<div class="...-card-image">` | Our `decorate()` function |
+
+---
+
+### Why the URL is `/adobe/dynamicmedia/deliver/...` not `/content/dam/...`
+
+This is because your AEM instance has **Adobe Dynamic Media** enabled.
+
+| | Traditional (no Dynamic Media) | Dynamic Media (what you have) |
+|---|---|---|
+| **URL** | `/content/dam/folder/banner.png` | `/adobe/dynamicmedia/deliver/dm-aid--UUID/banner.png` |
+| **Served from** | AEM repository directly | Adobe's global CDN edge |
+| **Format** | Original format always | Auto-converts to WebP if browser supports it |
+| **Resize** | No | Auto-resizes to `width` param |
+| **Compression** | No | Auto-compresses to `quality` param |
+
+**The query parameters explained:**
+
+| Parameter | Value | Meaning |
+|-----------|-------|---------|
+| `quality=85` | 85% | Compressed to 85% — smaller file, visually same |
+| `width=1280` | 1280px | Resized to 1280px wide |
+| `preferwebp=true` | true | Sends WebP to modern browsers, PNG fallback for old ones |
+
+**Author uploads:** `banner.png` (5MB, 4000×3000px original in DAM)
+**Browser receives:** WebP, ~180KB, resized to exactly the width needed — automatically.
+
+This is the **correct and expected** behavior on any AEM instance with Dynamic Media. It is better than `/content/dam` because you get CDN delivery + automatic format optimization + responsive sizing for free.
 
 ---
 

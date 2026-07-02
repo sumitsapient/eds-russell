@@ -65,3 +65,66 @@
   font-size: var(--heading-font-size-xs, 22px);
   color: var(--color-text, #131313);
 }
+
+/* =============================================
+   VARIANT: LIST — single column, image left
+   Block gets class: hello-world-with-child list
+   ============================================= */
+
+.hello-world-with-child.list .hello-world-with-child-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 600px) {
+  .hello-world-with-child.list .hello-world-with-child-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 900px) {
+  .hello-world-with-child.list .hello-world-with-child-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hello-world-with-child.list .hello-world-with-child-card {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    align-items: center;
+  }
+
+  .hello-world-with-child.list .hello-world-with-child-card-image {
+    aspect-ratio: 1;
+    border-radius: 0;
+  }
+
+  .hello-world-with-child.list .hello-world-with-child-card-title {
+    padding: var(--spacing-l, 24px);
+    font-size: var(--heading-font-size-s, 24px);
+  }
+}
+
+/* =============================================
+   VARIANT: FEATURED — first item spans full width
+   Block gets class: hello-world-with-child featured
+   ============================================= */
+
+@media (min-width: 600px) {
+  .hello-world-with-child.featured .hello-world-with-child-card:first-child {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+
+  .hello-world-with-child.featured .hello-world-with-child-card:first-child
+  .hello-world-with-child-card-image {
+    aspect-ratio: 16 / 9;
+    border-radius: 0;
+  }
+
+  .hello-world-with-child.featured .hello-world-with-child-card:first-child
+  .hello-world-with-child-card-title {
+    padding: var(--spacing-xl, 32px);
+    font-size: var(--heading-font-size-l, 34px);
+  }
+}
