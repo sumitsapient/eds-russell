@@ -40,6 +40,17 @@
    - [What are Variants](#what-are-variants)
    - [The classes Field](#the-classes-field)
    - [CSS Specificity Pattern](#css-specificity-pattern-for-variants)
+7. [Phase 3.2 — Section Metadata Extensions](#phase-32--section-metadata-extensions)
+   - [What is Section Metadata](#what-is-section-metadata)
+   - [New Fields Added](#new-fields-added)
+   - [How Each Feature Works](#how-each-feature-works)
+   - [How to Test](#how-to-test-phase-32)
+8. [Phase 3.3 — Page Templates](#phase-33--page-templates)
+   - [What is a Page Template](#what-is-a-page-template)
+   - [How EDS Loads Templates](#how-eds-loads-templates-automatically)
+   - [Article Template](#article-template)
+   - [Landing Page Template](#landing-page-template)
+   - [Page Metadata SEO Fields](#page-metadata-seo-fields)
    - [File 1: helloworld.js](#file-1-helloworldjs)
    - [File 2: helloworld.css](#file-2-helloworldcss)
    - [File 3: _helloworld.json](#file-3-_helloworldjson)
@@ -1292,6 +1303,228 @@ Example of `multiselect` (used in sections):
 }
 ```
 Author can select Dark + Centered together → `class="section dark centered"`.
+
+---
+
+## Phase 3.2 — Section Metadata Extensions
+
+> How to give sections background images, custom IDs, and scroll animations through authoring.
+
+---
+
+### What is Section Metadata
+
+Section Metadata is how authors configure a **section itself** (not the blocks inside it). It's a special table authors can add at the bottom of any section:
+
+```
+| Section Metadata |                         |
+|------------------|-------------------------|
+| style            | dark, centered          |
+| background       | (pick from DAM)         |
+| id               | about-us                |
+| animate          | slide-up                |
+```
+
+`aem.js` reads this table and applies values to the parent `<div class="section">`:
+- `style` → adds CSS classes directly: `<div class="section dark centered">`
+- Everything else → sets `data-*` attributes: `<div class="section" data-background="..." data-id="..." data-animate="...">`
+
+Our `decorateSectionMetadata()` in `scripts.js` then reads those `data-*` attributes and applies the JavaScript side effects (inline styles, id attributes, animation classes).
+
+---
+
+### New Fields Added
+
+Added to `models/_section.json`:
+
+| Field | Component | What it does |
+|-------|-----------|-------------|
+| `style` | `multiselect` | CSS classes: dark, accent, highlight, centered, narrow, spacious, compact |
+| `background` | `reference` | DAM image → applied as `background-image` inline style via JS |
+| `id` | `text` | Sets `id` attribute on section for anchor links (e.g. `#about-us`) |
+| `animate` | `select` | Scroll animation: `fade-in`, `slide-up`, `slide-left`, `slide-right` |
+
+---
+
+### How Each Feature Works
+
+#### Background Image
+
+```
+Author picks image in UE → DAM path stored in JCR
+         ↓
+AEM renders: <div class="section" data-background="/adobe/dynamicmedia/deliver/...">
+         ↓
+decorateSectionMetadata() in scripts.js reads data-background:
+  section.style.backgroundImage = `url(${bg})`;
+  section.classList.add('has-background');
+         ↓
+lazy-styles.css targets .section.has-background:
+  - background-size: cover, background-position: center
+  - ::before pseudo-element adds dark overlay (rgb(0 0 0 / 45%))
+  - Text inside turns white for readability
+```
+
+#### Section ID (Anchor Links)
+
+```
+Author types "about-us" in ID field in UE
+         ↓
+AEM renders: <div class="section" data-id="about-us">
+         ↓
+decorateSectionMetadata() reads data-id:
+  section.id = sectionId;  → <div class="section" id="about-us">
+         ↓
+Any link with href="#about-us" now scrolls to this section
+```
+
+#### Scroll Animations
+
+```
+Author selects "Slide Up" in animate dropdown
+         ↓
+AEM renders: <div class="section" data-animate="slide-up">
+         ↓
+decorateSectionMetadata() reads data-animate:
+  section.classList.add('animate', 'slide-up');
+         ↓
+lazy-styles.css: .section.animate.slide-up { opacity: 0; transform: translateY(40px); }
+         ↓
+observeSectionAnimations() sets up IntersectionObserver:
+  When section enters viewport → section.classList.add('visible')
+         ↓
+lazy-styles.css: .section.animate.visible { opacity: 1; transform: none; }
+  (CSS transition makes it smooth)
+```
+
+**All animations respect `prefers-reduced-motion`** — if the user has animations disabled in their OS, the CSS overrides to skip all transitions.
+
+---
+
+### How to Test (Phase 3.2)
+
+**Section ID:**
+1. Click a section in UE → Properties → "Section ID (anchor)" → type `my-section`
+2. Preview → check DevTools: `<div class="section" id="my-section">`
+3. Add `#my-section` to URL → page scrolls to it
+
+**Scroll Animation:**
+1. Click section 2+ (NOT first section) → Properties → "Scroll Animation" → "Slide Up"
+2. Preview → scroll down slowly → section slides up as it enters viewport
+3. DevTools: before scroll = `opacity: 0`, after = `opacity: 1, transform: none`
+
+**Background Image:**
+1. Click a section → Properties → "Background Image" → pick from DAM
+2. Preview → section shows image with dark overlay, text turns white
+
+---
+
+## Phase 3.3 — Page Templates
+
+> Different page types with different layouts — article, landing, and more.
+
+---
+
+### What is a Page Template
+
+Right now every page uses the same layout: header → content → footer. A template lets different page types have completely different structures.
+
+| Template | Layout | Use case |
+|----------|--------|----------|
+| `default` (blank) | Header + content + footer | Home, About, Contact |
+| `article` | Narrow column + reading features | Blog posts, news articles |
+| `landing` | No header/footer, brand bar only | Campaign pages, ads |
+
+---
+
+### How EDS Loads Templates Automatically
+
+```
+Author sets: template = "article" in Page Properties (UE)
+         ↓
+AEM writes to HTML <head>:
+  <meta name="template" content="article">
+         ↓
+aem.js decorateTemplateAndTheme() reads this meta tag:
+  → adds class "article" to <body>
+  → loads templates/article/article.css
+  → loads templates/article/article.js
+         ↓
+article.js runs → adds reading progress bar, reading time, auto TOC
+article.css applies via body.article selectors
+```
+
+**Folder structure:**
+```
+templates/
+├── article/
+│   ├── article.js    ← JS enhancements for articles
+│   └── article.css   ← Styles scoped to body.article
+└── landing/
+    ├── landing.js    ← Hides header/footer, adds brand bar
+    └── landing.css   ← Full-width layout scoped to body.landing
+```
+
+**Key rule:** All template CSS selectors are scoped to `body.{templatename}` — never global.
+
+---
+
+### Article Template
+
+**What it does:**
+1. **Reading progress bar** — thin blue line at the very top of the page, fills as you scroll
+2. **Reading time badge** — auto-calculated (words ÷ 200 wpm), appears below the `<h1>`
+3. **Auto Table of Contents** — scans all `<h2>` and `<h3>` tags, builds a clickable TOC nav before the first `<h2>` (only if 3+ headings exist)
+4. **Article typography** — narrow 760px column, larger body text (21px), h2 with dividers, blockquote styling
+
+**Reading time calculation:**
+```javascript
+const words = document.querySelector('main')?.innerText?.split(/\s+/).length || 0;
+const minutes = Math.max(1, Math.ceil(words / 200));
+// 1000 words = 5 min read
+```
+
+**TOC auto-generation:**
+```javascript
+// Each heading gets an id if it doesn't have one
+heading.id = `heading-${i}`;
+
+// A link is created pointing to that id
+link.href = `#${heading.id}`;
+// → clicking scrolls to the heading
+```
+
+---
+
+### Landing Page Template
+
+**What it does:**
+1. **Hides global header and footer** — removes navigation so visitors focus on the conversion goal
+2. **Adds a minimal brand bar** — sticky top bar with brand name and a CTA button
+3. **Full-width sections** — sections stretch edge-to-edge for dramatic visual impact
+4. **Sticky mobile CTA** — a fixed CTA bar at the bottom of the screen on mobile
+
+**Use case:** Campaign pages, ad landing pages, promotional pages where you want to remove all distractions and guide the visitor toward one action.
+
+---
+
+### Page Metadata SEO Fields
+
+Added to `models/_page.json` — visible in UE → Page Properties:
+
+| Field | What it does | Written to HTML as |
+|-------|-------------|-------------------|
+| `template` | Selects page layout | `<meta name="template" content="article">` |
+| `og:image` | Social share image | `<meta property="og:image" content="...">` + `<meta name="twitter:image" content="...">` |
+| `robots` | SEO indexing control | `<meta name="robots" content="noindex">` |
+| `canonical` | Canonical URL | `<link rel="canonical" href="...">` |
+
+**These are injected by `decorateSEO()` in `scripts.js`** during the Eager phase (before LCP), so search engines always see them even on slow connections.
+
+**How to set in Universal Editor:**
+1. Click the page canvas (not a section/block)
+2. Click the **Page Properties** icon (⚙ gear) in the right panel
+3. Fill in the fields: Title, Description, Template, Social Share Image, etc.
 
 ---
 

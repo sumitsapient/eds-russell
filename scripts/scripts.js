@@ -9,6 +9,7 @@ import {
   loadSection,
   loadSections,
   loadCSS,
+  getMetadata,
 } from './aem.js';
 
 /**
@@ -123,12 +124,54 @@ export function decorateMain(main) {
 }
 
 /**
+ * Injects SEO-related meta tags into <head> based on page metadata.
+ * Handles: robots, og:image, canonical URL.
+ */
+function decorateSEO() {
+  const robots = getMetadata('robots');
+  if (robots) {
+    let robotsMeta = document.querySelector('meta[name="robots"]');
+    if (!robotsMeta) {
+      robotsMeta = document.createElement('meta');
+      robotsMeta.name = 'robots';
+      document.head.append(robotsMeta);
+    }
+    robotsMeta.content = robots;
+  }
+
+  const ogImage = getMetadata('og:image');
+  if (ogImage) {
+    ['og:image', 'twitter:image'].forEach((prop) => {
+      let tag = document.querySelector(`meta[property="${prop}"], meta[name="${prop}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute(prop.startsWith('og:') ? 'property' : 'name', prop);
+        document.head.append(tag);
+      }
+      tag.content = ogImage;
+    });
+  }
+
+  const canonical = getMetadata('canonical');
+  if (canonical) {
+    let link = document.querySelector('link[rel="canonical"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'canonical';
+      document.head.append(link);
+    }
+    link.href = canonical;
+  }
+}
+
+/**
  * Loads everything needed to get to LCP.
  * @param {Element} doc The container element
  */
 async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
+  decorateSEO();
   const main = doc.querySelector('main');
   if (main) {
     decorateMain(main);
@@ -196,7 +239,7 @@ function decorateSectionMetadata(main) {
       section.classList.add('has-background');
     }
 
-    // Custom ID for anchor linking (e.g. data-id="about-us" â†’ id="about-us")
+    // Custom ID for anchor linking (e.g. data-id="about-us" Ã¢â€ â€™ id="about-us")
     const sectionId = section.dataset.id;
     if (sectionId) {
       section.id = sectionId;

@@ -1,0 +1,87 @@
+/* ====================================================
+   LANDING PAGE TEMPLATE
+   Loaded when <meta name="template" content="landing">
+   All selectors scoped to body.landing
+   ==================================================== */
+
+/* Hide global header and footer */
+body.landing header,
+body.landing footer {
+  display: none;
+}
+
+/* Minimal landing bar at top */
+body.landing .landing-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-m, 16px) var(--content-padding-inline, 24px);
+  background: var(--color-background, #fff);
+  border-bottom: var(--border-width, 1px) solid var(--color-border, #e5e7eb);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 5%));
+}
+
+body.landing .landing-bar-brand {
+  font-weight: var(--font-weight-bold, 700);
+  font-size: var(--body-font-size-m, 18px);
+  color: var(--color-text, #131313);
+  text-decoration: none;
+}
+
+body.landing .landing-bar-cta {
+  /* inherits .button.primary styles from styles.css */
+}
+
+/* Full-width sections on landing pages */
+body.landing main .section {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+body.landing main .section > div {
+  max-width: var(--max-width-content, 1200px);
+  margin: 0 auto;
+  padding: 0 var(--content-padding-inline, 24px);
+}
+
+/* First section is always a hero â€” give it more breathing room */
+body.landing main .section:first-child {
+  padding-top: var(--spacing-xxxl, 64px);
+  padding-bottom: var(--spacing-xxxl, 64px);
+}
+
+/* Sections with background images go truly full-width */
+body.landing main .section.has-background > div {
+  padding-top: var(--spacing-xxxl, 64px);
+  padding-bottom: var(--spacing-xxxl, 64px);
+}
+
+/* Trust bar / logo strip */
+body.landing .landing-trust {
+  text-align: center;
+  padding: var(--spacing-xl, 32px);
+  background: var(--color-surface, #f8f8f8);
+}
+
+/* Conversion footer â€” sticky at bottom on mobile */
+@media (max-width: 599px) {
+  body.landing .landing-sticky-cta {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--spacing-m, 16px);
+    background: var(--color-background, #fff);
+    box-shadow: 0 -4px 12px rgb(0 0 0 / 10%);
+    z-index: 100;
+  }
+
+  body.landing .landing-sticky-cta .button {
+    width: 100%;
+    text-align: center;
+  }
+}
