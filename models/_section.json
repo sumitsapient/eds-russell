@@ -40,6 +40,34 @@
             { "name": "Spacious", "value": "spacious" },
             { "name": "Compact", "value": "compact" }
           ]
+        },
+        {
+          "component": "reference",
+          "name": "background",
+          "label": "Background Image",
+          "description": "Optional background image for this section",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "id",
+          "label": "Section ID (anchor)",
+          "description": "Set a custom ID for anchor links, e.g. 'about-us' → link with #about-us",
+          "valueType": "string"
+        },
+        {
+          "component": "select",
+          "name": "animate",
+          "label": "Scroll Animation",
+          "description": "Animate the section when it enters the viewport",
+          "valueType": "string",
+          "options": [
+            { "name": "None", "value": "" },
+            { "name": "Fade In", "value": "fade-in" },
+            { "name": "Slide Up", "value": "slide-up" },
+            { "name": "Slide In from Left", "value": "slide-left" },
+            { "name": "Slide In from Right", "value": "slide-right" }
+          ]
         }
       ]
     }

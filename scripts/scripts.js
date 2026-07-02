@@ -160,21 +160,53 @@ function addSkipLink() {
 
 /**
  * Sets up Intersection Observer for section scroll animations.
+ * Supports animate variants: fade-in, slide-up, slide-left, slide-right.
  */
 function observeSectionAnimations() {
   const sections = document.querySelectorAll('.section');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        entry.target.setAttribute('data-animate', '');
-        requestAnimationFrame(() => entry.target.classList.add('visible'));
+        entry.target.classList.add('visible');
         observer.unobserve(entry.target);
       }
     });
   }, { threshold: 0.1 });
 
   sections.forEach((section, index) => {
-    if (index > 0) observer.observe(section); // skip first section (eager)
+    if (index > 0) observer.observe(section); // skip first section (eager/LCP)
+  });
+}
+
+/**
+ * Applies section metadata that requires JavaScript:
+ * - background: sets background-image inline style from data-background attribute
+ * - id: sets the section's id attribute for anchor linking from data-id attribute
+ * - animate: adds animation class for scroll-triggered effects from data-animate attribute
+ * aem.js already converts section-metadata key/value rows into data-* attributes.
+ * This function reads those attributes and applies the side effects.
+ * @param {Element} main The main element
+ */
+function decorateSectionMetadata(main) {
+  main.querySelectorAll('.section').forEach((section) => {
+    // Background image
+    const bg = section.dataset.background;
+    if (bg) {
+      section.style.backgroundImage = `url(${bg})`;
+      section.classList.add('has-background');
+    }
+
+    // Custom ID for anchor linking (e.g. data-id="about-us" â†’ id="about-us")
+    const sectionId = section.dataset.id;
+    if (sectionId) {
+      section.id = sectionId;
+    }
+
+    // Scroll animation type (data-animate="fade-in|slide-up|slide-left|slide-right")
+    const animationType = section.dataset.animate;
+    if (animationType) {
+      section.classList.add('animate', animationType);
+    }
   });
 }
 
@@ -188,6 +220,9 @@ async function loadLazy(doc) {
 
   const main = doc.querySelector('main');
   await loadSections(main);
+
+  // Apply section metadata side-effects (background, id, animate)
+  decorateSectionMetadata(main);
 
   const { hash } = window.location;
   const element = hash ? doc.getElementById(hash.substring(1)) : false;

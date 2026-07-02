@@ -36,6 +36,10 @@
    - [Block Structure](#block-structure)
    - [How picture tag is formed](#how-the-picture-tag-is-formed)
    - [Dynamic Media URLs](#why-the-url-is-adobedynamicmediadeliver-not-contentdam)
+6. [Phase 3.1 — Block Variants](#phase-31--block-variants)
+   - [What are Variants](#what-are-variants)
+   - [The classes Field](#the-classes-field)
+   - [CSS Specificity Pattern](#css-specificity-pattern-for-variants)
    - [File 1: helloworld.js](#file-1-helloworldjs)
    - [File 2: helloworld.css](#file-2-helloworldcss)
    - [File 3: _helloworld.json](#file-3-_helloworldjson)
@@ -1125,6 +1129,169 @@ This is because your AEM instance has **Adobe Dynamic Media** enabled.
 **Browser receives:** WebP, ~180KB, resized to exactly the width needed — automatically.
 
 This is the **correct and expected** behavior on any AEM instance with Dynamic Media. It is better than `/content/dam` because you get CDN delivery + automatic format optimization + responsive sizing for free.
+
+---
+
+## Phase 3.1 — Block Variants
+
+> One block, multiple visual layouts — without duplicating JS code.
+
+---
+
+### What are Variants
+
+A variant is a different **visual presentation** of the same block. The DOM structure is identical — only a CSS class on the block element changes. This means:
+
+- **Zero JS changes** to add a new variant
+- Authors pick the variant from a dropdown in Universal Editor
+- CSS targets the extra class to override the default styles
+
+**Real example:** `hello-world-with-child` block has 3 variants:
+
+| Variant | Author selects | Block class becomes | Layout |
+|---------|---------------|---------------------|--------|
+| Default | "Grid (default)" | `hello-world-with-child` | 3-column card grid |
+| List | "List" | `hello-world-with-child list` | Single column, image left |
+| Featured | "Featured" | `hello-world-with-child featured` | First card full width |
+
+---
+
+### The `classes` Field
+
+`classes` is a **special reserved field name** in EDS component models. When the author picks a value, AEM automatically appends it as a CSS class on the block element.
+
+**In `_hello-world-with-child.json`:**
+
+```json
+{
+  "component": "select",
+  "name": "classes",           ← MUST be named "classes" — this is the special name
+  "label": "Layout Variant",
+  "description": "Choose how the items are displayed",
+  "valueType": "string",
+  "options": [
+    { "name": "Grid (default)", "value": "" },      ← empty = no extra class
+    { "name": "List",           "value": "list" },   ← adds class "list"
+    { "name": "Featured",       "value": "featured"} ← adds class "featured"
+  ]
+}
+```
+
+**What AEM does with it:**
+
+```
+Author selects "List" (value: "list")
+         ↓
+AEM writes to JCR: @classes = "list"
+         ↓
+AEM renders HTML:
+<div class="hello-world-with-child list block">
+                                   ^^^^
+                                   added automatically — our CSS targets this
+```
+
+**Files changed for variants:**
+
+| File | Change | Why |
+|------|--------|-----|
+| `_hello-world-with-child.json` | Added `classes` select field | Shows dropdown in UE Properties panel |
+| `hello-world-with-child.css` | Added `.list` and `.featured` rule blocks | Visual override for each variant |
+| `hello-world-with-child.js` | **Nothing** ✅ | DOM structure is identical for all variants |
+
+---
+
+### CSS Specificity Pattern for Variants
+
+This is the key CSS pattern. Pay attention to the **space vs no-space** difference.
+
+```css
+/* DEFAULT — applies to ALL instances of the block */
+.hello-world-with-child .hello-world-with-child-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* VARIANT — overrides default only when "list" class is present */
+.hello-world-with-child.list .hello-world-with-child-grid {
+/*                     ^^^^^ NO SPACE here */
+  grid-template-columns: 1fr;
+}
+```
+
+**No space = the block element itself has both classes:**
+```html
+<div class="hello-world-with-child list block"> ← both on same element
+```
+`.hello-world-with-child.list` matches this ✅
+
+**With space = looking for .list INSIDE the block:**
+```html
+<div class="hello-world-with-child">
+  <div class="list">  ← would need a child with class "list"
+```
+`.hello-world-with-child .list` does NOT match ✅ (wrong selector)
+
+**The 3 variants and how they work:**
+
+```css
+/* VARIANT: LIST — single column, image left of title */
+.hello-world-with-child.list .hello-world-with-child-grid {
+  grid-template-columns: 1fr; /* force single column at all breakpoints */
+}
+
+@media (min-width: 900px) {
+  .hello-world-with-child.list .hello-world-with-child-card {
+    display: grid;
+    grid-template-columns: 220px 1fr; /* 220px image | rest for title */
+    align-items: center;
+  }
+}
+
+/* VARIANT: FEATURED — first card spans full width, side by side */
+@media (min-width: 600px) {
+  .hello-world-with-child.featured .hello-world-with-child-card:first-child {
+    grid-column: 1 / -1; /* span ALL columns in the grid */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* image left | title right */
+  }
+}
+```
+
+**Key CSS technique — `grid-column: 1 / -1`:**
+In CSS Grid, `-1` means "the last grid line". So `1 / -1` means "start at column 1, end at the last column" = span ALL columns. This is how the featured first card breaks out of the 3-column grid.
+
+---
+
+### How to Test Variants in Universal Editor
+
+1. Click the **Hello World With Child** block on the canvas
+2. Properties panel shows **"Layout Variant"** dropdown (new field)
+3. Select **"List"** → block gets class `list` → layout switches to side-by-side
+4. Select **"Featured"** → block gets class `featured` → first card goes full width
+5. Select **"Grid (default)"** → back to 3-column grid
+
+---
+
+### When to Use `select` vs `multiselect` for Classes
+
+| Field | Use when | Result |
+|-------|---------|--------|
+| `"component": "select"` | One variant at a time (mutually exclusive) | `class="list"` OR `class="featured"` — not both |
+| `"component": "multiselect"` | Author can combine variants | `class="dark centered"` — multiple at once |
+
+Example of `multiselect` (used in sections):
+```json
+{
+  "component": "multiselect",
+  "name": "style",
+  "label": "Style",
+  "options": [
+    { "name": "Dark",     "value": "dark" },
+    { "name": "Centered", "value": "centered" },
+    { "name": "Narrow",   "value": "narrow" }
+  ]
+}
+```
+Author can select Dark + Centered together → `class="section dark centered"`.
 
 ---
 

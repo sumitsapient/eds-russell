@@ -1,4 +1,69 @@
-/* add global styles that can be loaded post LCP here */
+/* === SECTION BACKGROUND IMAGE === */
+main .section.has-background {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  margin: 0;
+  padding: var(--spacing-xxxl, 64px) 0;
+}
+
+/* Dark overlay on background-image sections for text readability */
+main .section.has-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 45%);
+  z-index: 0;
+}
+
+main .section.has-background > div {
+  position: relative;
+  z-index: 1;
+  color: var(--color-text-inverse, #fff);
+}
+
+main .section.has-background h1,
+main .section.has-background h2,
+main .section.has-background h3 {
+  color: var(--color-text-inverse, #fff);
+}
+
+/* === SCROLL ANIMATIONS === */
+
+/* Base state â€” sections marked for animation start hidden */
+main .section.animate {
+  opacity: 0;
+  transition:
+    opacity var(--duration-slow, 500ms) var(--easing-out, ease-out),
+    transform var(--duration-slow, 500ms) var(--easing-out, ease-out);
+}
+
+/* Fade In â€” just opacity */
+main .section.fade-in {
+  opacity: 0;
+}
+
+/* Slide Up â€” moves up from below */
+main .section.slide-up {
+  transform: translateY(40px);
+}
+
+/* Slide In from Left */
+main .section.slide-left {
+  transform: translateX(-40px);
+}
+
+/* Slide In from Right */
+main .section.slide-right {
+  transform: translateX(40px);
+}
+
+/* Visible state â€” added by IntersectionObserver in scripts.js */
+main .section.animate.visible {
+  opacity: 1;
+  transform: none;
+}
 
 /* === SKIP TO CONTENT === */
 .skip-to-content {
@@ -19,19 +84,6 @@
   top: var(--spacing-s);
 }
 
-/* === SCROLL ANIMATIONS === */
-.section[data-animate] {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity var(--duration-slow) var(--easing-out),
-    transform var(--duration-slow) var(--easing-out);
-}
-
-.section[data-animate].visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 /* === REDUCED MOTION === */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -43,7 +95,7 @@
     scroll-behavior: auto !important;
   }
 
-  .section[data-animate] {
+  main .section.animate {
     opacity: 1;
     transform: none;
   }
