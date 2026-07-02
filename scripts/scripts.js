@@ -112,8 +112,9 @@ function isVideoUrl(url) {
  * Detects standalone video URLs (YouTube/Vimeo/MP4) on their own paragraph
  * and wraps them in a video-embed block automatically.
  *
- * Trigger: <p><a href="https://www.youtube.com/...">https://...</a></p>
- * Result:  <div class="video-embed block"><div><div>https://...</div></div></div>
+ * Trigger: <p><a href="https://www.youtube.com/...">...</a></p>
+ *          where the <a> is the ONLY element inside <p>
+ * Result:  <div class="video-embed block"><div><div>URL</div></div></div>
  *
  * @param {Element} main
  */
@@ -122,30 +123,20 @@ function buildVideoEmbeds(main) {
     const p = a.closest('p');
     if (!p) return;
 
-    // Only process links that are the ONLY content in the paragraph
-    // and where the link text IS the URL (i.e. author pasted the raw URL)
-    if (p.textContent.trim() !== a.href && p.textContent.trim() !== a.textContent.trim()) return;
+    // The link must be the ONLY child node in the paragraph
+    // (no other text nodes or elements alongside it)
+    const siblingContent = [...p.childNodes]
+      .filter((n) => n !== a && n.textContent.trim() !== '');
+    if (siblingContent.length > 0) return;
+
+    // Must be a video URL
     if (!isVideoUrl(a.href)) return;
 
-    // Build a video-embed block with the URL as content
+    // Build the video-embed block with the raw URL as text content
     const videoBlock = buildBlock('video-embed', a.href);
 
-    // Replace the paragraph with the video block, wrapped in a section
-    const section = p.closest('.section') || p.parentElement;
+    // Replace the paragraph â€” decorateBlocks() will load it naturally
     p.replaceWith(videoBlock);
-
-    // Let aem.js know this is a block that needs loading
-    videoBlock.dataset.blockName = 'video-embed';
-    videoBlock.dataset.blockStatus = 'initialized';
-
-    // Manually trigger block decoration (aem.js won't auto-detect this)
-    import('./aem.js').then(({ decorateBlock, loadBlock }) => {
-      decorateBlock(videoBlock);
-      loadBlock(videoBlock);
-    });
-
-    // eslint-disable-next-line no-console
-    console.debug(`[AutoBlock] video-embed created for: ${a.href} in section`, section);
   });
 }
 
@@ -171,20 +162,14 @@ function buildBreadcrumb(main) {
   // Don't add if a breadcrumb block already exists (authored manually)
   if (main.querySelector('.breadcrumb')) return;
 
-  // Build an empty breadcrumb block â€” decorate() will auto-generate from URL
+  // Build an empty breadcrumb block â€” decorate() auto-generates from URL
   const breadcrumbBlock = buildBlock('breadcrumb', '');
-  breadcrumbBlock.dataset.blockName = 'breadcrumb';
-  breadcrumbBlock.dataset.blockStatus = 'initialized';
 
-  // Insert at the very start of the first section
-  const firstSection = main.querySelector('.section');
-  if (firstSection) {
-    firstSection.prepend(breadcrumbBlock);
-
-    import('./aem.js').then(({ decorateBlock, loadBlock }) => {
-      decorateBlock(breadcrumbBlock);
-      loadBlock(breadcrumbBlock);
-    });
+  // Insert at the very start of main â€” decorateBlocks() will load it naturally
+  // Note: at this point decorateSections hasn't run yet, so use first child div
+  const firstDiv = main.querySelector(':scope > div');
+  if (firstDiv) {
+    firstDiv.prepend(breadcrumbBlock);
   }
 }
 
@@ -371,7 +356,7 @@ function decorateSectionMetadata(main) {
       section.classList.add('has-background');
     }
 
-    // Custom ID for anchor linking (e.g. data-id="about-us" ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ id="about-us")
+    // Custom ID for anchor linking (e.g. data-id="about-us" ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ id="about-us")
     const sectionId = section.dataset.id;
     if (sectionId) {
       section.id = sectionId;

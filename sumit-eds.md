@@ -51,6 +51,12 @@
    - [Article Template](#article-template)
    - [Landing Page Template](#landing-page-template)
    - [Page Metadata SEO Fields](#page-metadata-seo-fields)
+9. [Phase 3.4 — Auto Blocks](#phase-34--auto-blocks)
+   - [What are Auto Blocks](#what-are-auto-blocks)
+   - [The buildAutoBlocks Mechanism](#the-buildautoblocks-mechanism)
+   - [Auto Video Embed](#auto-video-embed)
+   - [Auto Breadcrumb](#auto-breadcrumb)
+   - [How to Test](#how-to-test-auto-blocks)
    - [File 1: helloworld.js](#file-1-helloworldjs)
    - [File 2: helloworld.css](#file-2-helloworldcss)
    - [File 3: _helloworld.json](#file-3-_helloworldjson)
@@ -1525,6 +1531,188 @@ Added to `models/_page.json` — visible in UE → Page Properties:
 1. Click the page canvas (not a section/block)
 2. Click the **Page Properties** icon (⚙ gear) in the right panel
 3. Fill in the fields: Title, Description, Template, Social Share Image, etc.
+
+---
+
+## Phase 3.4 — Auto Blocks
+
+> Blocks that create themselves automatically from content patterns — no author action needed.
+
+---
+
+### What are Auto Blocks
+
+Auto blocks are blocks that the code detects and inserts **programmatically** at page load time based on content patterns — without the author ever selecting a block from the "+" picker.
+
+| Auto Block | Trigger | What happens |
+|---|---|---|
+| **Video Embed** | Author pastes a raw YouTube/Vimeo URL on its own line | URL auto-wrapped in a `video-embed` block |
+| **Breadcrumb** | Page path has 2+ segments (e.g. `/blog/my-post`) | Breadcrumb auto-inserted at the top of the page |
+
+The key difference from regular blocks:
+
+| Regular block | Auto block |
+|---|---|
+| Author adds it via "+" picker in UE | Added by code automatically |
+| Stored in JCR as a block component | Detected from content pattern at runtime |
+| Always present on the page | Only appears when the pattern matches |
+
+---
+
+### The `buildAutoBlocks()` Mechanism
+
+The entry point is `buildAutoBlocks(main)` in `scripts.js`. It runs as part of `decorateMain()` in the **Eager phase** (before LCP).
+
+```javascript
+// scripts.js - execution flow
+async function loadEager(doc) {
+  decorateTemplateAndTheme();
+  decorateSEO();
+  const main = doc.querySelector('main');
+  decorateMain(main);  // ← this calls buildAutoBlocks inside
+}
+
+function decorateMain(main) {
+  decorateIcons(main);
+  buildAutoBlocks(main);   // ← runs first, creates synthetic blocks
+  decorateSections(main);
+  decorateBlocks(main);    // ← then aem.js finds and prepares all blocks
+  decorateButtons(main);
+}
+```
+
+**`buildBlock()` helper** — creates a block element programmatically:
+
+```javascript
+function buildBlock(blockName, content) {
+  const blockEl = document.createElement('div');
+  blockEl.classList.add(blockName, 'block');
+  // wraps content in row → cell structure (same as authored blocks)
+  const rowEl = document.createElement('div');
+  const colEl = document.createElement('div');
+  colEl.innerHTML = content;
+  rowEl.append(colEl);
+  blockEl.append(rowEl);
+  return blockEl;
+}
+```
+
+The result is identical to what AEM would generate for an authored block. `loadBlock()` then loads its JS and CSS exactly as normal.
+
+---
+
+### Auto Video Embed
+
+**How detection works:**
+
+```
+Author pastes in UE rich text / default content:
+  https://www.youtube.com/watch?v=dQw4w9WgXcQ
+
+AEM renders this to HTML as:
+  <p>
+    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+      https://www.youtube.com/watch?v=dQw4w9WgXcQ
+    </a>
+  </p>
+
+buildVideoEmbeds() checks every link on the page:
+  ✅ Is the paragraph's only content this link?
+  ✅ Is the link text the same as the URL? (raw paste, no custom label)
+  ✅ Is the URL a video URL? (youtube.com, youtu.be, vimeo.com, .mp4, .webm)
+
+→ All 3 true → replace <p> with:
+  <div class="video-embed block">
+    <div><div>https://www.youtube.com/watch?v=...</div></div>
+  </div>
+
+→ loadBlock() loads video-embed.js → decorate() runs
+→ Builds click-to-play player with YouTube thumbnail
+→ On click: loads iframe with autoplay
+```
+
+**Supported URL patterns:**
+
+| Platform | Example | Result |
+|---|---|---|
+| YouTube (long) | `youtube.com/watch?v=VIDEO_ID` | YouTube nocookie iframe |
+| YouTube (short) | `youtu.be/VIDEO_ID` | YouTube nocookie iframe |
+| Vimeo | `vimeo.com/VIDEO_ID` | Vimeo player iframe |
+| Direct MP4 | `example.com/video.mp4` | Native `<video>` element |
+| Direct WebM | `example.com/video.webm` | Native `<video>` element |
+
+**Why click-to-play?** Loading an iframe for every YouTube video on the page would make a network request to YouTube immediately on page load — hurting performance (LCP). Click-to-play shows a thumbnail image instead. The iframe only loads when the user actually clicks play.
+
+---
+
+### Auto Breadcrumb
+
+**How detection works:**
+
+```javascript
+const pathSegments = window.location.pathname.split('/').filter(Boolean);
+// /blog/my-post → ['blog', 'my-post'] → length = 2 → insert breadcrumb
+
+// Skip these cases:
+if (pathSegments.length < 2) return;     // / or /about → too shallow
+if (skipPaths.includes(pathSegments[0])) return;  // /nav, /footer → fragment pages
+if (main.querySelector('.breadcrumb')) return;    // already authored manually
+```
+
+**What the breadcrumb generates from `/blog/my-post`:**
+
+```html
+<nav aria-label="Breadcrumb">
+  <ol class="breadcrumb-list">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item"><a href="/blog">Blog</a></li>
+    <li class="breadcrumb-item">
+      <span aria-current="page">My Post</span>
+    </li>
+  </ol>
+</nav>
+```
+
+URL segments are humanized automatically: `my-post` → `My Post` (hyphens to spaces, title case).
+
+**JSON-LD Structured Data** is also auto-injected into `<head>`:
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://site.com/" },
+    { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://site.com/blog" },
+    { "@type": "ListItem", "position": 3, "name": "My Post" }
+  ]
+}
+```
+
+This tells Google exactly what the breadcrumb trail is — it appears in search results as `site.com › Blog › My Post`.
+
+---
+
+### How to Test Auto Blocks
+
+**Auto Video Embed:**
+1. In UE on any page, add a **Text** component or use default content
+2. Type/paste a raw YouTube URL on its own line (no other text around it):
+   `https://www.youtube.com/watch?v=dQw4w9WgXcQ`
+3. Preview → the URL paragraph is replaced by a video player with YouTube thumbnail
+4. Click the play button → iframe loads and plays the video
+
+**Auto Breadcrumb:**
+1. Create or navigate to a page at least 2 levels deep, e.g. `/blog/my-post`
+2. Preview that page → breadcrumb appears at the top automatically: `Home › Blog › My Post`
+3. Check `<head>` in DevTools → Sources → find the `application/ld+json` script with the BreadcrumbList schema
+
+**Verify with DevTools:**
+```javascript
+// In console on the preview page
+document.querySelector('.video-embed')  // should exist after pasting a YouTube URL
+document.querySelector('.breadcrumb')   // should exist on /a/b pages
+document.querySelector('script[type="application/ld+json"]')?.textContent  // breadcrumb schema
+```
 
 ---
 
