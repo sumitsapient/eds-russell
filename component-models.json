@@ -310,6 +310,25 @@
     ]
   },
   {
+    "id": "helloworld",
+    "fields": [
+      {
+        "component": "text",
+        "name": "title",
+        "label": "Title",
+        "valueType": "string",
+        "value": "Hello World"
+      },
+      {
+        "component": "text",
+        "name": "description",
+        "label": "Description",
+        "valueType": "string",
+        "value": "Welcome to my site"
+      }
+    ]
+  },
+  {
     "id": "hero",
     "fields": [
       {
