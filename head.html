@@ -4,6 +4,37 @@
   move-to-http-header="true"
 >
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<!-- === AEP WEB SDK CONFIG ===
+  Replace the content values with your actual AEP credentials.
+  aep-org-id:        IMS Organization ID (format: XXXXXXXXXXXXXXXX@AdobeOrg)
+  aep-datastream-id: Datastream GUID from AEP Data Collection UI
+-->
+<meta name="aep-org-id"        content=""/>
+<meta name="aep-datastream-id" content=""/>
+
+<!-- === RESOURCE HINTS === -->
+<!-- AEP Web SDK (alloy.js) CDN -->
+<link rel="preconnect" href="https://cdn1.adoberesources.net" crossorigin/>
+<!-- AEP Edge Network — where alloy sends events -->
+<link rel="preconnect" href="https://edge.adobedc.net" crossorigin/>
+<!-- Experience Cloud ID service -->
+<link rel="dns-prefetch" href="https://dpm.demdex.net"/>
+<!-- Adobe Target delivery -->
+<link rel="dns-prefetch" href="https://tt.omtrdc.net"/>
+<!-- AEM Dynamic Media CDN for faster image delivery -->
+<link rel="preconnect" href="https://delivery-p146753-e1506305.adobeaemcloud.com" crossorigin/>
+<!-- YouTube for auto-embedded videos -->
+<link rel="dns-prefetch" href="https://www.youtube-nocookie.com"/>
+<link rel="dns-prefetch" href="https://i.ytimg.com"/>
+
+<!-- === MODULE PRELOAD — critical JS === -->
+<link rel="modulepreload" href="/scripts/aem.js"/>
+<link rel="modulepreload" href="/scripts/scripts.js"/>
+
+<!-- === SCRIPTS === -->
 <script nonce="aem" src="/scripts/aem.js" type="module"></script>
 <script nonce="aem" src="/scripts/scripts.js" type="module"></script>
+
+<!-- === CRITICAL CSS === -->
 <link rel="stylesheet" href="/styles/styles.css"/>

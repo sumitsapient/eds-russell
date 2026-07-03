@@ -63,6 +63,39 @@
    - [File 4: models/_section.json](#file-4-models_sectionjson)
    - [Build Step](#build-step)
    - [Q&A](#qa)
+10. [Phase 4 — Performance & Core Web Vitals](#phase-4--performance--core-web-vitals)
+    - [What are Core Web Vitals](#what-are-core-web-vitals)
+    - [The Three Metrics Explained](#the-three-metrics-explained)
+    - [Why EDS Scores 100 by Default](#why-eds-scores-100-by-default)
+    - [Where Performance Can Break](#where-performance-can-break)
+    - [LCP Deep Dive](#lcp-deep-dive)
+    - [CLS Deep Dive](#cls-deep-dive)
+    - [INP Deep Dive](#inp-deep-dive)
+    - [Image Optimization Rules](#image-optimization-rules)
+    - [Font Loading Rules](#font-loading-rules)
+    - [JavaScript Performance Rules](#javascript-performance-rules)
+    - [Measuring Performance](#measuring-performance)
+    - [Performance Q&A](#performance-qa)
+11. [Phase 5 — SEO & Structured Data](#phase-5--seo--structured-data)
+    - [What is SEO in EDS](#what-is-seo-in-eds)
+    - [Complete OG & Twitter Cards](#complete-og--twitter-cards)
+    - [JSON-LD Structured Data](#json-ld-structured-data)
+    - [Organization Schema (All Pages)](#organization-schema-all-pages)
+    - [BlogPosting Schema (Article Template)](#blogposting-schema-article-template)
+    - [FAQPage Schema (Accordion Block)](#faqpage-schema-accordion-block)
+    - [Heading IDs for Deep Linking](#heading-ids-for-deep-linking)
+    - [Sitemap Configuration](#sitemap-configuration)
+    - [SEO Q&A](#seo-qa)
+12. [Phase 6 — Analytics, Personalization & Martech](#phase-6--analytics-personalization--martech)
+    - [Architecture Overview](#architecture-overview)
+    - [Adobe Client Data Layer (ACDL)](#adobe-client-data-layer-acdl)
+    - [AEP Web SDK — Alloy.js](#aep-web-sdk--alloyjs)
+    - [The Alloy Stub Pattern](#the-alloy-stub-pattern)
+    - [Consent Management](#consent-management)
+    - [Custom Event Tracking](#custom-event-tracking)
+    - [A/B Experimentation](#ab-experimentation)
+    - [Configuration Setup](#configuration-setup)
+    - [Analytics Q&A](#analytics-qa)
 
 ---
 
@@ -1713,6 +1746,1448 @@ document.querySelector('.video-embed')  // should exist after pasting a YouTube 
 document.querySelector('.breadcrumb')   // should exist on /a/b pages
 document.querySelector('script[type="application/ld+json"]')?.textContent  // breadcrumb schema
 ```
+
+---
+
+## Phase 4 — Performance & Core Web Vitals
+
+> How EDS achieves Lighthouse 100 — what the metrics are, why they matter, and what breaks them.
+
+---
+
+### What are Core Web Vitals
+
+Core Web Vitals are **Google's official set of metrics** that measure real user experience. They directly affect SEO ranking (since 2021 Google Page Experience update) and are the standard used by Lighthouse, PageSpeed Insights, and Chrome UX Report.
+
+There are three main CWV metrics:
+
+| Metric | Full Name | Measures | Good | Needs Work | Poor |
+|--------|-----------|----------|------|------------|------|
+| **LCP** | Largest Contentful Paint | How fast the main content loads | ≤ 2.5s | 2.5–4.0s | > 4.0s |
+| **CLS** | Cumulative Layout Shift | How much content jumps around while loading | ≤ 0.1 | 0.1–0.25 | > 0.25 |
+| **INP** | Interaction to Next Paint | How fast the page responds to user input | ≤ 200ms | 200–500ms | > 500ms |
+
+Plus two supporting metrics that inform the above:
+
+| Metric | Full Name | Measures | Good |
+|--------|-----------|----------|------|
+| **FCP** | First Contentful Paint | First pixel of content appears | ≤ 1.8s |
+| **TTFB** | Time to First Byte | How fast the server responds | ≤ 800ms |
+
+---
+
+### The Three Metrics Explained
+
+#### LCP — Largest Contentful Paint
+
+LCP measures how long it takes for the **largest visible element above the fold** to fully render.
+
+Typical LCP elements:
+- A `<img>` or `<picture>` (most common — the hero image)
+- A large heading `<h1>` with a lot of text
+- A background image on the first section
+
+```
+User navigates to page
+         ↓
+Browser starts rendering HTML
+         ↓
+LCP clock starts at navigation start
+         ↓
+Browser identifies the largest element visible without scrolling
+   → usually the hero image (e.g. 1280×600px)
+         ↓
+LCP clock stops when that element's last pixel is painted
+         ↓
+Score: under 2.5 seconds = "Good" ✅
+```
+
+**Why it matters for EDS:** The Eager phase exists solely to get to LCP fast. Only the first section loads in Eager — everything else waits until after LCP.
+
+---
+
+#### CLS — Cumulative Layout Shift
+
+CLS measures how much page content **unexpectedly moves** during loading. Every time an element shifts position, its shift score is added to the cumulative total.
+
+**What causes layout shift:**
+```
+Image loads without dimensions → takes up 0 space initially
+         ↓
+Image loads → suddenly 600px tall → everything below shifts DOWN
+         ↓
+CLS score accumulates (bad)
+
+Fix: Always set width + height on <img> tags
+→ browser reserves space before image loads → no shift
+```
+
+**Common CLS causes and fixes:**
+
+| Cause | What happens | Fix |
+|-------|-------------|-----|
+| Images without `width`/`height` | Page jumps when image loads | Always set dimensions or use `aspect-ratio` CSS |
+| Web fonts loading | FOUT (Flash of Unstyled Text) shifts layout | Use `font-display: swap` + preload hints |
+| Ads or embeds injected late | Block of content pushes other content | Pre-reserve space with a min-height container |
+| Dynamic content above the fold | New DOM added above existing content | Insert below fold, or reserve space |
+
+**Why EDS handles this well:** `createOptimizedPicture()` always sets `width` and `height` attributes on `<img>` tags based on the intrinsic image dimensions. The CDN serves images at known sizes so dimensions are known at render time.
+
+---
+
+#### INP — Interaction to Next Paint
+
+INP replaced FID (First Input Delay) in March 2024. It measures how fast the page **visually responds** to every user interaction (clicks, taps, keyboard) — not just the first one.
+
+```
+User clicks a button
+         ↓
+Browser processes the event handler (JS runs)
+         ↓
+Browser paints the visual update (button state changes, modal opens, etc.)
+         ↓
+INP = time from click → next paint
+```
+
+**What causes slow INP:**
+- Long-running JavaScript on the main thread during interaction
+- Heavy `scroll` or `resize` event handlers running synchronously
+- Layout thrashing (repeatedly reading and writing DOM layout properties)
+- Third-party scripts (analytics, chat widgets) blocking the main thread
+
+**Why EDS handles this well:** By loading analytics and martech in `delayed.js` (3 seconds after page load), the main thread is free during the critical interaction window. By using vanilla JS with no frameworks, there's no virtual DOM diffing or hydration overhead.
+
+---
+
+### Why EDS Scores 100 by Default
+
+EDS is architected from the ground up to be fast. Every default choice contributes to Lighthouse 100.
+
+| EDS Decision | Performance Benefit |
+|---|---|
+| HTML pre-rendered on CDN edge | Sub-50ms TTFB — no server-side rendering on each request |
+| Only first section loads in Eager | LCP element loads before anything else |
+| Block JS/CSS auto-split per block | Zero JS/CSS loads unless that block is actually on the page |
+| No JavaScript framework | No 100–300KB framework bundle; no hydration cost |
+| No CSS framework (no Tailwind/Bootstrap) | No unused CSS purging needed; styles are minimal by design |
+| Images through Dynamic Media / `createOptimizedPicture()` | WebP format, correct width, lazy loading, explicit dimensions |
+| `lazy-styles.css` separate from `styles.css` | Non-critical styles don't block first render |
+| Analytics in `delayed.js` | Zero martech cost on LCP or INP |
+| Fonts preloaded in `head.html` | Fonts ready early, no FOUT during LCP |
+
+**The CDN edge is the biggest advantage.** Traditional CMS pages hit a server (PHP, Java, Node), run code, query a database, render HTML, then send it. EDS pages are already-rendered HTML sitting on Fastly's global edge — the server "response" is a cache hit in the nearest data center.
+
+```
+Traditional CMS:
+Browser → DNS → Server → App (execute code) → Database → Render HTML → Send
+Total: 300ms–1000ms TTFB
+
+EDS:
+Browser → DNS → Fastly Edge (cache hit) → Send HTML
+Total: 20–50ms TTFB
+```
+
+---
+
+### Where Performance Can Break
+
+Even with EDS's fast defaults, developer mistakes can tank the score. Most common offenders:
+
+| Mistake | Metric hit | Why |
+|---------|-----------|-----|
+| Adding `<img>` without `width`/`height` | CLS ↑ | Browser can't reserve space → layout shift on load |
+| Adding a `<script>` tag in `<head>` | LCP ↑, FCP ↑ | Render-blocking — browser stops parsing HTML until script downloads + runs |
+| Adding `<link rel="stylesheet">` without `media` qualifier in `<head>` | LCP ↑ | Render-blocking stylesheet |
+| Loading a third-party library in block JS eagerly | LCP ↑, INP ↑ | Heavy JS on main thread during critical path |
+| Importing npm packages (webpack/bundled) | LCP ↑ | Large JS bundles; no auto code splitting |
+| Large unoptimized images committed to `/icons/` or `/fonts/` | LCP ↑ | Uncompressed assets downloaded on every page |
+| Running heavy DOM loops in `decorate()` synchronously | INP ↑ | Blocks main thread during block load |
+| Using `document.write()` or synchronous XHR | All metrics ↑ | Parser-blocking operations |
+| Fonts not declared in `fonts.css` | CLS ↑ | FOUT causes text reflow |
+
+---
+
+### LCP Deep Dive
+
+#### The LCP element is almost always the hero image
+
+```
+Page structure:
+  Section 1 → Hero block → large <picture><img>
+                            ↑ THIS is the LCP element
+  Section 2 → Cards block
+  Section 3 → Footer
+
+EDS loads Section 1 in Eager, waits for hero image → LCP achieved
+Then loads Sections 2, 3 in Lazy
+```
+
+#### How EDS preloads the LCP image
+
+In `head.html` there is a preload hint for the LCP image pattern:
+
+```html
+<link rel="preload" as="image" fetchpriority="high">
+```
+
+`aem.js` also sets `fetchpriority="high"` on the first image in the first section so the browser knows to download it with maximum priority — ahead of CSS, fonts, and other images.
+
+#### `loading="lazy"` vs `loading="eager"`
+
+`createOptimizedPicture()` (in `aem.js`) sets:
+- `loading="eager"` for the **first** image on the page (LCP candidate — must not be lazy loaded)
+- `loading="lazy"` for **all other** images (deferred until near viewport)
+
+**Critical rule:** Never put `loading="lazy"` on the hero image. If the browser defers loading the LCP element, LCP score collapses.
+
+```javascript
+// aem.js - createOptimizedPicture signature
+createOptimizedPicture(src, alt, eager, breakpoints)
+//                                ^^^^
+//                                true = loading="eager" + fetchpriority="high"
+//                                false = loading="lazy" (default)
+
+// First image on page should always pass eager=true:
+createOptimizedPicture(src, alt, true, [...]);
+```
+
+---
+
+### CLS Deep Dive
+
+#### The aspect-ratio pattern
+
+When you can't know image dimensions at authoring time, use CSS `aspect-ratio` to reserve space:
+
+```css
+/* Reserve 16:9 space before image loads */
+.hero .hero-image {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+}
+
+.hero .hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+```
+
+This tells the browser: "this container will always be 16:9". No space needs to be recalculated when the image loads → CLS = 0.
+
+#### Font CLS
+
+Fonts cause CLS when the fallback font has different metrics (letter spacing, line height, glyph size) than the web font. When the web font loads, text reflows.
+
+EDS mitigation:
+1. `@font-face { font-display: swap; }` in `fonts.css` — shows fallback immediately, swaps to web font when ready. Small CLS but avoids invisible text (FOIT).
+2. `<link rel="preload">` in `head.html` for critical fonts — loads fonts in parallel with HTML parsing, so swap happens before first paint.
+3. Using `size-adjust` or `ascent-override` CSS properties to make fallback font metrics closely match the web font (advanced technique).
+
+---
+
+### INP Deep Dive
+
+#### The main thread is the bottleneck
+
+The browser has one main thread that handles:
+- JavaScript execution
+- Style calculation
+- Layout
+- Paint
+
+If your JS is running on the main thread, user interactions cannot be processed simultaneously. INP gets worse the more you block the main thread.
+
+#### Task length matters
+
+Chrome DevTools Performance tab shows "Long Tasks" — any task > 50ms appears in red. Each long task is a potential INP problem because if the user clicks during a long task, the browser can't respond until the task finishes.
+
+```
+Long Task example:
+  decorate() runs with a 200ms forEach loop
+  User clicks a button at 100ms into that loop
+  Browser can't process the click until the forEach finishes
+  INP = 100ms wait + paint time = potentially > 200ms
+```
+
+**Fix:** Break large work into smaller chunks using `setTimeout` or `scheduler.postTask()`:
+
+```javascript
+// ❌ Blocks main thread for entire loop duration
+items.forEach((item) => expensiveOperation(item));
+
+// ✅ Yields to browser between batches
+async function processItems(items) {
+  for (let i = 0; i < items.length; i++) {
+    expensiveOperation(items[i]);
+    if (i % 10 === 0) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => { setTimeout(resolve, 0); });
+    }
+  }
+}
+```
+
+#### EDS-specific INP risks
+
+| Risk | Where it appears | Fix |
+|------|-----------------|-----|
+| Accordion / Tabs animations with layout-triggering CSS | blocks with show/hide | Use `opacity` + `visibility` instead of `height` transitions |
+| Modal open/close with heavy DOM manipulation | modal.js | Pre-render modal HTML, toggle `.visible` class only |
+| Search / filter running on every keystroke | search blocks | Debounce input handler (300ms) |
+| Scroll-linked animations using `scroll` event | section animations | Use `IntersectionObserver` instead — much cheaper |
+
+---
+
+### Image Optimization Rules
+
+Images are the #1 cause of LCP failures. These rules must be followed for every image in every block.
+
+#### Rule 1: Always use `createOptimizedPicture()` for authored images
+
+```javascript
+import { createOptimizedPicture } from '../../scripts/aem.js';
+
+// The function generates a <picture> with responsive srcset
+const picture = createOptimizedPicture(
+  img.src,          // original URL (Dynamic Media or /content/dam/)
+  img.alt,          // alt text
+  false,            // eager? (true = LCP image, false = lazy)
+  [
+    { media: '(min-width: 900px)', width: '1200' },  // desktop
+    { media: '(min-width: 600px)', width: '900' },   // tablet
+    { width: '600' },                                 // mobile (default)
+  ],
+);
+img.closest('picture').replaceWith(picture);
+```
+
+This generates:
+```html
+<picture>
+  <source type="image/webp" media="(min-width: 900px)" srcset="...?width=1200&format=webply">
+  <source type="image/webp" media="(min-width: 600px)" srcset="...?width=900&format=webply">
+  <source type="image/webp" srcset="...?width=600&format=webply">
+  <img src="...?width=600&format=webp" loading="lazy" width="600" height="400" alt="...">
+</picture>
+```
+
+Browser picks the right size → downloads only the pixels it needs.
+
+#### Rule 2: Assets committed to Git must be pre-optimized
+
+Images committed directly to the repository (in `/icons/`, `/fonts/`, `/drafts/`) are **not** processed by Dynamic Media. They are served as-is.
+
+| File type | Max size | Tool |
+|-----------|---------|------|
+| SVG icons | < 5 KB | Remove metadata, use SVGO |
+| PNG/JPG in `/drafts/` | < 200 KB | Use Squoosh or ImageOptim |
+| WOFF2 fonts | < 50 KB per variant | Subset to used characters |
+| Favicon | < 10 KB | Keep as `.ico` or small `.png` |
+
+#### Rule 3: Never use `background-image` for content images
+
+```css
+/* ❌ Bad — browser can't optimize, no lazy load, no LCP detection */
+.hero {
+  background-image: url('/media/hero.jpg');
+}
+
+/* ✅ Good — use <picture><img> in HTML, let Dynamic Media + createOptimizedPicture handle it */
+```
+
+Exception: decorative/texture backgrounds that are not content (e.g. section background patterns) — these are fine as CSS background-image.
+
+---
+
+### Font Loading Rules
+
+Fonts cause both CLS (reflow on swap) and LCP delay (render blocked until font loads). EDS handles fonts in a specific sequence.
+
+#### How EDS loads fonts
+
+```
+1. head.html — <link rel="preload"> for critical fonts (roboto-regular.woff2)
+         ↓ font starts downloading immediately alongside HTML
+2. Eager phase — styles.css loads
+         → @import url('../fonts/fonts.css')
+         → CSS engine sees @font-face declarations
+         → since font is already preloading, it's often ready
+3. Lazy phase — fonts.css has already run
+         → web font available → text renders in correct font
+         → no FOUT because preload ensured font was ready early
+```
+
+#### `fonts.css` structure
+
+```css
+/* fonts.css — each variant = one @font-face */
+@font-face {
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;                           /* show fallback, then swap */
+  src: url('../fonts/roboto-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/roboto-bold.woff2') format('woff2');
+}
+```
+
+#### `head.html` preload pattern
+
+```html
+<!-- head.html — preload the font used above the fold -->
+<link rel="preload" href="/fonts/roboto-regular.woff2" as="font" type="font/woff2" crossorigin>
+```
+
+Only preload the **regular weight** (used most above the fold). Bold and italic load lazily — they're used lower on the page.
+
+---
+
+### JavaScript Performance Rules
+
+#### Rule 1: No framework imports
+
+```javascript
+// ❌ Bad — pulls in entire React + ReactDOM (~140KB minified)
+import React from 'react';
+
+// ✅ Good — vanilla DOM APIs, zero extra download
+const el = document.createElement('div');
+```
+
+#### Rule 2: Third-party scripts go in `delayed.js` only
+
+```javascript
+// delayed.js — loaded 3 seconds after page load
+// ✅ Analytics
+// ✅ Chat widgets
+// ✅ A/B testing frameworks
+// ✅ Social share scripts
+// ✅ Tag managers
+
+// ❌ Never in scripts.js, aem.js, or block JS
+```
+
+#### Rule 3: Lazy-load non-critical block dependencies
+
+If a block needs a library (e.g. a charting library, a datepicker), import it inside `decorate()` so it only loads when that block is on the page:
+
+```javascript
+export default async function decorate(block) {
+  // Only downloads chart.js when a chart block exists on this page
+  const { Chart } = await import('https://cdn.jsdelivr.net/npm/chart.js@4/+esm');
+  // ...
+}
+```
+
+#### Rule 4: Minimize DOM operations in `decorate()`
+
+```javascript
+// ❌ Slow — forces layout recalculation on every read
+items.forEach((item) => {
+  const height = item.offsetHeight; // READ — triggers layout
+  item.style.minHeight = `${height}px`; // WRITE — invalidates layout
+});
+
+// ✅ Fast — batch reads first, then batch writes (avoid layout thrashing)
+const heights = items.map((item) => item.offsetHeight); // all READs
+items.forEach((item, i) => { item.style.minHeight = `${heights[i]}px`; }); // all WRITEs
+```
+
+---
+
+### Measuring Performance
+
+#### Tool 1: Lighthouse in Chrome DevTools
+
+```
+DevTools → Lighthouse tab → Mobile → Generate report
+```
+
+- Simulates a mid-range Android phone on 4G
+- Run against your **feature preview URL** (`https://{branch}--{repo}--{owner}.aem.page/`) — not localhost (localhost has no network latency simulation)
+- **Target: 100 on all four scores** (Performance, Accessibility, Best Practices, SEO)
+
+#### Tool 2: PageSpeed Insights
+
+```
+https://developers.google.com/speed/pagespeed/insights/?url=YOUR_PREVIEW_URL
+```
+
+- Runs the same Lighthouse test in Google's lab environment
+- Also shows **real-world CrUX data** (Chrome User Experience Report) — aggregated from actual Chrome users visiting the live site
+- This is what Google uses for search ranking — lab score matters for dev, CrUX for ranking
+
+#### Tool 3: Chrome DevTools Performance tab
+
+```
+DevTools → Performance → Record → Do the interaction → Stop
+```
+
+Use to diagnose:
+- Long tasks (red blocks in the flame chart)
+- Layout shifts (purple "Layout" blocks in the timeline)
+- JavaScript that runs during interaction (find the call stack in the flame chart)
+- LCP element (green "LCP" marker in the timeline)
+
+#### Tool 4: DevTools Rendering panel
+
+```
+DevTools → More tools → Rendering
+```
+
+Enable:
+- **Paint flashing** — green flash every time a region repaints (should only flash when something visually changes)
+- **Layout Shift Regions** — blue flash every time a layout shift happens
+- **Core Web Vitals** — live LCP, CLS, INP overlay on the page
+
+#### Tool 5: AEM RUM (Real User Monitoring)
+
+EDS automatically collects real user performance data via the RUM beacon (`/rum` endpoint). You can view this in:
+- `https://main--{repo}--{owner}.aem.live/.rum/` (if access is configured)
+- Adobe's Experience Cloud analytics dashboard
+
+RUM captures actual LCP, CLS, INP from real visitors on your live site — more reliable than lab scores for catching real-world issues.
+
+---
+
+### Measuring with `aem up` (Local Dev)
+
+Local dev (`localhost:3000`) is useful for functional testing but **not reliable for performance numbers** because:
+- No network latency (files served from disk)
+- No CDN edge caching
+- Dev server adds overhead
+
+Always test performance against the **preview URL** (`*.aem.page`), never localhost.
+
+```
+Local dev → functional testing only
+Preview URL → performance testing + stakeholder review
+Live URL → production traffic + CrUX data
+```
+
+---
+
+### Performance Q&A
+
+---
+
+**Q1: My Lighthouse score dropped from 100 to 85 after adding a block. What do I check first?**
+
+Look at the **Opportunities** and **Diagnostics** sections in the Lighthouse report. Common culprits:
+
+1. **Render-blocking resources** → did you add a `<script>` or `<link>` to `head.html`?
+2. **Largest Contentful Paint element** → click "View Treemap" → check if the LCP image is lazy-loaded
+3. **Cumulative Layout Shift** → enable "Layout Shift Regions" in DevTools Rendering, reload, watch for blue flashes
+4. **Unused JavaScript** → did your block import a large library?
+5. **Image sizing** → did you forget `width`/`height` attrs or skip `createOptimizedPicture()`?
+
+---
+
+**Q2: What is the difference between a lab score (Lighthouse) and field data (CrUX)?**
+
+| | Lab Score (Lighthouse) | Field Data (CrUX) |
+|---|---|---|
+| **Source** | Simulated test in controlled conditions | Real Chrome user sessions |
+| **Device** | Mid-range Android, throttled 4G | Mix of all real devices |
+| **When available** | Immediately (any URL, any time) | After ~28 days of real traffic |
+| **Use for** | Development, debugging, CI checks | Understanding actual user experience |
+| **Affected by** | Your code changes only | All real-world factors (slow devices, bad networks, geography) |
+
+Both matter. You can have a Lighthouse 100 in the lab but poor CrUX if your audience has slow devices. Conversely, you can have mediocre Lighthouse but good CrUX if your audience uses fast devices on fast networks.
+
+---
+
+**Q3: Should I set `loading="lazy"` on all images?**
+
+No. There are exactly two cases:
+
+| Image | Setting | Why |
+|-------|---------|-----|
+| **First image on the page** (hero, LCP candidate) | `loading="eager"` + `fetchpriority="high"` | Must not be deferred — it IS the LCP element |
+| **All other images** | `loading="lazy"` | Only loads when near the viewport → saves bandwidth + doesn't compete with LCP |
+
+`createOptimizedPicture(src, alt, eager, ...)` handles this: pass `eager = true` for the LCP image, `false` (or omit) for everything else.
+
+---
+
+**Q4: Why does EDS use `font-display: swap` instead of `font-display: block`?**
+
+| Value | Behavior | Trade-off |
+|-------|---------|-----------|
+| `block` | Browser shows invisible text until font loads (FOIT) | No visual flash, but invisible content during load |
+| `swap` | Browser shows fallback font immediately, swaps when ready (FOUT) | Flash of unstyled text, but content always visible |
+| `optional` | Browser uses fallback; only uses web font if it was already cached | No FOUT, but web font may not appear on first visit |
+
+EDS uses `swap` because:
+- Invisible text is a UX problem (especially on slow connections)
+- The swap flash is minimized by preloading the font in `head.html`
+- If the font preloads fast enough, the swap happens before first paint → no visible FOUT at all
+
+---
+
+**Q5: What is the 14KB rule?**
+
+The first TCP connection from browser to server can transfer exactly **14KB** of data in the first round trip (one TCP slow-start window). If your HTML + critical CSS fits in 14KB, the page can start rendering after a single round trip.
+
+EDS `styles.css` is kept deliberately minimal for this reason — it contains only the CSS required for above-the-fold rendering. Everything else (`lazy-styles.css`) is deferred.
+
+In practice, EDS pages typically get the first render done in 1–2 round trips because:
+1. The HTML is served from the CDN edge (no server processing delay)
+2. `styles.css` is small enough to fit in early packets
+3. The first section's block CSS is fetched in parallel immediately after
+
+---
+
+## Phase 5 — SEO & Structured Data
+
+> How EDS handles search engine optimization — meta tags, JSON-LD schemas, heading IDs, sitemap, and how Google reads your pages.
+
+---
+
+### What is SEO in EDS
+
+EDS has a unique SEO architecture compared to traditional CMS:
+
+| Traditional CMS | EDS |
+|---|---|
+| Server renders HTML with meta tags each request | Meta tags baked into HTML at preview time, served from CDN |
+| Dynamic robots.txt / sitemap generation | `helix-sitemap.yaml` config drives sitemap generation |
+| Plugin/module for structured data | Plain JS in `scripts.js` and block files |
+| OG image generation service | Author specifies DAM image via page metadata |
+
+In EDS, **all SEO work happens in two places:**
+1. `scripts/scripts.js` — `decorateSEO()` and `injectOrganizationSchema()` run on every page in the Eager phase
+2. Template/block JS files — page-type-specific schemas (Article, FAQ) run where they're relevant
+
+---
+
+### Complete OG & Twitter Cards
+
+`decorateSEO()` in `scripts.js` injects all Open Graph and Twitter Card meta tags on every page. The data comes from page metadata set in Universal Editor Page Properties.
+
+**What gets injected (full set):**
+
+```html
+<!-- Canonical — author-specified wins, otherwise current URL without query params -->
+<link rel="canonical" href="https://site.com/blog/my-post">
+
+<!-- Robots (only if authored) -->
+<meta name="robots" content="noindex">
+
+<!-- Open Graph -->
+<meta property="og:type"        content="article">          ← "article" for article template
+<meta property="og:url"         content="https://site.com/blog/my-post">
+<meta property="og:title"       content="My Post Title">
+<meta property="og:description" content="The page description">
+<meta property="og:image"       content="https://dm.../hero.jpg">
+
+<!-- Twitter Card -->
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="My Post Title">
+<meta name="twitter:description" content="The page description">
+<meta name="twitter:image"       content="https://dm.../hero.jpg">
+```
+
+**How `og:type` is set automatically:**
+```javascript
+const template = getMetadata('template'); // reads <meta name="template" content="article">
+const ogType = template === 'article' ? 'article' : 'website';
+```
+No author action needed — if the page uses the article template, `og:type` is automatically `article`.
+
+**How canonical is set:**
+```javascript
+// Author-specified canonical wins (useful for syndicated content)
+const authoredCanonical = getMetadata('canonical');
+// Fallback: strip query params from current URL to avoid duplicate canonicals
+const canonicalUrl = authoredCanonical
+  || `${window.location.origin}${window.location.pathname}`;
+```
+
+**The implementation pattern — batch inject:**
+```javascript
+const metaTags = [
+  { attr: 'property', name: 'og:type',        value: ogType },
+  { attr: 'property', name: 'og:url',         value: canonicalUrl },
+  // ... more tags
+];
+
+metaTags.forEach(({ attr, name, value }) => {
+  if (!value) return;  // skip tags with no value — no empty <meta> tags
+  const selector = `meta[${attr}="${name}"]`;
+  let tag = document.querySelector(selector);
+  if (!tag) {            // don't duplicate if AEM already injected it
+    tag = document.createElement('meta');
+    tag.setAttribute(attr, name);
+    document.head.append(tag);
+  }
+  tag.content = value;   // update value whether new or existing
+});
+```
+
+**Why check if tag already exists?** AEM may inject some OG tags into the HTML at render time (from page metadata). The code checks first and updates the existing tag instead of creating a duplicate.
+
+---
+
+### JSON-LD Structured Data
+
+JSON-LD (JavaScript Object Notation for Linked Data) is how you tell Google what your content **means**, not just what it **is**. Google uses it to show rich results in search (FAQs, article bylines, breadcrumb trails, etc.).
+
+```html
+<!-- Injected into <head> as a script tag with type="application/ld+json" -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "My Site",
+  "url": "https://site.com"
+}
+</script>
+```
+
+Three schemas are implemented:
+
+| Schema | Where | Trigger |
+|--------|-------|---------|
+| `Organization` | Every page | Always — in `scripts.js` loadEager |
+| `BlogPosting` | Article pages | `template: article` — in `templates/article/article.js` |
+| `FAQPage` | Accordion blocks | Block has `faq` class — in `blocks/accordion/accordion.js` |
+
+---
+
+### Organization Schema (All Pages)
+
+Injected by `injectOrganizationSchema()` in `scripts.js`. Runs in the Eager phase on every page.
+
+```javascript
+function injectOrganizationSchema() {
+  const siteName = getMetadata('site-name') || window.location.hostname;
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: siteName,
+    url: window.location.origin,
+    logo: `${window.location.origin}/favicon.ico`,
+  };
+  const script = document.createElement('script');
+  script.type = 'application/ld+json';
+  script.textContent = JSON.stringify(schema);
+  document.head.append(script);
+}
+```
+
+**Result in Google Search Console:** Google sees your site as an Organization with a known name, URL, and logo. Used for Knowledge Panel and Sitelinks appearance in search results.
+
+**How to customize:** Add `<meta name="site-name" content="Your Brand Name">` to `head.html` or set it per-page in Page Properties.
+
+---
+
+### BlogPosting Schema (Article Template)
+
+Injected by `injectArticleSchema()` in `templates/article/article.js`. Only runs on pages with `template: article`.
+
+**Page metadata fields it reads:**
+
+| Metadata field | Schema property | How to set in UE |
+|---|---|---|
+| `document.title` | `headline` | Page title (always present) |
+| `description` | `description` | Page Properties → Description |
+| `og:image` | `image` | Page Properties → Social Image |
+| `published-date` or `date` | `datePublished` | Page Properties → Published Date |
+| `modified-date` | `dateModified` | Page Properties → Modified Date |
+| `author` or `author-name` | `author.name` | Page Properties → Author |
+
+**Generated JSON-LD:**
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "How I Built My First EDS Block",
+  "url": "https://site.com/blog/my-first-block",
+  "description": "A step-by-step walkthrough...",
+  "image": "https://dm.../hero.jpg",
+  "datePublished": "2026-07-02",
+  "dateModified": "2026-07-02",
+  "author": { "@type": "Person", "name": "Sumit" },
+  "publisher": {
+    "@type": "Organization",
+    "name": "site.com",
+    "logo": { "@type": "ImageObject", "url": "https://site.com/favicon.ico" }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://site.com/blog/my-first-block"
+  }
+}
+```
+
+**Google rich result this enables:** Article author, date, and reading time shown directly in search results under the headline.
+
+---
+
+### FAQPage Schema (Accordion Block)
+
+Injected automatically by `blocks/accordion/accordion.js` when the block has the `faq` CSS class variant.
+
+**How to enable:**
+In Universal Editor → click the Accordion block → Properties → Layout Variant → select **"FAQ"**. This adds class `faq` to the block element.
+
+**What it generates:**
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Edge Delivery Services?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "EDS is Adobe's CDN-first architecture for AEM sites..."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How fast is EDS?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sub-50ms TTFB globally via Fastly CDN..."
+      }
+    }
+  ]
+}
+```
+
+**Google rich result:** FAQ items appear directly in search results as expandable dropdowns **below** the page's main listing. Each question/answer can be expanded without clicking through to the page.
+
+**Important:** Google limits FAQ rich results to ~3 items in search results. Include your most important Q&As first.
+
+**Implementation note — why after `block.textContent = ''`:**
+```javascript
+block.textContent = '';    // wipes original rows
+block.append(accordion);   // inserts decorated structure
+
+// Schema reads the DECORATED accordion (.accordion-title, .accordion-content)
+// Must run AFTER decoration so the text content is clean (no stray HTML tags)
+if (block.classList.contains('faq')) {
+  const faqItems = [...accordion.querySelectorAll('.accordion-item')].map((item) => ({
+    '@type': 'Question',
+    name: item.querySelector('.accordion-title')?.textContent.trim(),
+    acceptedAnswer: { '@type': 'Answer',
+      text: item.querySelector('.accordion-content')?.textContent.trim() },
+  })).filter((q) => q.name);
+  // ...inject schema
+}
+```
+
+---
+
+### Heading IDs for Deep Linking
+
+`decorateHeadingIds(main)` in `scripts.js` runs in the Lazy phase after all sections load. It auto-generates `id` attributes on every `h2`, `h3`, and `h4` from their text content.
+
+```
+<h2>How EDS Loads Blocks</h2>
+         ↓ decorateHeadingIds runs
+<h2 id="how-eds-loads-blocks">How EDS Loads Blocks</h2>
+```
+
+**What this enables:**
+- Deep links: `https://site.com/docs#how-eds-loads-blocks` scrolls directly to that section
+- The Article Template TOC already relied on heading IDs (previously set per-template). Now all pages get them.
+- Search engines can link to specific sections within a page in search results
+
+**Duplicate handling:**
+If two headings have the same text, the second one gets a numeric suffix:
+```
+<h2 id="installation">Installation</h2>
+<h2 id="installation-2">Installation</h2>  ← second occurrence
+```
+
+**Algorithm:**
+```javascript
+const base = heading.textContent.trim()
+  .toLowerCase()
+  .replace(/[^a-z0-9\s-]/g, '')  // remove special chars
+  .replace(/\s+/g, '-')           // spaces → hyphens
+  .replace(/-+/g, '-')            // collapse multiple hyphens
+  .substring(0, 60);              // max 60 chars
+
+// Deduplicate
+let id = base;
+let n = 2;
+while (seen.has(id)) { id = `${base}-${n}`; n += 1; }
+seen.add(id);
+heading.id = id;
+```
+
+---
+
+### Sitemap Configuration
+
+`helix-sitemap.yaml` controls how the AEM Sitemap service generates `sitemap.xml`.
+
+**Current config:**
+```yaml
+sitemaps:
+  default:
+    source: /query-index.json   # the page index from helix-query.yaml
+    destination: /sitemap.xml   # served at https://site.com/sitemap.xml
+    lastmod: YYYY-MM-DD         # date format for <lastmod> tags
+    exclude:
+      - /nav                    # fragment pages excluded
+      - /footer
+      - /header
+      - /drafts/**              # dev test pages excluded
+```
+
+**How it works:**
+```
+helix-query.yaml → drives what pages appear in /query-index.json
+helix-sitemap.yaml → tells the Sitemap service how to build sitemap.xml from that index
+sitemap.xml → submitted to Google Search Console
+```
+
+**The query-index is auto-populated** — every page that is previewed/published gets an entry in the index automatically. You don't manually add pages.
+
+**Excluding noindex pages:** Pages with `<meta name="robots" content="noindex">` should also be excluded from the sitemap. The `exclude` list handles the structural exclusions (fragment pages, drafts). For dynamic noindex exclusion, you'd need to filter at the `helix-query.yaml` level.
+
+---
+
+### SEO Q&A
+
+---
+
+**Q1: Why does `decorateSEO()` run in the Eager phase instead of Lazy?**
+
+Search engine crawlers (Googlebot) render JavaScript but have limited rendering budget per page. Meta tags in `<head>` must be present early in the render. Running `decorateSEO()` in the Eager phase ensures:
+1. Tags are injected before the page's main content loads (before LCP)
+2. If the crawler abandons rendering early, it still sees canonical, robots, og:type
+3. Social media link preview bots (Facebook, Twitter) often have zero JS execution — but they read the pre-rendered AEM HTML which already has basic OG tags from the CMS. `decorateSEO()` ensures they're correct.
+
+---
+
+**Q2: How does Google find and parse JSON-LD?**
+
+```
+Googlebot fetches the page URL
+         ↓
+Executes JavaScript (Chrome-based, limited budget)
+         ↓
+Scans <head> for <script type="application/ld+json">
+         ↓
+Parses the JSON and validates against schema.org vocabulary
+         ↓
+If valid → stores structured data → may show rich result in SERP
+```
+
+**Testing tool:** Google's Rich Results Test:
+```
+https://search.google.com/test/rich-results?url=YOUR_PREVIEW_URL
+```
+Paste your preview URL → Google shows which schemas are valid and what rich results are eligible.
+
+---
+
+**Q3: What is the difference between `og:title` and `<title>`?**
+
+| Tag | Used by | When it matters |
+|-----|---------|----------------|
+| `<title>` | Browser tab, Google search headline | Always — this is the primary SEO title |
+| `og:title` | Facebook, LinkedIn, Slack, Discord when pasting a URL | When someone shares your URL in social/chat apps |
+| `twitter:title` | Twitter/X when pasting a URL | Twitter-specific unfurl preview |
+
+In our implementation, all three are set to the same `document.title` value. Some sites differentiate them (e.g. shorter OG title without the brand suffix) but for most cases they should match.
+
+---
+
+**Q4: The FAQ accordion only injects schema when it has the `faq` class. Why not always?**
+
+Not every accordion is an FAQ. An accordion might be used for:
+- "Show/hide details" toggles on a product page
+- Navigation menus on mobile
+- General expandable content (Terms of Service sections)
+
+Adding `FAQPage` schema to a non-FAQ accordion would confuse Google and potentially be flagged as schema spam (misusing a rich result type for content it doesn't represent). The `faq` class is an explicit opt-in by the author.
+
+---
+
+**Q5: Can the same page have multiple JSON-LD scripts?**
+
+Yes. Google explicitly supports multiple `<script type="application/ld+json">` blocks on one page. Our pages may have:
+1. `Organization` (from `scripts.js` — always)
+2. `BreadcrumbList` (from `breadcrumb.js` — on deep pages)
+3. `BlogPosting` (from `article.js` — on article template pages)
+4. `FAQPage` (from `accordion.js` — when `faq` class is present)
+
+All four can coexist on a single article page that has a breadcrumb and an FAQ section. Google reads all of them independently.
+
+---
+
+## Phase 6 — Analytics, Personalization & Martech
+
+> How EDS integrates with Adobe Experience Platform Web SDK — without ever blocking page performance.
+
+---
+
+### Architecture Overview
+
+```
+BROWSER LOAD SEQUENCE
+─────────────────────
+Eager (0ms)
+  scripts.js runs
+  → window.adobeDataLayer = []   ← data layer available immediately
+  → decorateSEO(), decorateMain()
+
+Lazy (~100ms after LCP)
+  lazy-styles.css loads
+  → includes .consent-banner CSS (ready before banner appears)
+
+Delayed (3000ms after page load)
+  delayed.js loads
+  → pushPageLoadEvent()      — ACDL gets initial page state
+  → loadAlloy()              — alloy.js fetches from Adobe CDN
+  → showConsentBanner()      — banner appears if no prior decision
+  → trackCTAClicks()         — click event listeners attached
+  → trackScrollDepth()       — scroll listener attached
+  → trackVideoEngagement()   — play listeners on video-embed blocks
+  → setupExperimentation()   — variant assigned, body data attrs set
+```
+
+**Why 3 seconds?** Adobe recommends loading martech after LCP + TTI. The 3-second delay means alloy.js (~120KB) never competes with page rendering for network or main thread. Lighthouse scores remain 100.
+
+---
+
+### Adobe Client Data Layer (ACDL)
+
+The ACDL (`window.adobeDataLayer`) is Adobe's pub/sub event bus — the equivalent of Google's `dataLayer` but designed for Adobe solutions.
+
+**Why two layers? (ACDL + alloy)**
+
+```
+ACDL                                     Alloy (AEP Web SDK)
+─────────────────────────────────────    ─────────────────────────────────────
+Universal event bus                      Adobe-specific delivery layer
+Any solution can listen                  Sends to AEP Edge Network only
+Stores event history (array)             Fires & forgets (network request)
+Works without alloy                      Requires AEP Datastream config
+Launch/Tags can subscribe to it          Sends to Analytics, Target, RTCDP
+
+Example: push to ACDL → Adobe Launch      Example: alloy('sendEvent') →
+  picks it up → forwards to alloy             AEP Edge → Analytics + Target
+```
+
+**How ACDL is initialized:**
+
+In `scripts.js` (Eager phase — before delayed.js):
+```javascript
+window.adobeDataLayer = window.adobeDataLayer || [];
+```
+This ensures the array exists before any code tries to push to it — even if delayed.js hasn't loaded yet.
+
+**Events pushed to ACDL in this project:**
+
+| Event | When | Data |
+|-------|------|------|
+| `page loaded` | delayed.js init | title, URL, section, template, viewport |
+| `cta clicked` | Any .button click | text, url, section id |
+| `scroll depth` | 25/50/75/100% scroll | percent |
+| `video play` | Video-embed play button click | url |
+| `consent decision` | Banner accept/decline | value: "in" or "out" |
+| `experiment assigned` | Page with experiment metadata | id, variant |
+
+---
+
+### AEP Web SDK — Alloy.js
+
+Alloy.js is Adobe's unified SDK that replaces at.js (Target), AppMeasurement.js (Analytics), and DIL (Audience Manager) with a single library.
+
+**What it sends to:**
+
+```
+alloy("sendEvent", { xdm: {...} })
+         ↓
+AEP Edge Network (edge.adobedc.net)
+         ↓ routes to configured services:
+   ┌─────────────────────────────────┐
+   │  Adobe Analytics (AA)           │  ← via data.__adobe.analytics
+   │  Adobe Target                   │  ← via renderDecisions: true
+   │  Adobe Audience Manager (AAM)   │  ← automatic via ECID
+   │  Real-Time CDP (RTCDP)          │  ← via XDM schema
+   │  Adobe Journey Optimizer (AJO)  │  ← via XDM schema
+   └─────────────────────────────────┘
+```
+
+**Key configuration options:**
+
+```javascript
+window.alloy('configure', {
+  datastreamId: '...',          // which Datastream to route events to
+  orgId: '...@AdobeOrg',        // which IMS org you belong to
+  renderDecisions: true,        // auto-apply Target activities to DOM
+  personalizationStorageEnabled: true, // persist Target data across pages
+  clickCollectionEnabled: false, // we handle clicks manually
+  defaultConsent: 'pending',    // hold events until setConsent() is called
+});
+```
+
+**The most important setting: `defaultConsent: 'pending'`**
+Without this, alloy sends events even before the user consents. `'pending'` queues all events and only sends them after `alloy('setConsent', ...)` is called. This is required for GDPR compliance.
+
+**XDM event structure (Adobe Analytics field group):**
+
+```javascript
+// Page view
+alloy("sendEvent", {
+  xdm: {
+    eventType: 'web.webpagedetails.pageViews',
+    web: {
+      webPageDetails: {
+        name: document.title,       // s.pageName in AA
+        URL: window.location.href,
+        pageViews: { value: 1 },
+      },
+      webReferrer: { URL: document.referrer }, // s.referrer in AA
+    },
+  },
+});
+
+// CTA click
+alloy("sendEvent", {
+  xdm: {
+    eventType: 'web.webInteraction.linkClicks',
+    web: {
+      webInteraction: {
+        name: 'Get Started',        // s.linkName in AA
+        URL: '/pricing',
+        linkClicks: { value: 1 },
+        type: 'exit',               // lnk_e in AA
+      },
+    },
+  },
+});
+
+// Scroll depth — uses data.__adobe.analytics for AA-specific mappings
+alloy("sendEvent", {
+  xdm: { eventType: 'web.webInteraction.linkClicks', ... },
+  data: {
+    __adobe: { analytics: { eVar1: '50%', events: 'event2' } },
+  },
+});
+```
+
+**`data.__adobe.analytics` vs `xdm`:**
+- `xdm` — standard XDM schema, maps to RTCDP, AEP datasets
+- `data.__adobe.analytics` — AA-specific values (eVars, props, events) that bypass XDM mapping. Useful for existing AA implementations where eVar/event assignments are already defined.
+
+---
+
+### The Alloy Stub Pattern
+
+Alloy.js is loaded asynchronously — but you need to call `alloy("configure")` immediately. Without the stub, calling `alloy()` before the script loads would throw `ReferenceError: alloy is not defined`.
+
+**How the stub works:**
+
+```javascript
+// This ONE line is the entire stub:
+!function(n,o){o.forEach(function(o){n[o]||((n.__alloyNS=n.__alloyNS||[]).push(o),
+n[o]=function(){var u=arguments;return new Promise(function(i,l){n[o].q.push([i,l,u])})},
+n[o].q=[])})}(window,["alloy"]);
+```
+
+**What it creates:**
+```javascript
+window.alloy = function() {
+  // Returns a Promise
+  // Pushes [resolve, reject, arguments] into window.alloy.q (a queue)
+  return new Promise((resolve, reject) => {
+    window.alloy.q.push([resolve, reject, arguments]);
+  });
+};
+window.alloy.q = []; // the queue
+```
+
+When alloy.js fully loads, it replaces the stub with the real implementation and drains the queue — processing every call that was made during loading. This is why `alloy("configure", ...)` called right after the script tag works correctly even though the script hasn't parsed yet.
+
+---
+
+### Consent Management
+
+The implementation uses **Adobe's standard consent model** (version 1.0) with a cookie banner as the collection mechanism.
+
+**The two layers:**
+
+```
+Layer 1: Cookie Banner (UI)
+  Shows after 3 seconds if localStorage has no 'aep-consent' entry
+  Accept/Decline buttons → store decision → trigger Layer 2
+
+Layer 2: alloy setConsent (SDK)
+  alloy("setConsent", { consent: [{ standard: "Adobe", version: "1.0", value: { general: "in" } }] })
+  This either:
+    "in"  — releases the pending event queue → all queued events send
+    "out" — discards the pending event queue → no data sent
+```
+
+**Persistence:**
+- Decision stored in `localStorage` key `aep-consent`
+- On subsequent page loads: `showConsentBanner()` reads localStorage and calls `setAlloyConsent()` immediately — the banner never shows again
+- The stored value is `"in"` or `"out"` (matching the alloy consent model)
+
+**The flow on first visit:**
+
+```
+Page loads
+         ↓ (3 seconds later)
+delayed.js runs → loadAlloy() → alloy configured with defaultConsent: 'pending'
+         ↓
+alloy("sendEvent", { page view }) → queued (not sent yet)
+         ↓
+showConsentBanner() → banner slides up
+         ↓
+User clicks Accept
+         ↓
+localStorage.setItem('aep-consent', 'in')
+alloy("setConsent", { general: "in" }) → QUEUE DRAINS → page view sends to AEP
+ACDL push → { event: 'consent decision', consent: { value: 'in' } }
+```
+
+**The flow on returning visit (consent already given):**
+
+```
+delayed.js runs → localStorage.getItem('aep-consent') = 'in'
+         ↓
+setAlloyConsent('in') called immediately
+         ↓
+alloy("sendEvent", { page view }) fires immediately (no queue needed)
+Banner never shown ✅
+```
+
+---
+
+### Custom Event Tracking
+
+#### CTA Click Tracking
+
+Uses a **single delegated listener** on `document` rather than individual listeners per button. This is more efficient and works for dynamically added buttons.
+
+```javascript
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('a.button, button.button');
+  if (!btn) return;
+  // ...
+});
+```
+
+Why `closest()`? If the button contains a span or icon, the click event target may be the child element, not the button itself. `closest()` traverses up to find the matching ancestor.
+
+**Section attribution:** The click event data includes which section the CTA was in:
+```javascript
+section: btn.closest('[id]')?.id        // section with custom id (Phase 3.2)
+  || btn.closest('.section')?.dataset?.id // section data-id attribute
+  || ''
+```
+
+#### Scroll Depth Tracking
+
+Standard scroll depth milestones (25/50/75/100%) with a `Set` to prevent firing the same milestone twice per page view.
+
+**AA event mapping:**
+
+| Scroll % | AA event |
+|----------|----------|
+| 25% | event1 |
+| 50% | event2 |
+| 75% | event3 |
+| 100% | event4 |
+| Experiment assigned | event5 |
+
+Configure these in AA's Report Suite Admin → Success Events to see scroll depth reports.
+
+#### Video Engagement Tracking
+
+Fires only on the **first play** per video-embed block (`{ once: true }`). Subsequent plays in the same session don't fire again — prevents inflated video play counts from rewatching.
+
+---
+
+### A/B Experimentation
+
+#### How it works end-to-end
+
+```
+1. Author sets in Page Properties:
+   experiment: hero-cta-test
+
+2. Code in delayed.js:
+   const variant = sessionStorage.get('exp-hero-cta-test')
+     || (Math.random() < 0.5 ? 'control' : 'variant-a');
+   sessionStorage.set('exp-hero-cta-test', variant);
+   document.body.dataset.experiment = 'hero-cta-test';
+   document.body.dataset.variant = 'control'; // or 'variant-a'
+
+3. CSS in any block targets the variant:
+   /* Default CTA text */
+   .hero .hero-cta { content: 'Learn More'; }
+
+   /* Variant A — different CTA text */
+   body[data-variant="variant-a"] .hero .hero-cta { content: 'Get Started Free'; }
+
+4. alloy sendEvent fires with eVar2=hero-cta-test, eVar3=control
+   AA receives the experiment assignment
+   You can create segments in AA: eVar2=hero-cta-test AND eVar3=variant-a
+   Compare conversion metrics between control and variant-a
+```
+
+#### QA workflow
+
+Set `experiment-variant: variant-a` in Page Properties to force variant A for everyone. Preview the page → verify the variant CSS/content is showing correctly. Clear it when done.
+
+#### With Adobe Target
+
+When alloy has `renderDecisions: true`, Target can **override** the random assignment client-side:
+- Target activity matches the page URL/audience
+- Target returns a "proposition" (DOM modification instruction)
+- alloy applies the proposition automatically before the page renders
+- This is the EDS + Target integration story — no need for separate at.js
+
+---
+
+### Configuration Setup
+
+#### Step 1: Fill in head.html credentials
+
+```html
+<!-- head.html — replace these with your real values -->
+<meta name="aep-org-id"        content="ABCDEF@AdobeOrg"/>
+<meta name="aep-datastream-id" content="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+```
+
+**Where to find these:**
+- Org ID: AEP UI → top-right account menu → `@AdobeOrg`
+- Datastream ID: AEP → Data Collection → Datastreams → your datastream
+
+#### Step 2: Configure the Datastream in AEP UI
+
+In AEP → Data Collection → Datastreams:
+1. Create a Datastream (or use existing)
+2. Add services:
+   - **Adobe Analytics** → enter Report Suite ID
+   - **Adobe Target** → enabled by default for the org
+   - **Adobe Experience Platform** → select a sandbox + dataset
+
+#### Step 3: Set up AA success events
+
+In Adobe Analytics → Report Suite Admin → Success Events:
+```
+event1 = Scroll 25%
+event2 = Scroll 50%
+event3 = Scroll 75%
+event4 = Scroll 100%
+event5 = Experiment Assignment
+```
+
+And eVars:
+```
+eVar1 = Scroll Depth Percent
+eVar2 = Experiment ID
+eVar3 = Experiment Variant
+```
+
+#### Step 4: Customize consent banner text (optional)
+
+Add to `head.html`:
+```html
+<meta name="cookie-banner-text"  content="We use cookies to personalize your experience."/>
+<meta name="cookie-accept-text"  content="Accept Cookies"/>
+<meta name="cookie-decline-text" content="Reject Non-Essential"/>
+```
+
+If not set, the defaults in `delayed.js` are used.
+
+---
+
+### Analytics Q&A
+
+---
+
+**Q1: Why does alloy use `defaultConsent: 'pending'` instead of `'in'`?**
+
+`'in'` (default if not set) means alloy sends events immediately without waiting for consent — non-compliant in GDPR regions. `'out'` means alloy never sends. `'pending'` is the correct GDPR approach: queue everything until the user makes a decision. If the user has already consented (returning visit), `setAlloyConsent('in')` is called at the top of `showConsentBanner()`, which releases the queue immediately — so real users don't experience any delay in data collection after their first visit.
+
+---
+
+**Q2: What happens to the page-view event if the user declines?**
+
+```
+alloy("sendEvent", { page view }) — queued (pending)
+         ↓
+User clicks Decline
+         ↓
+alloy("setConsent", { general: "out" })
+         ↓
+Alloy DISCARDS the entire queue
+         ↓
+No data sent to AEP Edge Network
+         ↓
+ACDL push still fires (ACDL is client-side only — no network call)
+```
+
+ACDL events always fire regardless of consent because they're client-side only (in-memory array). Only alloy network requests are gated by consent.
+
+---
+
+**Q3: Why use ACDL if alloy already handles events?**
+
+ACDL decouples the data collection layer from the delivery layer. Today you use alloy. Tomorrow you might:
+- Add Adobe Launch/Tags (subscribes to ACDL events)
+- Add a customer data platform that listens to ACDL
+- Add debug tooling (ACDL event inspector)
+
+With ACDL as the event bus, you don't change your tracking code when you change your delivery mechanism.
+
+---
+
+**Q4: How does `renderDecisions: true` enable Adobe Target without at.js?**
+
+When alloy sends an event with `renderDecisions: true`:
+
+```
+alloy("sendEvent", { renderDecisions: true, xdm: {...} })
+         ↓
+AEP Edge receives event
+         ↓ (if Target service is in Datastream)
+Target evaluates which activities match this visitor
+         ↓
+Returns "propositions" — DOM modification instructions:
+  { selector: ".hero h1", content: "Try It Free Today" }
+         ↓
+alloy applies the DOM changes automatically before rendering completes
+```
+
+The visitor sees the personalized content without any flicker. This is faster than at.js because the decisioning is bundled into the same network request as the analytics ping.
+
+---
+
+**Q5: The experiment variant is assigned in `delayed.js` which runs 3 seconds after load. Won't users see the control version for 3 seconds before variant-a appears?**
+
+Yes — this is a limitation of the client-side random assignment approach. The 3-second delay means any visual experiment (different headline, hero image, CTA color) will flash from control → variant-a, which is a bad user experience.
+
+**Solutions:**
+1. **Adobe Target server-side**: When alloy sends the page-view event, Target returns a proposition before the page fully renders (using edge network latency of ~50ms). No 3-second delay.
+2. **Edge-side experimentation**: EDS supports a URL-based traffic split at the CDN layer — different variants are served as different pages with no client-side flicker.
+3. **Non-visual experiments only**: Use client-side random assignment only for non-visual tests (e.g. different email subject lines, different analytics tracking, feature flags) where a 3-second delay has no user-visible effect.
+
+For visual experiments in production, use Adobe Target via alloy with `renderDecisions: true`.
 
 ---
 

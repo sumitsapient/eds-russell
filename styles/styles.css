@@ -19,12 +19,12 @@
   --color-secondary-hover: #3a3a3a;
   --color-accent: #ff6b35;
   --color-accent-hover: #e55a28;
-  --color-background: #ffffff;
+  --color-background: #fff;
   --color-surface: #f8f8f8;
   --color-surface-alt: #f0f0f0;
   --color-text: #131313;
   --color-text-muted: #6b7280;
-  --color-text-inverse: #ffffff;
+  --color-text-inverse: #fff;
   --color-border: #e5e7eb;
   --color-border-strong: #d1d5db;
   --color-success: #10b981;
@@ -60,12 +60,12 @@
   --line-height-normal: 1.6;
   --line-height-loose: 1.8;
 
-  /* body sizes – fluid with clamp */
+  /* body sizes â€“ fluid with clamp */
   --body-font-size-m: clamp(18px, 2vw, 22px);
   --body-font-size-s: clamp(16px, 1.8vw, 19px);
   --body-font-size-xs: clamp(14px, 1.5vw, 17px);
 
-  /* heading sizes – fluid with clamp */
+  /* heading sizes â€“ fluid with clamp */
   --heading-font-size-xxl: clamp(36px, 5vw, 55px);
   --heading-font-size-xl: clamp(30px, 4vw, 44px);
   --heading-font-size-l: clamp(24px, 3vw, 34px);
@@ -139,6 +139,8 @@ body.appear {
 
 header {
   height: var(--nav-height);
+  min-height: 64px;
+  contain: layout;
 }
 
 header .header,
@@ -331,6 +333,21 @@ button.button.accent:disabled:focus-visible {
   color: var(--dark-color);
 }
 
+/* 4.2 CLS — Reserve space for all images before they load.
+   Prevents layout shift by always keeping the aspect ratio container.
+   Works with AEM's createOptimizedPicture() which uses width/height attrs. */
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent CLS from picture elements — keep aspect ratio while image loads */
+picture {
+  display: block;
+  line-height: 0;
+}
+
 main img {
   max-width: 100%;
   width: auto;
@@ -349,8 +366,12 @@ main img {
 }
 
 /* sections */
+
+/* 4.3 INP — content-visibility: auto defers rendering of off-screen sections. */
 main > .section {
   margin: var(--spacing-section) 0;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 400px;
 }
 
 main > .section > div {
@@ -359,8 +380,11 @@ main > .section > div {
   padding: 0 var(--content-padding-inline);
 }
 
+/* First section is ALWAYS visible — don't defer it (LCP section) */
 main > .section:first-of-type {
   margin-top: 0;
+  content-visibility: visible;
+  contain-intrinsic-size: none;
 }
 
 @media (width >= 900px) {
@@ -418,4 +442,29 @@ main .section.spacious {
 
 main .section.compact {
   padding: var(--spacing-m) 0;
+}
+
+/* ============================================
+   PHASE 4: PERFORMANCE & CLS PREVENTION
+   ============================================ */
+
+/* 4.2 CLS â€” Blocks should not shift during decoration.
+   Hide undecorated blocks (data-block-status not 'loaded') to prevent
+   flash of unstyled content causing layout shifts. */
+main .block[data-block-status='loading'],
+main .block:not([data-block-status]) {
+  visibility: hidden;
+  min-height: 1px; /* Prevent complete collapse to 0 which also causes CLS */
+}
+
+main .block[data-block-status='loaded'] {
+  visibility: visible;
+}
+
+/* 4.3 INP â€” Optimize transitions to not trigger layout/paint.
+   Only animate transform and opacity â€” these are GPU-composited
+   and don't trigger layout recalculation. */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

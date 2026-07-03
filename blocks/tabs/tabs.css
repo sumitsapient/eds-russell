@@ -88,7 +88,7 @@
 }
 
 /* Variant: vertical (desktop only) */
-@media (min-width: 900px) {
+@media (width >= 900px) {
   .tabs.vertical {
     display: grid;
     grid-template-columns: 240px 1fr;

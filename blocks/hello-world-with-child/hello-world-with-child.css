@@ -19,13 +19,13 @@
   gap: var(--spacing-l, 24px);
 }
 
-@media (min-width: 600px) {
+@media (width >= 600px) {
   .hello-world-with-child .hello-world-with-child-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (min-width: 900px) {
+@media (width >= 900px) {
   .hello-world-with-child .hello-world-with-child-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -75,13 +75,13 @@
   grid-template-columns: 1fr;
 }
 
-@media (min-width: 600px) {
+@media (width >= 600px) {
   .hello-world-with-child.list .hello-world-with-child-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (min-width: 900px) {
+@media (width >= 900px) {
   .hello-world-with-child.list .hello-world-with-child-grid {
     grid-template-columns: 1fr;
   }
@@ -108,7 +108,7 @@
    Block gets class: hello-world-with-child featured
    ============================================= */
 
-@media (min-width: 600px) {
+@media (width >= 600px) {
   .hello-world-with-child.featured .hello-world-with-child-card:first-child {
     grid-column: 1 / -1;
     display: grid;

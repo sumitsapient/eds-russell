@@ -86,7 +86,9 @@ export function paginate(items, page = 1, pageSize = 10) {
   const totalPages = Math.ceil(total / pageSize);
   const currentPage = Math.max(1, Math.min(page, totalPages));
   const start = (currentPage - 1) * pageSize;
-  return { items: items.slice(start, start + pageSize), page: currentPage, totalPages, total };
+  return {
+    items: items.slice(start, start + pageSize), page: currentPage, totalPages, total,
+  };
 }
 
 /**
@@ -121,4 +123,3 @@ export function sortBy(items, key, order = 'asc') {
 
 /** Clears the in-memory cache. */
 export function clearCache() { CF_CACHE.clear(); }
-

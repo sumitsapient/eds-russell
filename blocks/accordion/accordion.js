@@ -110,4 +110,29 @@ export default function decorate(block) {
 
   block.textContent = '';
   block.append(accordion);
+
+  // Inject FAQPage JSON-LD when the block has the "faq" class variant.
+  // This tells Google to display Q&A rich results in search.
+  if (block.classList.contains('faq')) {
+    const faqItems = [...accordion.querySelectorAll('.accordion-item')].map((item) => ({
+      '@type': 'Question',
+      name: item.querySelector('.accordion-title')?.textContent.trim(),
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.querySelector('.accordion-content')?.textContent.trim(),
+      },
+    })).filter((q) => q.name);
+
+    if (faqItems.length > 0) {
+      const schema = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqItems,
+      };
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.textContent = JSON.stringify(schema);
+      document.head.append(script);
+    }
+  }
 }

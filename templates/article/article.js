@@ -1,5 +1,5 @@
 /**
- * Article template â€” loaded automatically when page has template: article
+ * Article template — loaded automatically when page has template: article
  * Adds a reading progress bar and estimated read time to article pages.
  *
  * How it works:
@@ -9,6 +9,58 @@
  * 4. Loads templates/article/article.css
  * 5. This script runs and enhances the page
  */
+
+/**
+ * Reads a <meta> tag's content from <head>.
+ * @param {string} name The meta name or property attribute
+ * @returns {string}
+ */
+function getMeta(name) {
+  return (
+    document.querySelector(`meta[name="${name}"]`)?.content
+    || document.querySelector(`meta[property="${name}"]`)?.content
+    || ''
+  );
+}
+
+/**
+ * Injects BlogPosting JSON-LD structured data into <head>.
+ * Google uses this to display rich results for articles in search.
+ * Fields are read from page metadata set in Universal Editor Page Properties.
+ */
+function injectArticleSchema() {
+  const { title } = document;
+  const description = getMeta('description');
+  const image = getMeta('og:image');
+  const datePublished = getMeta('published-date') || getMeta('date');
+  const dateModified = getMeta('modified-date') || datePublished;
+  const authorName = getMeta('author') || getMeta('author-name');
+  const siteOrigin = window.location.origin;
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: title,
+    url: window.location.href,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': window.location.href },
+    publisher: {
+      '@type': 'Organization',
+      name: window.location.hostname,
+      logo: { '@type': 'ImageObject', url: `${siteOrigin}/favicon.ico` },
+    },
+  };
+
+  if (description) schema.description = description;
+  if (image) schema.image = image;
+  if (datePublished) schema.datePublished = datePublished;
+  if (dateModified) schema.dateModified = dateModified;
+  if (authorName) schema.author = { '@type': 'Person', name: authorName };
+
+  const script = document.createElement('script');
+  script.type = 'application/ld+json';
+  script.textContent = JSON.stringify(schema);
+  document.head.append(script);
+}
 
 /**
  * Calculates estimated reading time from body text.
@@ -96,8 +148,9 @@ function addTableOfContents() {
 
 // Run when page is loaded
 addReadingProgress();
-// Reading time and TOC run after sections load (lazy phase)
+// Reading time, TOC, and schema run after sections load (lazy phase)
 window.addEventListener('load', () => {
   addReadingTime();
   addTableOfContents();
+  injectArticleSchema();
 });

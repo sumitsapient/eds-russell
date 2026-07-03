@@ -76,7 +76,7 @@
 }
 
 /* Responsive */
-@media (min-width: 600px) {
+@media (width >= 600px) {
   .cta-banner .cta-banner-inner {
     min-height: 350px;
   }
@@ -86,7 +86,7 @@
   }
 }
 
-@media (min-width: 900px) {
+@media (width >= 900px) {
   .cta-banner .cta-banner-inner {
     min-height: 400px;
   }

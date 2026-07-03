@@ -36,13 +36,13 @@ footer .footer > div > .default-content-wrapper {
   margin-bottom: var(--spacing-l);
 }
 
-@media (min-width: 600px) {
+@media (width >= 600px) {
   footer .footer > div > .default-content-wrapper {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (min-width: 900px) {
+@media (width >= 900px) {
   footer .footer > div > .default-content-wrapper {
     grid-template-columns: repeat(4, 1fr);
   }

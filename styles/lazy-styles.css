@@ -1,4 +1,4 @@
-/* === SECTION BACKGROUND IMAGE === */
+﻿/* === SECTION BACKGROUND IMAGE === */
 main .section.has-background {
   background-size: cover;
   background-position: center;
@@ -31,7 +31,7 @@ main .section.has-background h3 {
 
 /* === SCROLL ANIMATIONS === */
 
-/* Base state â€” sections marked for animation start hidden */
+/* Base state Ã¢â‚¬â€ sections marked for animation start hidden */
 main .section.animate {
   opacity: 0;
   transition:
@@ -39,12 +39,12 @@ main .section.animate {
     transform var(--duration-slow, 500ms) var(--easing-out, ease-out);
 }
 
-/* Fade In â€” just opacity */
+/* Fade In Ã¢â‚¬â€ just opacity */
 main .section.fade-in {
   opacity: 0;
 }
 
-/* Slide Up â€” moves up from below */
+/* Slide Up Ã¢â‚¬â€ moves up from below */
 main .section.slide-up {
   transform: translateY(40px);
 }
@@ -59,7 +59,7 @@ main .section.slide-right {
   transform: translateX(40px);
 }
 
-/* Visible state â€” added by IntersectionObserver in scripts.js */
+/* Visible state Ã¢â‚¬â€ added by IntersectionObserver in scripts.js */
 main .section.animate.visible {
   opacity: 1;
   transform: none;
@@ -133,3 +133,65 @@ html {
   background-color: var(--color-primary);
   color: var(--color-text-inverse);
 }
+
+/* === CONSENT BANNER (Phase 6) === */
+
+/* Slides up from bottom of screen after 3s delay (via delayed.js) */
+.consent-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-m, 16px);
+  padding: var(--spacing-m, 16px) var(--spacing-l, 24px);
+  background: var(--color-text, #131313);
+  color: var(--color-text-inverse, #fff);
+  box-shadow: 0 -4px 20px rgb(0 0 0 / 20%);
+  transform: translateY(100%);
+  transition:
+    transform var(--duration-normal, 300ms) var(--easing-out, cubic-bezier(0, 0, 0.2, 1));
+}
+
+.consent-banner-visible {
+  transform: translateY(0);
+}
+
+.consent-banner-hiding {
+  transform: translateY(100%);
+}
+
+.consent-banner-text {
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+  font-size: var(--body-font-size-xs, 14px);
+  line-height: var(--line-height-normal, 1.6);
+}
+
+.consent-banner-actions {
+  display: flex;
+  gap: var(--spacing-s, 8px);
+  flex-shrink: 0;
+}
+
+@media (width <= 600px) {
+  .consent-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .consent-banner-actions {
+    width: 100%;
+  }
+
+  .consent-banner-actions .button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+

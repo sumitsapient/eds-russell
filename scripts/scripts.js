@@ -12,6 +12,10 @@ import {
   getMetadata,
 } from './aem.js';
 
+// Initialize Adobe Client Data Layer early (before delayed.js loads analytics).
+// delayed.js pushes events into this array; ACDL listeners subscribe to it.
+window.adobeDataLayer = window.adobeDataLayer || [];
+
 /**
  * Moves all the attributes from a given elmenet to another given element.
  * @param {Element} from the element to copy attributes from
@@ -135,7 +139,7 @@ function buildVideoEmbeds(main) {
     // Build the video-embed block with the raw URL as text content
     const videoBlock = buildBlock('video-embed', a.href);
 
-    // Replace the paragraph â€” decorateBlocks() will load it naturally
+    // Replace the paragraph Ã¢â‚¬â€ decorateBlocks() will load it naturally
     p.replaceWith(videoBlock);
   });
 }
@@ -162,10 +166,10 @@ function buildBreadcrumb(main) {
   // Don't add if a breadcrumb block already exists (authored manually)
   if (main.querySelector('.breadcrumb')) return;
 
-  // Build an empty breadcrumb block â€” decorate() auto-generates from URL
+  // Build an empty breadcrumb block Ã¢â‚¬â€ decorate() auto-generates from URL
   const breadcrumbBlock = buildBlock('breadcrumb', '');
 
-  // Insert at the very start of main â€” decorateBlocks() will load it naturally
+  // Insert at the very start of main Ã¢â‚¬â€ decorateBlocks() will load it naturally
   // Note: at this point decorateSections hasn't run yet, so use first child div
   const firstDiv = main.querySelector(':scope > div');
   if (firstDiv) {
@@ -228,6 +232,59 @@ export function decorateButtons(main) {
 }
 
 /**
+ * Adds fetchpriority="high" to the first image in the first section.
+ * This tells the browser to prioritize downloading the LCP image
+ * over other resources, improving LCP score.
+ * Must run AFTER decorateBlocks so block images are already in the DOM.
+ * @param {Element} main
+ */
+function decorateLCPImages(main) {
+  // The LCP image is typically the first image in the first section
+  const firstSection = main.querySelector('.section');
+  if (!firstSection) return;
+
+  const firstImg = firstSection.querySelector('img');
+  if (!firstImg) return;
+
+  firstImg.setAttribute('fetchpriority', 'high');
+  firstImg.setAttribute('loading', 'eager');
+
+  // Also set on the parent picture's source elements for completeness
+  const picture = firstImg.closest('picture');
+  if (picture) {
+    picture.querySelectorAll('source').forEach((source) => {
+      // fetchpriority on source isn't standard but some browsers honour it
+      source.setAttribute('fetchpriority', 'high');
+    });
+  }
+}
+
+/**
+ * Auto-generates id attributes on h2/h3/h4 headings from their text content.
+ * Enables deep-linking (e.g. page.html#section-title) and TOC anchor links.
+ * Skips headings that already have an id.
+ * @param {Element} main
+ */
+function decorateHeadingIds(main) {
+  const seen = new Set();
+  main.querySelectorAll('h2, h3, h4').forEach((heading) => {
+    if (heading.id) return;
+    const base = heading.textContent.trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .substring(0, 60);
+    if (!base) return;
+    let id = base;
+    let n = 2;
+    while (seen.has(id)) { id = `${base}-${n}`; n += 1; }
+    seen.add(id);
+    heading.id = id;
+  });
+}
+
+/**
  * Decorates the main element.
  * @param {Element} main The main element
  */
@@ -238,13 +295,33 @@ export function decorateMain(main) {
   decorateSections(main);
   decorateBlocks(main);
   decorateButtons(main);
+  decorateLCPImages(main);
 }
 
 /**
- * Injects SEO-related meta tags into <head> based on page metadata.
- * Handles: robots, og:image, canonical URL.
+ * Injects complete SEO meta tags into <head> based on page metadata.
+ * Handles: canonical, robots, og:type/url/title/description/image,
+ * twitter:card/title/description/image.
+ * Called in loadEager so search engines always see these tags.
  */
 function decorateSEO() {
+  const { title } = document;
+  const description = getMetadata('description');
+  const template = getMetadata('template');
+  const ogImageMeta = getMetadata('og:image');
+
+  // Canonical URL — author-specified wins, otherwise current URL (no query params)
+  const authoredCanonical = getMetadata('canonical');
+  const canonicalUrl = authoredCanonical || `${window.location.origin}${window.location.pathname}`;
+  let canonicalLink = document.querySelector('link[rel="canonical"]');
+  if (!canonicalLink) {
+    canonicalLink = document.createElement('link');
+    canonicalLink.rel = 'canonical';
+    document.head.append(canonicalLink);
+  }
+  canonicalLink.href = canonicalUrl;
+
+  // Robots
   const robots = getMetadata('robots');
   if (robots) {
     let robotsMeta = document.querySelector('meta[name="robots"]');
@@ -256,29 +333,53 @@ function decorateSEO() {
     robotsMeta.content = robots;
   }
 
-  const ogImage = getMetadata('og:image');
-  if (ogImage) {
-    ['og:image', 'twitter:image'].forEach((prop) => {
-      let tag = document.querySelector(`meta[property="${prop}"], meta[name="${prop}"]`);
-      if (!tag) {
-        tag = document.createElement('meta');
-        tag.setAttribute(prop.startsWith('og:') ? 'property' : 'name', prop);
-        document.head.append(tag);
-      }
-      tag.content = ogImage;
-    });
-  }
+  // og:type — "article" for article template, "website" for everything else
+  const ogType = template === 'article' ? 'article' : 'website';
 
-  const canonical = getMetadata('canonical');
-  if (canonical) {
-    let link = document.querySelector('link[rel="canonical"]');
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'canonical';
-      document.head.append(link);
+  // Batch inject OG + Twitter Card meta tags
+  const metaTags = [
+    { attr: 'property', name: 'og:type', value: ogType },
+    { attr: 'property', name: 'og:url', value: canonicalUrl },
+    { attr: 'property', name: 'og:title', value: title },
+    { attr: 'property', name: 'og:description', value: description },
+    { attr: 'property', name: 'og:image', value: ogImageMeta },
+    { attr: 'name', name: 'twitter:card', value: 'summary_large_image' },
+    { attr: 'name', name: 'twitter:title', value: title },
+    { attr: 'name', name: 'twitter:description', value: description },
+    { attr: 'name', name: 'twitter:image', value: ogImageMeta },
+  ];
+
+  metaTags.forEach(({ attr, name, value }) => {
+    if (!value) return;
+    const selector = `meta[${attr}="${name}"]`;
+    let tag = document.querySelector(selector);
+    if (!tag) {
+      tag = document.createElement('meta');
+      tag.setAttribute(attr, name);
+      document.head.append(tag);
     }
-    link.href = canonical;
-  }
+    tag.content = value;
+  });
+}
+
+/**
+ * Injects Organization JSON-LD structured data into <head>.
+ * Runs on every page — tells Google the site's identity.
+ * Uses metadata "site-name" if authored, otherwise falls back to hostname.
+ */
+function injectOrganizationSchema() {
+  const siteName = getMetadata('site-name') || window.location.hostname;
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: siteName,
+    url: window.location.origin,
+    logo: `${window.location.origin}/favicon.ico`,
+  };
+  const script = document.createElement('script');
+  script.type = 'application/ld+json';
+  script.textContent = JSON.stringify(schema);
+  document.head.append(script);
 }
 
 /**
@@ -289,6 +390,7 @@ async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
   decorateSEO();
+  injectOrganizationSchema();
   const main = doc.querySelector('main');
   if (main) {
     decorateMain(main);
@@ -356,7 +458,7 @@ function decorateSectionMetadata(main) {
       section.classList.add('has-background');
     }
 
-    // Custom ID for anchor linking (e.g. data-id="about-us" ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ id="about-us")
+    // Custom ID for anchor linking — data-id="about-us" sets id="about-us" on the section
     const sectionId = section.dataset.id;
     if (sectionId) {
       section.id = sectionId;
@@ -380,6 +482,9 @@ async function loadLazy(doc) {
 
   const main = doc.querySelector('main');
   await loadSections(main);
+
+  // Auto-generate id attributes on headings for deep-linking
+  decorateHeadingIds(main);
 
   // Apply section metadata side-effects (background, id, animate)
   decorateSectionMetadata(main);

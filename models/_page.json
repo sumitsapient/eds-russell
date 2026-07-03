@@ -60,6 +60,26 @@
           "name": "canonical",
           "label": "Canonical URL",
           "description": "Override the canonical URL for this page (leave blank to use page URL)"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "experiment",
+          "label": "A/B Experiment ID",
+          "description": "Assign this page to an A/B test (e.g. hero-cta-test). Visitors are randomly split 50/50 between control and variant-a."
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "experiment-variant",
+          "label": "Force Experiment Variant (QA)",
+          "description": "Pin a specific variant for QA/preview. Leave blank for random assignment.",
+          "options": [
+            { "name": "Random (default)", "value": "" },
+            { "name": "Control", "value": "control" },
+            { "name": "Variant A", "value": "variant-a" },
+            { "name": "Variant B", "value": "variant-b" }
+          ]
         }
       ]
     }
