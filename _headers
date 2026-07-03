@@ -1,0 +1,22 @@
+/*
+  # Prevent clickjacking — page cannot be embedded in an iframe on another domain
+  X-Frame-Options: SAMEORIGIN
+
+  # Prevent MIME-type sniffing — browser must use declared content-type
+  X-Content-Type-Options: nosniff
+
+  # Referrer policy — send full URL for same-origin, only origin for cross-origin
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Disable browser features not needed by the site
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+
+  # Content Security Policy
+  # - default-src 'self'              : block all by default
+  # - script-src  'self' + CDNs       : allow our scripts + Adobe Launch + axe-core
+  # - style-src   'self' 'unsafe-inline': AEM adds inline styles during decoration
+  # - img-src     'self' data: blob:  : AEM optimized images + inline SVGs
+  # - connect-src 'self' + AEP Edge   : alloy.js calls to Edge Network
+  # - frame-src   youtube-nocookie    : video-embed block
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://assets.adobedtm.com https://cdnjs.cloudflare.com https://cdn1.adoberesources.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.adobeaemcloud.com https://placehold.co; connect-src 'self' https://edge.adobedc.net https://dpm.demdex.net https://cm.everesttech.net; frame-src https://www.youtube-nocookie.com https://www.youtube.com; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';
+

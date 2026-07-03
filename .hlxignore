@@ -1,8 +1,28 @@
-.*
+﻿.*
 *.md
 karma.config.js
 LICENSE
 package.json
 package-lock.json
 test/*
-_*
+# Node / build artefacts
+node_modules/
+*.log
+*.lock
+dist/
+# Dev-only pages -- never serve to real visitors
+drafts/
+# AI agent instructions
+AGENTS.md
+CLAUDE.md
+# Tooling & config -- not web-servable content
+tools/
+.eslintrc*
+.stylelintrc*
+eslint.config*
+stylelint.config*
+# Environment / secrets (belt-and-suspenders -- never commit these)
+.env
+.env.*
+*.pem
+*.key

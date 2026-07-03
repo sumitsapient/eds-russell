@@ -174,6 +174,32 @@ export function announceToScreenReader(message, priority = 'polite') {
   requestAnimationFrame(() => { live.textContent = message; });
 }
 
+// ── PHASE 9: SECURITY ────────────────────────────────────────────────────────
+
+/**
+ * Sanitizes an HTML string using DOMPurify to prevent XSS.
+ * Use whenever inserting author-controlled or third-party HTML into the DOM.
+ *
+ * @param {string} dirty  Raw HTML string (potentially unsafe)
+ * @param {object} [config] DOMPurify config overrides
+ * @returns {string} Safe HTML string
+ *
+ * @example
+ * // Instead of: el.innerHTML = unsafeString;
+ * // Use:        el.innerHTML = sanitizeHTML(unsafeString);
+ */
+export async function sanitizeHTML(dirty, config = {}) {
+  if (!dirty) return '';
+  // DOMPurify is bundled in scripts/ to avoid external CDN dependency
+  const { default: DOMPurify } = await import('./dompurify.min.js');
+  return DOMPurify.sanitize(dirty, {
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
+    ...config,
+  });
+}
+
 /**
  * load fonts.css and set a session storage flag
  */

@@ -96,6 +96,27 @@
     - [A/B Experimentation](#ab-experimentation)
     - [Configuration Setup](#configuration-setup)
     - [Analytics Q&A](#analytics-qa)
+    - [Phase 6 Real Testing Session](#phase-6-real-testing-session)
+13. [Phase 7 — Internationalization & Localization](#phase-7--internationalization--localization)
+    - [Locale Detection](#locale-detection)
+    - [RTL Support](#rtl-support)
+    - [Locale-Aware Utilities](#locale-aware-utilities)
+    - [hreflang Tags](#hreflang-tags)
+    - [Language Switcher Block](#language-switcher-block)
+    - [i18n Q&A](#i18n-qa)
+14. [Phase 8 — Accessibility (WCAG 2.1 AA)](#phase-8--accessibility-wcag-21-aa)
+    - [What is axe-core](#what-is-axe-core)
+    - [The 57% Rule](#the-57-rule)
+    - [Real Violation Found](#real-violation-found)
+    - [Accessibility Utilities](#accessibility-utilities)
+    - [WCAG Rules We Cover](#wcag-rules-we-cover)
+    - [Accessibility Q&A](#accessibility-qa)
+15. [Phase 9 — Security & Governance](#phase-9--security--governance)
+    - [HTTP Security Headers](#http-security-headers)
+    - [Content Security Policy](#content-security-policy)
+    - [DOMPurify — Sanitizing HTML](#dompurify--sanitizing-html)
+    - [.hlxignore — File Protection](#hlxignore--file-protection)
+    - [Security Q&A](#security-qa)
 
 ---
 
@@ -3789,5 +3810,587 @@ This catches ~57% of accessibility issues automatically (axe-core's own publishe
 
 ---
 
+## Phase 8 — Real-World Verification (July 3, 2026)
+
+### What axe-core found on the first run
+
+After pushing Phase 8 code and visiting the preview URL, the console showed:
+
+```
+[a11y] ❌ 1 accessibility violation(s):
+
+  MODERATE — page-has-heading-one
+    Ensure that the page, or at least one of its frames contains a level-one heading
+    <html lang="en">
+```
+
+**This is exactly what the tool is for.** A real accessibility issue caught automatically, in the browser, with zero setup.
+
+---
+
+### The fix
+
+The `/home` page had no `<h1>` element. Screen reader users navigate pages by jumping between headings — the `<h1>` is the "title" of the page in the DOM.
+
+**Debug command that shows the heading structure:**
+```javascript
+['h1','h2','h3'].forEach(tag => {
+  const els = document.querySelectorAll(tag);
+  console.log(`${tag}: ${els.length} found`);
+  els.forEach(el => console.log(`  → "${el.textContent.trim()}"`));
+});
+```
+
+**Fix:** Author opens the page in Universal Editor, finds the main heading, and changes its format from "Heading 2" (or plain paragraph) to **Heading 1**. This is a **content fix**, not a code fix.
+
+**After fix:** Run the console command again — axe shows:
+```
+[a11y] ✅ No accessibility violations found.
+```
+
+---
+
+### What axe-core is
+
+Made by **Deque Systems** — the same engine powering Lighthouse accessibility audits and the axe DevTools Chrome extension.
+
+**How it works:**
+```
+axe.run()
+    ↓ scans every element in the live DOM
+    ↓ checks ~100+ WCAG rules
+    ↓ returns violations / passes / incomplete
+```
+
+**The 57% rule:** axe-core catches ~57% of all accessibility issues automatically (Deque's own published stat). The other 43% require human testing — does alt text actually describe the image? Is the reading order logical? Does it work with a real screen reader?
+
+**Why it lives in `delayed.js` not a test file:**
+- EDS has no unit test runner yet (Phase 10)
+- `delayed.js` only runs on `localhost` and `*.aem.page` — never production (`*.aem.live`)
+- Every developer sees violations in the browser they're already using — zero extra setup
+
+---
+
 *Last updated: July 3, 2026*
+
+---
+
+## Phase 6 Real Testing Session
+
+> What we actually did on July 3, 2026 — step by step.
+
+### The key discovery: Adobe Launch was already configured
+
+My company already had AEP + Adobe Launch + Adobe Analytics. In traditional AEM this was loaded in `page.html`. In EDS there is no `page.html` — the equivalent is `delayed.js`.
+
+**The mapping:**
+```
+Traditional AEM          EDS
+────────────────         ──────────────
+page.html                delayed.js
+  └─ <script src=          └─ creates <script> tag
+      launch-xxx.js>            → launch-xxx.js
+```
+
+We replaced `loadAlloy()` with `loadLaunch()` — same Launch URL, just loaded differently.
+
+---
+
+### What we verified
+
+**Step 1 — Launch loads at 3 seconds**
+
+Network tab filtered by `adobe` showed:
+```
+launch-d51eda9acd14-development.min.js    200    script    delayed.js:65    165 kB    3.11s
+RC5aa51012537144a...source.min.js         200    script    launch-xxx.js    0.6 kB    377ms
+```
+Initiator `delayed.js:65` confirms our code loaded it.
+
+**Step 2 — ACDL `page loaded` event**
+
+```javascript
+window.adobeDataLayer.forEach((item, i) => {
+  if (item.event) console.log(`[${i}] ${item.event}`, item);
+});
+// Output:
+// [0] page loaded
+//     web.webPageDetails.name:        "Home"
+//     web.webPageDetails.URL:         "http://localhost:3000/home"
+//     web.webPageDetails.siteSection: "home"
+//     web.webPageDetails.template:    "default"
+```
+
+**Step 3 — Accordion click → AEP Edge Network beacon**
+
+Clicked an accordion link → Network tab showed:
+```
+collect?configId=6e227148-bb5a-4a9b-8c00-1f27cd88f8d3   204   Fetch/XHR
+```
+**204 No Content** = AEP Edge accepted the data, nothing to return.
+
+Payload (Payload tab):
+```json
+web.webInteraction:
+  name:       "What is AEM"
+  region:     "what-is-aem"       ← Phase 5 heading ID enriching Phase 6 data!
+  type:       "other"
+  linkClicks: { value: 1 }
+```
+
+**`region: "what-is-aem"`** came from `decorateHeadingIds()` we built in Phase 5. alloy's automatic link tracking found the nearest `id` attribute on an ancestor and used it as the region. Phase 5 directly enriched Phase 6 analytics data.
+
+**Step 4 — AEP Debugger Extension**
+
+Installed: `https://chromewebstore.google.com/detail/adobe-experience-platform/bfnnokhpnncpkdmbokanobigaccjkpob`
+
+Confirmed on preview URL `https://main--eds-russell--sumitsapient.aem.page/home`:
+```
+Page Title:  Home
+Page URL:    https://main--eds-russell--sumitsapient.aem.page/home
+Hostname:    edge.adobedc.net
+Pathname:    /ee/or2/v1/collect
+configId:    6e227148-bb5a-4a9b...     ← company's real Datastream ID
+Timestamp:   Jul 3, 2026, 3:38:57 pm  ← real-time!
+```
+
+**Step 5 — AEP Query Service**
+
+Table: `event_ds` (Dataset ID: `69c2e613c608cdc9d7198c59`)
+
+```sql
+SELECT
+  timestamp,
+  web.webPageDetails.URL        AS page_url,
+  web.webInteraction.name       AS link_clicked,
+  web.webInteraction.region     AS link_region
+FROM event_ds
+WHERE DATE(timestamp) = CURRENT_DATE
+  AND web.webInteraction.name IS NOT NULL
+ORDER BY timestamp DESC
+LIMIT 20;
+```
+
+Data from existing production pages appeared immediately. EDS localhost data appears after 15–30 min ingestion delay. Preview URL data (`*.aem.page`) arrives faster.
+
+---
+
+### Two layers of click tracking
+
+| Layer | What tracks it | What it captures |
+|---|---|---|
+| **Automatic** | Launch's alloy click collection | Every `<a>` link click on the page |
+| **Custom** | Our `trackCTAClicks()` | Only `.button` class clicks, with richer CTA context |
+
+The automatic layer gives the `region` dimension (from heading IDs). Our custom layer gives the CTA text and section context.
+
+---
+
+### 204 vs 200 on AEP Edge
+
+| Response | Endpoint | Meaning |
+|---|---|---|
+| **204 No Content** | `/collect` | Fire-and-forget — data accepted |
+| **200 OK** | `/interact` | Browser needs response (ECID, Target decisions) |
+
+Click events use `/collect` → 204. Page load with `renderDecisions: true` uses `/interact` → 200.
+
+---
+
+## Phase 7 — Internationalization & Localization
+
+> How EDS serves the same site in multiple languages.
+
+### Locale Detection
+
+EDS uses **URL path-based locale detection** — the simplest and most SEO-friendly approach.
+
+```
+/home           → locale: en (default)
+/fr/home        → locale: fr
+/de/about       → locale: de
+/ar/contact     → locale: ar + dir="rtl"
+```
+
+Code in `scripts.js`:
+```javascript
+const SUPPORTED_LOCALES = ['en', 'fr', 'de', 'es', 'it', 'ja', 'ko', 'zh', 'ar', 'he', 'pt', 'nl'];
+
+export function getLocale() {
+  const [, first] = window.location.pathname.split('/');
+  return SUPPORTED_LOCALES.includes(first) ? first : 'en';
+}
+```
+
+`decorateI18n()` runs in the **Eager phase** (before first render) and sets:
+```javascript
+document.documentElement.lang = 'fr';   // for /fr/* pages
+document.documentElement.dir = 'rtl';   // for /ar/*, /he/* pages
+```
+
+---
+
+### RTL Support
+
+**`dir="rtl"` on `<html>`** flips the entire layout automatically.
+
+Tested live: `document.documentElement.dir = 'rtl'` in DevTools console — the whole page mirrored instantly.
+
+**Why it works without extra CSS** — CSS Logical Properties:
+
+| Traditional (never flips) | Logical (auto-flips with dir) |
+|---|---|
+| `margin-left: 16px` | `margin-inline-start: 16px` |
+| `padding-right: 8px` | `padding-inline-end: 8px` |
+| `border-left: 2px solid` | `border-inline-start: 2px solid` |
+| `text-align: left` | `text-align: start` |
+
+Our `lazy-styles.css` has `[dir="rtl"]` overrides for any rules that can't use logical properties.
+
+---
+
+### Locale-Aware Utilities
+
+Exported from `scripts.js`, usable by any block:
+
+```javascript
+// Date formatting — same date, different locale
+formatDate('2026-07-03', 'en')  // "July 3, 2026"
+formatDate('2026-07-03', 'fr')  // "3 juillet 2026"
+formatDate('2026-07-03', 'ja')  // "2026年7月3日"
+
+// Number/currency formatting
+formatNumber(1234567.89, 'en', { style: 'currency', currency: 'USD' })  // "$1,234,567.89"
+formatNumber(1234567.89, 'de', { style: 'currency', currency: 'EUR' })  // "1.234.567,89 €"
+```
+
+All powered by the browser's built-in `Intl` API — zero library weight.
+
+---
+
+### hreflang Tags
+
+Tell Google which pages are language equivalents. Injected by `decorateI18n()` from page metadata.
+
+**Author sets in Page Properties:**
+```
+hreflang: en:https://site.com/home, fr:https://site.com/fr/home, de:https://site.com/de/home
+```
+
+**Results in `<head>`:**
+```html
+<link rel="alternate" hreflang="en"        href="https://site.com/home">
+<link rel="alternate" hreflang="fr"        href="https://site.com/fr/home">
+<link rel="alternate" hreflang="de"        href="https://site.com/de/home">
+<link rel="alternate" hreflang="x-default" href="https://site.com/home">
+```
+
+Without hreflang, Google may serve the wrong language version to users in France.
+
+---
+
+### Language Switcher Block
+
+The `language-switcher` block renders as an accessible `<select>` dropdown.
+
+**Author content (one row per language):**
+```
+| Language Switcher |           |
+| English           | en        |
+| Français          | fr        |
+| Deutsch           | de        |
+```
+
+On selection → navigates to the equivalent page in the new locale, preserving the current path segment.
+
+---
+
+### i18n Q&A
+
+**Q: Why URL-based locale, not `Accept-Language` header?**
+A: AEM EDS serves from CDN — there is no server-side logic. The CDN doesn't fork responses by `Accept-Language`. URL-based is the only option, and also the most SEO-friendly (each language has its own URL).
+
+**Q: Do I need to duplicate all content for each language?**
+A: Yes — each locale has its own content tree in AEM. `/en/home`, `/fr/home`, `/de/home` are separate pages authored separately. The EDS code is language-agnostic.
+
+**Q: What about locale-specific blocks?**
+A: Use `getLocale()` inside any block. Example: a date field block uses `formatDate(value, getLocale())` to render in the correct format.
+
+---
+
+## Phase 8 — Accessibility (WCAG 2.1 AA)
+
+> Automated + manual testing to ensure the site works for everyone.
+
+### What is axe-core
+
+Open-source accessibility testing engine by **Deque Systems** — the same engine inside:
+- Chrome DevTools Lighthouse
+- axe DevTools Chrome extension
+- Many CI/CD pipelines
+
+In our `delayed.js`:
+```javascript
+function runAccessibilityAudit() {
+  const isDev = hostname === 'localhost' || hostname.includes('.aem.page');
+  if (!isDev) return;  // NEVER runs on *.aem.live (production)
+  // loads axe from CDN, runs axe.run(), logs violations to console
+}
+```
+
+---
+
+### The 57% Rule
+
+axe-core catches **~57% of accessibility issues automatically** (Deque's published stat).
+
+| axe finds automatically | Requires human testing |
+|---|---|
+| Missing `alt` text | Does alt text actually describe the image? |
+| Low color contrast ratio | Is it readable for dyslexic users? |
+| Missing form `<label>` | Is the error message helpful? |
+| Missing `<h1>` | Does heading hierarchy make logical sense? |
+| Broken ARIA attributes | Does it actually work with VoiceOver/NVDA? |
+
+---
+
+### Real Violation Found
+
+On `https://main--eds-russell--sumitsapient.aem.page/home`:
+
+```
+[a11y] ❌ 1 accessibility violation(s):
+  MODERATE — page-has-heading-one
+    Ensure that the page contains a level-one heading
+    <html lang="en">
+```
+
+**Root cause:** The home page had no `<h1>`. The main heading was `<h2>`.
+
+**Debug command:**
+```javascript
+['h1','h2','h3'].forEach(tag => {
+  const els = document.querySelectorAll(tag);
+  console.log(`${tag}: ${els.length} found`);
+});
+```
+
+**Fix:** Author opened page in Universal Editor → changed main heading format to Heading 1. This is a **content fix**, not a code fix.
+
+**After fix:**
+```
+[a11y] ✅ No accessibility violations found.
+```
+
+---
+
+### Accessibility Utilities
+
+Exported from `scripts.js`:
+
+**`trapFocus(element)`** — for modals and dialogs:
+```javascript
+// Open modal:
+const cleanup = trapFocus(modalElement);
+// Close modal:
+cleanup(); // removes the keydown listener
+```
+Tab wraps from last focusable → first. Shift+Tab wraps first → last. Without this, keyboard users Tab out of the modal into the page behind it.
+
+**`announceToScreenReader(message)`** — ARIA live region:
+```javascript
+announceToScreenReader('3 results found');
+// Creates an invisible <div aria-live="polite"> and sets its text.
+// Screen reader announces it without moving focus.
+```
+
+---
+
+### WCAG Rules We Cover
+
+| Rule | WCAG | How |
+|---|---|---|
+| `lang` on `<html>` | 3.1.1 | `decorateI18n()` sets correct locale |
+| One `<h1>` per page | 2.4.6 | axe-core catches violations |
+| Button min 44×44px | 2.5.5 | `styles.css` min-height/min-width on buttons |
+| Focus visible | 2.4.7 | Browser default + our `:focus-visible` styles |
+| Skip to content | 2.4.1 | `<a href="#main" class="visually-hidden">` in `head.html` |
+| Color contrast | 1.4.3 | axe-core checks all text |
+| High contrast mode | 1.4.11 | `@media (prefers-contrast: more)` in `lazy-styles.css` |
+| Screen reader announcements | 4.1.3 | `announceToScreenReader()` utility |
+
+---
+
+### Accessibility Q&A
+
+**Q: Why `prefers-contrast: more` instead of just making everything high contrast?**
+A: Most users prefer the normal design. Forcing high contrast everywhere hurts the visual design. `prefers-contrast: more` only activates for users who have enabled "Increase Contrast" in their OS settings.
+
+**Q: What is `visually-hidden`?**
+A: A CSS class that hides content from sighted users but keeps it accessible to screen readers:
+```css
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+```
+Used for "Skip to content" links and ARIA live regions.
+
+---
+
+## Phase 9 — Security & Governance
+
+> Protecting the site and its users without adding performance overhead.
+
+### HTTP Security Headers
+
+EDS serves from a CDN. You can add HTTP response headers via a `_headers` file at the project root. Same format as Netlify.
+
+**`_headers` file:**
+```
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Content-Security-Policy: ...
+```
+
+The `/*` pattern applies headers to every URL on the site.
+
+---
+
+### HTTP Headers Explained
+
+| Header | What it prevents | Value we use |
+|---|---|---|
+| `X-Frame-Options` | Clickjacking — site embedded in an iframe on another domain | `SAMEORIGIN` |
+| `X-Content-Type-Options` | MIME sniffing — browser guessing wrong content type for a script | `nosniff` |
+| `Referrer-Policy` | Leaking full URLs to third parties | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | Malicious scripts accessing camera, mic, location | `camera=(), microphone=(), geolocation=()` |
+| `Content-Security-Policy` | XSS — blocks unauthorized scripts/styles/connections | See below |
+
+---
+
+### Content Security Policy
+
+CSP is the most powerful security header — it tells the browser exactly which sources are allowed for scripts, styles, images, and network connections.
+
+**Our CSP breakdown:**
+
+```
+default-src 'self'
+  → block everything by default unless explicitly allowed
+
+script-src 'self'
+  https://assets.adobedtm.com        ← Adobe Launch
+  https://cdnjs.cloudflare.com       ← axe-core (dev/preview only)
+  https://cdn1.adoberesources.net    ← alloy.js
+  'unsafe-inline'                    ← AEM adds inline scripts during decoration
+
+style-src 'self' 'unsafe-inline'
+  → AEM decoration adds inline styles
+
+img-src 'self' data: blob:
+  https://*.adobeaemcloud.com        ← AEM author images
+  https://placehold.co               ← placeholder images in drafts
+
+connect-src 'self'
+  https://edge.adobedc.net           ← AEP Edge Network (alloy)
+  https://dpm.demdex.net             ← ECID service
+  https://cm.everesttech.net         ← Adobe Audience Manager
+
+frame-src
+  https://www.youtube-nocookie.com   ← video-embed block
+  https://www.youtube.com
+
+object-src 'none'                    ← block Flash/Java entirely
+base-uri 'self'                      ← prevent base tag hijacking
+form-action 'self'                   ← forms can only POST to same origin
+```
+
+**`'unsafe-inline'` — why we need it:**
+AEM's `decorate()` functions add `style` attributes to elements during page decoration. Without `'unsafe-inline'` the browser would block them. This is a trade-off — CSP without `'unsafe-inline'` would require nonces on every inline script, which EDS doesn't support yet.
+
+---
+
+### DOMPurify — Sanitizing HTML
+
+`scripts/dompurify.min.js` is already in the project. Phase 9 wired it up as an exported utility.
+
+**When to use it:**
+```javascript
+// ❌ NEVER do this with untrusted content:
+element.innerHTML = userContent;
+
+// ✅ Always sanitize first:
+import { sanitizeHTML } from '../../scripts/scripts.js';
+element.innerHTML = await sanitizeHTML(userContent);
+```
+
+**What DOMPurify removes:**
+- `<script>` tags
+- `<iframe>`, `<object>`, `<embed>`
+- Event handlers: `onerror`, `onload`, `onclick`, `onmouseover`
+- `javascript:` URLs in `href` attributes
+
+**When NOT to use it:**
+- AEM-authored content from `*.aem.page` / `*.aem.live` — already sanitized by the platform
+- Static HTML in your blocks — you wrote it, you trust it
+- Use only for content from external APIs, user-generated input, or third-party sources
+
+---
+
+### .hlxignore — File Protection
+
+`.hlxignore` tells AEM's CDN **never to serve** certain files — same format as `.gitignore`.
+
+**Key rules we added:**
+
+```
+# Never serve tooling config — reveals project structure
+tools/
+.eslintrc*
+.stylelintrc*
+
+# Never serve env files — belt-and-suspenders (never commit these anyway)
+.env
+.env.*
+*.pem
+*.key
+```
+
+**Test it:** After deploying, try accessing `https://main--eds-russell--sumitsapient.aem.page/package.json` — should return 404.
+
+---
+
+### Security Q&A
+
+**Q: Does CSP break anything on the site?**
+A: Possibly during development if you add a new third-party script. You'll see a CSP violation in the console:
+```
+Refused to load script from 'https://new-vendor.com/script.js'
+because it violates the Content-Security-Policy directive: "script-src 'self' ..."
+```
+Fix: add the new domain to `script-src` in `_headers`.
+
+**Q: Why `'unsafe-inline'` in CSP — doesn't that defeat the purpose?**
+A: Partially. `'unsafe-inline'` allows inline `<script>` tags and `style=""` attributes. In an ideal world we'd use nonces. But AEM's decoration pattern depends on inline styles, and removing `'unsafe-inline'` from `style-src` breaks layout. It's a known trade-off in the EDS architecture.
+
+**Q: What is clickjacking?**
+A: An attacker puts your site in a transparent iframe on their page. The user thinks they're clicking on the attacker's page but actually clicking your site — potentially triggering purchases, form submissions, or account actions. `X-Frame-Options: SAMEORIGIN` prevents this by blocking the iframe.
+
+**Q: Does DOMPurify add any performance overhead?**
+A: It's lazy-imported — only loads when `sanitizeHTML()` is called. The library is ~45KB minified and only needed for blocks that handle external content. Most blocks never call it.
+
+**Q: What about HTTPS? Does EDS handle it?**
+A: Yes — `*.aem.page` and `*.aem.live` are always HTTPS. Custom domains also get automatic TLS via the AEM CDN. You don't manage certificates.
+
+---
+
+*Last updated: July 3, 2026*
+
 
