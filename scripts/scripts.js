@@ -124,6 +124,57 @@ export function moveInstrumentation(from, to) {
 }
 
 /**
+ * Traps keyboard focus inside an element (for modals/dialogs).
+ * Tab wraps from last focusable → first; Shift+Tab wraps first → last.
+ * @param {Element} element The container to trap focus within
+ * @returns {Function} Cleanup function — call it when the trap should be removed
+ */
+export function trapFocus(element) {
+  const focusableSelector = [
+    'a[href]', 'button:not([disabled])', 'textarea',
+    'input', 'select', '[tabindex]:not([tabindex="-1"])',
+  ].join(', ');
+  const focusable = [...element.querySelectorAll(focusableSelector)];
+  if (!focusable.length) return () => {};
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  const handleKeydown = (e) => {
+    if (e.key !== 'Tab') return;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+  element.addEventListener('keydown', handleKeydown);
+  return () => element.removeEventListener('keydown', handleKeydown);
+}
+
+/**
+ * Announces a message to screen readers via an ARIA live region.
+ * Invisible to sighted users — only read aloud by assistive technology.
+ * @param {string} message The text to announce
+ * @param {'polite'|'assertive'} [priority='polite'] polite = waits, assertive = interrupts
+ */
+export function announceToScreenReader(message, priority = 'polite') {
+  let live = document.getElementById('eds-live-region');
+  if (!live) {
+    live = document.createElement('div');
+    live.id = 'eds-live-region';
+    live.setAttribute('aria-live', priority);
+    live.setAttribute('aria-atomic', 'true');
+    live.className = 'visually-hidden';
+    document.body.append(live);
+  }
+  // Clear first — screen reader fires on content change, not on same content
+  live.textContent = '';
+  requestAnimationFrame(() => { live.textContent = message; });
+}
+
+/**
  * load fonts.css and set a session storage flag
  */
 async function loadFonts() {

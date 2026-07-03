@@ -11,25 +11,7 @@
  *
  * @param {Element} block The modal block element
  */
-
-function trapFocus(element) {
-  const focusableSelector = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
-  const focusable = [...element.querySelectorAll(focusableSelector)];
-  if (!focusable.length) return;
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-
-  element.addEventListener('keydown', (e) => {
-    if (e.key !== 'Tab') return;
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  });
-}
+import { trapFocus } from '../../scripts/scripts.js';
 
 export default function decorate(block) {
   const content = block.innerHTML;

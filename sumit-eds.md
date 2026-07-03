@@ -3497,9 +3497,6 @@ These use the browser's built-in `Intl.DateTimeFormat` and `Intl.NumberFormat` A
 
 ### Language Switcher Q&A
 
----
-
-**Q: How does switching from `/home` to `/fr/home` work when there's no locale prefix?**
 
 The switcher detects whether the current path has a locale prefix:
 ```javascript
@@ -3515,6 +3512,280 @@ The code strips the current locale (if any) and prepends the new one. If the pag
 **Q: What if a French page doesn't exist? Will the user land on a 404?**
 
 Yes — EDS doesn't auto-fallback to English if a French page doesn't exist. The switcher should only show languages that actually have content. In practice, authors control which languages appear in the Language Switcher block — they only add rows for languages that have been translated.
+
+---
+
+### Phase 7 Verification (July 3, 2026)
+
+**Step 1 — Locale detection on English page:**
+```javascript
+console.log(document.documentElement.lang); // "en"
+console.log(document.documentElement.dir);  // ""  (ltr by default)
+```
+
+**Step 2 — Simulate French locale detection:**
+```javascript
+const path = '/fr/home';
+const [, first] = path.split('/');
+const supported = ['en','fr','de','es','it','ja','ko','zh','ar','he','pt','nl'];
+console.log(supported.includes(first) ? first : 'en'); // "fr"
+```
+
+**Step 3 — Date/number formatting (uses browser Intl API, no library):**
+```javascript
+const { formatDate, formatNumber } = await import('/scripts/scripts.js');
+formatDate('2026-07-03', 'fr');  // "3 juillet 2026"
+formatDate('2026-07-03', 'ja');  // "2026年7月3日"
+formatNumber(1234567.89, 'de', { style: 'currency', currency: 'EUR' }); // "1.234.567,89 €"
+```
+
+**Step 4 — RTL visual flip:**
+```javascript
+document.documentElement.lang = 'ar';
+document.documentElement.dir = 'rtl';
+// Page layout mirrors — text aligns right, nav flips
+// Undo: document.documentElement.dir = 'ltr';
+```
+
+**Step 5 — hreflang simulation:**
+```javascript
+// Simulate what decorateI18n() injects when author sets Language Alternates in Page Properties
+[
+  { lang: 'en', href: 'https://site.com/home' },
+  { lang: 'fr', href: 'https://site.com/fr/home' },
+  { lang: 'x-default', href: 'https://site.com/home' },
+].forEach(({ lang, href }) => {
+  const link = document.createElement('link');
+  link.rel = 'alternate'; link.hreflang = lang; link.href = href;
+  document.head.append(link);
+});
+// DevTools → Elements → <head> → see the <link rel="alternate"> tags
+```
+
+---
+
+## Phase 8 — Accessibility (WCAG 2.1 AA+)
+
+> Making every block usable by everyone — keyboard, screen reader, high contrast, and touch.
+
+---
+
+### What Was Already Done (Before Phase 8)
+
+Auditing existing blocks showed most accessibility was already in place:
+
+| Block | What was already there |
+|---|---|
+| `accordion.js` | `role="region"`, `aria-expanded`, `aria-controls`, `id` on headers/panels, Arrow/Home/End keyboard nav |
+| `tabs.js` | `role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`, `tabindex` roving, Arrow/Home/End nav |
+| `modal.js` | `<dialog>` element, `aria-modal`, focus trap, `previousFocus` restore on close, `Escape` key |
+| `scripts.js` | `addSkipLink()` — skip-to-content link, `main` gets `id="main-content"` |
+| `lazy-styles.css` | `:focus-visible` outline, `prefers-reduced-motion` |
+
+**Phase 8 added the missing pieces:**
+- `trapFocus` and `announceToScreenReader` exported from `scripts.js` — shared utilities
+- `prefers-contrast: more` CSS — high contrast mode
+- Touch target minimum sizes (44×44px) on buttons
+- `.visually-hidden` utility class
+- `axe-core` auto-audit in `delayed.js` (DEV/preview only)
+- Updated `modal.js` to import `trapFocus` from `scripts.js` (no duplication)
+
+---
+
+### The Four Principles of Accessibility (POUR)
+
+WCAG 2.1 is built on four principles. Every rule traces back to one of these:
+
+| Principle | Means | Examples |
+|---|---|---|
+| **P**erceivable | Users must be able to perceive all content | Alt text on images, captions for video, contrast ratio |
+| **O**perable | Users must be able to operate all UI | Keyboard navigation, no seizure-inducing content, enough time |
+| **R**obustable | Content must be robustly interpreted by assistive tech | Correct ARIA, valid HTML, semantic elements |
+| **U**nderstandable | Content and UI must be understandable | Clear labels, predictable navigation, helpful error messages |
+
+---
+
+### The `trapFocus` Utility
+
+Focus trapping keeps keyboard focus inside a modal/dialog while it's open. Without it, pressing Tab would let focus escape to elements behind the overlay — which are invisible to the user.
+
+```javascript
+// scripts.js — exported for any block to use
+export function trapFocus(element) {
+  const focusableSelector = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+  const focusable = [...element.querySelectorAll(focusableSelector)];
+  if (!focusable.length) return () => {};
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  const handleKeydown = (e) => {
+    if (e.key !== 'Tab') return;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus(); // Shift+Tab from first → wrap to last
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus(); // Tab from last → wrap to first
+    }
+  };
+
+  element.addEventListener('keydown', handleKeydown);
+  return () => element.removeEventListener('keydown', handleKeydown); // cleanup fn
+}
+```
+
+**The cleanup return value** — calling the returned function removes the event listener when the modal closes. Without this, every time the modal opened, a new listener would stack up.
+
+---
+
+### The `announceToScreenReader` Utility
+
+Some interactions change content without navigating (filtering results, form validation, live search). Sighted users see the change visually. Screen reader users hear nothing unless you announce it.
+
+```javascript
+export function announceToScreenReader(message, priority = 'polite') {
+  let live = document.getElementById('eds-live-region');
+  if (!live) {
+    live = document.createElement('div');
+    live.id = 'eds-live-region';
+    live.setAttribute('aria-live', priority); // 'polite' or 'assertive'
+    live.setAttribute('aria-atomic', 'true');
+    live.className = 'visually-hidden';
+    document.body.append(live);
+  }
+  // Must clear first, then set — screen reader fires on content change
+  live.textContent = '';
+  requestAnimationFrame(() => { live.textContent = message; });
+}
+```
+
+| `aria-live` value | When to use |
+|---|---|
+| `polite` | Non-urgent updates — waits for user to finish current action |
+| `assertive` | Urgent errors — interrupts immediately (use sparingly) |
+
+**Usage in a block:**
+```javascript
+import { announceToScreenReader } from '../../scripts/scripts.js';
+
+// After a filter applies and updates results:
+announceToScreenReader(`${results.length} results found`);
+// Screen reader says: "12 results found"
+```
+
+---
+
+### The `.visually-hidden` Pattern
+
+Content that needs to be accessible to screen readers but invisible to sighted users:
+
+```css
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+```
+
+**Why not `display:none` or `visibility:hidden`?** Both of those also hide content from screen readers. `.visually-hidden` makes content invisible to eyes but fully readable by assistive technology.
+
+**Common uses:**
+```html
+<!-- Icon button with no visible text — add screen reader label -->
+<button class="search-btn">
+  <svg aria-hidden="true">...</svg>
+  <span class="visually-hidden">Search</span>
+</button>
+
+<!-- ARIA live region — where announceToScreenReader() writes to -->
+<div id="eds-live-region" aria-live="polite" class="visually-hidden"></div>
+```
+
+---
+
+### High Contrast Mode (`prefers-contrast: more`)
+
+Some users run their OS in high contrast mode (Windows High Contrast, macOS Increase Contrast). Without `prefers-contrast` support, the design breaks — colors become unreadable or invisible.
+
+```css
+@media (prefers-contrast: more) {
+  :root {
+    --color-primary: #00c;       /* pure blue — maximum contrast */
+    --color-text: #000;
+    --color-background: #fff;
+    --color-border: #000;
+  }
+
+  /* Make all links underlined — visual affordance for low-vision users */
+  a:any-link { text-decoration: underline; }
+
+  /* Thicker button borders — more visible in high contrast */
+  a.button:any-link, button.button { border: 3px solid currentcolor; }
+}
+```
+
+**How to test:** Open DevTools → Rendering tab → "Emulate CSS media feature prefers-contrast" → select "more".
+
+---
+
+### Touch Target Size (WCAG 2.5.5)
+
+Minimum interactive element size: **44×44 CSS pixels**. Users with motor impairments and anyone using a touchscreen needs large enough tap targets.
+
+Added to `styles.css`:
+```css
+a.button:any-link,
+button.button {
+  min-height: 44px;
+  min-width: 44px;
+}
+```
+
+---
+
+### axe-core Auto-Audit (DEV Only)
+
+`runAccessibilityAudit()` in `delayed.js` automatically scans the page and logs violations in the console. It only runs on `localhost` and `*.aem.page` — never on production (`*.aem.live`).
+
+**What it looks like in the console on a page with issues:**
+```
+[a11y] ❌ 2 accessibility violation(s):
+  CRITICAL — color-contrast
+    Ensure the contrast between foreground and background colors...
+    <p style="color: #aaa">Light grey text on white background</p>
+
+  MODERATE — image-alt
+    Ensure img elements have alternate text
+    <img src="hero.jpg">
+```
+
+**What it looks like on a clean page:**
+```
+[a11y] ✅ No accessibility violations found.
+```
+
+This catches ~57% of accessibility issues automatically (axe-core's own published figure). The remaining 43% require manual testing with a screen reader.
+
+---
+
+### WCAG 2.1 AA Checklist for EDS Blocks
+
+| Criterion | What to check | Tool |
+|---|---|---|
+| 1.1.1 Non-text Content | Every `<img>` has meaningful `alt` text | axe-core |
+| 1.4.3 Contrast (Minimum) | Text: 4.5:1 ratio, UI elements: 3:1 | axe-core + [contrast checker](https://webaim.org/resources/contrastchecker/) |
+| 1.4.4 Resize Text | Page usable at 200% zoom | Manual browser test |
+| 2.1.1 Keyboard | All interactive elements reachable by Tab | Manual keyboard test |
+| 2.1.2 No Keyboard Trap | Tab can always leave any component | Manual — especially modals |
+| 2.4.3 Focus Order | Tab order matches visual reading order | Manual keyboard test |
+| 2.4.7 Focus Visible | Focused elements have visible outline | DevTools → `:focus` inspection |
+| 2.5.5 Target Size | Buttons at least 44×44px | DevTools → computed styles |
+| 3.1.1 Language of Page | `<html lang="en">` is set | DevTools → Elements |
+| 4.1.2 Name, Role, Value | Interactive elements have ARIA names | axe-core |
 
 ---
 

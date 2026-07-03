@@ -84,6 +84,29 @@ main .section.animate.visible {
   top: var(--spacing-s);
 }
 
+/* === HIGH CONTRAST MODE === */
+@media (prefers-contrast: more) {
+  :root {
+    --color-primary: #00c;
+    --color-primary-hover: #009;
+    --color-text: #000;
+    --color-text-muted: #333;
+    --color-background: #fff;
+    --color-border: #000;
+    --color-surface: #f0f0f0;
+  }
+
+  a:any-link {
+    text-decoration: underline;
+  }
+
+  a.button:any-link,
+  button.button {
+    border-width: 3px;
+    border-color: currentcolor;
+  }
+}
+
 /* === REDUCED MOTION === */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -213,6 +213,48 @@ function setupExperimentation() {
   });
 }
 
+// ── 6. ACCESSIBILITY AUDIT (DEV / PREVIEW ONLY) ──────────────────────────────
+
+/**
+ * Loads axe-core and runs an automated accessibility audit.
+ * Only runs on localhost and *.aem.page — never on *.aem.live (production).
+ * Logs violations to the browser console grouped by severity.
+ */
+function runAccessibilityAudit() {
+  const { hostname } = window.location;
+  const isDev = hostname === 'localhost' || hostname.includes('.aem.page');
+  if (!isDev) return;
+
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.1/axe.min.js';
+  script.onload = () => {
+    window.axe.run().then(({ violations }) => {
+      if (!violations.length) {
+        // eslint-disable-next-line no-console
+        console.info('[a11y] \u2705 No accessibility violations found.');
+        return;
+      }
+      // eslint-disable-next-line no-console
+      console.group(`[a11y] \u274C ${violations.length} accessibility violation(s):`);
+      violations.forEach(({
+        id, impact, description, nodes,
+      }) => {
+        // eslint-disable-next-line no-console
+        console.group(`${(impact || 'unknown').toUpperCase()} \u2014 ${id}`);
+        // eslint-disable-next-line no-console
+        console.log(description);
+        // eslint-disable-next-line no-console
+        nodes.forEach((n) => console.log(n.html));
+        // eslint-disable-next-line no-console
+        console.groupEnd();
+      });
+      // eslint-disable-next-line no-console
+      console.groupEnd();
+    });
+  };
+  document.head.append(script);
+}
+
 // ── INIT ─────────────────────────────────────────────────────────────────────
 pushPageLoadEvent();
 loadLaunch();
@@ -221,3 +263,4 @@ trackCTAClicks();
 trackScrollDepth();
 trackVideoEngagement();
 setupExperimentation();
+runAccessibilityAudit();
