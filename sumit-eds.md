@@ -116,6 +116,7 @@
     - [Content Security Policy](#content-security-policy)
     - [DOMPurify — Sanitizing HTML](#dompurify--sanitizing-html)
     - [.hlxignore — File Protection](#hlxignore--file-protection)
+    - [Authentication Hooks — Gated Content](#authentication-hooks--gated-content)
     - [Security Q&A](#security-qa)
 
 ---
@@ -4364,6 +4365,60 @@ tools/
 ```
 
 **Test it:** After deploying, try accessing `https://main--eds-russell--sumitsapient.aem.page/package.json` — should return 404.
+
+---
+
+### Authentication Hooks — Gated Content
+
+EDS has no server-side session management — everything is client-side. The auth system lives in `scripts/auth.js`.
+
+#### Token Storage
+
+```
+Cookie "eds-auth-token"            ← Primary (set by server login flow)
+sessionStorage "eds-auth-token"    ← Fallback (set by SPA login)
+```
+
+The code reads cookie first, falls back to sessionStorage — works with both traditional server login and SPA-style login.
+
+#### Two Levels of Gating
+
+**1. Page-level** — entire page is gated. Author sets in Page Properties:
+```
+auth-required: true
+login-page: /login        ← optional, defaults to /login
+```
+
+Runs in `loadEager()` **before `decorateMain()`** — unauthenticated users never see any content, not even a flash.
+
+**2. Block-level** — individual blocks are gated. Author adds class `auth-required` to any block in Universal Editor. Runs in `loadLazy()` — block is hidden immediately, then shown or removed after auth check.
+
+#### The Login Flow
+
+```
+User visits /gated-page
+    ↓
+requireAuth() checks token → not found
+    ↓
+Redirect to /login?redirect=%2Fgated-page
+    ↓
+Login page calls setAuthToken(token, user)
+    ↓
+Redirect back to /gated-page → auth passes → content shown
+```
+
+#### fetchWithAuth — Calling Protected APIs
+
+```javascript
+import { fetchWithAuth } from '../../scripts/auth.js';
+
+// Automatically adds Authorization: Bearer <token>
+const data = await fetchWithAuth('/api/portfolio/holdings').then(r => r.json());
+```
+
+#### Optional Server Validation
+
+Set `auth-validate-endpoint: /api/auth/validate` in Page Properties — `isAuthenticated()` will make a real API call to verify the token hasn't been revoked, not just check for its presence.
 
 ---
 

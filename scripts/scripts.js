@@ -542,6 +542,16 @@ async function loadEager(doc) {
   decorateSEO();
   decorateI18n();
   injectOrganizationSchema();
+
+  // ── PAGE-LEVEL AUTH GATING ──────────────────────────────────────────────
+  // If author sets "auth-required: true" in Page Properties,
+  // redirect to login before rendering any content.
+  if (getMetadata('auth-required') === 'true') {
+    const { requireAuth } = await import('./auth.js');
+    await requireAuth(); // throws + redirects if not authenticated
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   const main = doc.querySelector('main');
   if (main) {
     decorateMain(main);
@@ -639,6 +649,16 @@ async function loadLazy(doc) {
 
   // Apply section metadata side-effects (background, id, animate)
   decorateSectionMetadata(main);
+
+  // ── BLOCK-LEVEL AUTH GATING ─────────────────────────────────────────────
+  // Author adds class "auth-required" to any block in Universal Editor.
+  // Blocks are hidden until auth check resolves, then shown or removed.
+  const gatedBlocks = main.querySelectorAll('.block.auth-required');
+  if (gatedBlocks.length) {
+    const { gateBlock } = await import('./auth.js');
+    await Promise.all([...gatedBlocks].map(gateBlock));
+  }
+  // ────────────────────────────────────────────────────────────────────────
 
   const { hash } = window.location;
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
