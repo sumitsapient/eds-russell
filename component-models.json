@@ -530,6 +530,75 @@
     ]
   },
   {
+    "id": "insights-listing",
+    "fields": [
+      {
+        "component": "select",
+        "name": "category",
+        "label": "Default Category",
+        "valueType": "string",
+        "options": [
+          {
+            "name": "All",
+            "value": "all"
+          },
+          {
+            "name": "Equities",
+            "value": "Equities"
+          },
+          {
+            "name": "Fixed Income",
+            "value": "Fixed Income"
+          },
+          {
+            "name": "Alternatives",
+            "value": "Alternatives"
+          },
+          {
+            "name": "Market Outlook",
+            "value": "Market Outlook"
+          }
+        ]
+      },
+      {
+        "component": "select",
+        "name": "page-size",
+        "label": "Cards Per Page",
+        "valueType": "string",
+        "options": [
+          {
+            "name": "6",
+            "value": "6"
+          },
+          {
+            "name": "9",
+            "value": "9"
+          },
+          {
+            "name": "12",
+            "value": "12"
+          }
+        ]
+      },
+      {
+        "component": "select",
+        "name": "sort",
+        "label": "Default Sort",
+        "valueType": "string",
+        "options": [
+          {
+            "name": "Newest First",
+            "value": "date"
+          },
+          {
+            "name": "Title A–Z",
+            "value": "title"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "language-switcher",
     "fields": []
   },

@@ -256,6 +256,11 @@ function runAccessibilityAudit() {
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
+
+// Apply client-side redirects (CDN handles these in production; this is the
+// localhost / fallback handler).
+import('./redirects.js').then(({ applyRedirects }) => applyRedirects());
+
 pushPageLoadEvent();
 loadLaunch();
 // Consent is managed by Adobe Launch (Privacy extension) — no custom banner needed

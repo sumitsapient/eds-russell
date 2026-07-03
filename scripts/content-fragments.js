@@ -26,8 +26,9 @@ export async function fetchContentFragments(queryPath, variables = {}, options =
     if (cached && Date.now() - cached.timestamp < cacheTTL) return cached.data;
   }
   const endpoint = getAEMEndpoint();
-  const params = Object.keys(variables).length
-    ? `?${new URLSearchParams(Object.entries(variables).map(([k, v]) => [k, String(v)])).toString()}`
+  const paramEntries = Object.entries(variables).map(([k, v]) => [k, String(v)]);
+  const params = paramEntries.length
+    ? `?${new URLSearchParams(paramEntries).toString()}`
     : '';
   const url = `${endpoint}/graphql/execute.json${queryPath}${params}`;
   const response = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
@@ -56,6 +57,45 @@ export async function fetchJSON(path, options = {}) {
   const data = json.data || json;
   CF_CACHE.set(cacheKey, { data, timestamp: Date.now() });
   return data;
+}
+
+/**
+ * Fetches the placeholders key-value map for the current locale.
+ * Falls back to /placeholders.json if no locale-specific file exists.
+ *
+ * @returns {Promise<Record<string, string>>} Map of key → value
+ *
+ * @example
+ * const p = await getPlaceholders();
+ * btn.textContent = p['cta-learn-more'] || 'Learn More';
+ */
+export async function getPlaceholders() {
+  // Detect locale from URL (e.g. /fr/page → 'fr')
+  const [, first] = window.location.pathname.split('/');
+  const supported = ['en', 'fr', 'de', 'es', 'it', 'ja', 'ko', 'zh', 'ar', 'he', 'pt', 'nl'];
+  const locale = supported.includes(first) ? first : null;
+
+  // Try locale-specific first, fall back to root
+  const primary = locale ? `/${locale}/placeholders.json` : null;
+  const fallback = '/placeholders.json';
+
+  const toMap = (data) => Object.fromEntries(
+    (Array.isArray(data) ? data : []).map(({ key, value }) => [key, value]),
+  );
+
+  const tryFetch = (path) => fetchJSON(path).then(toMap).catch(() => null);
+
+  const result = primary ? await tryFetch(primary) : null;
+  if (result && Object.keys(result).length) return result;
+  return (await tryFetch(fallback)) || {};
+}
+
+/**
+ * Fetches the taxonomy hierarchy.
+ * @returns {Promise<Array>} Array of taxonomy items
+ */
+export async function getTaxonomy() {
+  return fetchJSON('/taxonomy.json');
 }
 
 /**
@@ -105,6 +145,28 @@ export function filterBy(items, key, value) {
     if (Array.isArray(v)) return v.includes(value);
     return String(v).toLowerCase() === String(value).toLowerCase();
   });
+}
+
+/**
+ * Searches items across multiple fields for a query string.
+ * Case-insensitive. Matches partial strings.
+ *
+ * @param {Array} items - Data items
+ * @param {string} query - Search query
+ * @param {string[]} [fields=['title','description']] - Fields to search in
+ * @returns {Array} Matching items
+ *
+ * @example
+ * const results = searchBy(allArticles, 'equity', ['title', 'description', 'category']);
+ */
+export function searchBy(items, query, fields = ['title', 'description']) {
+  if (!query || !query.trim()) return items;
+  const q = query.trim().toLowerCase();
+  return items.filter((item) => fields.some((field) => {
+    const val = item[field];
+    if (!val) return false;
+    return String(val).toLowerCase().includes(q);
+  }));
 }
 
 /**

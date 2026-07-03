@@ -269,6 +269,21 @@
           }
         },
         {
+          "title": "Insights Listing",
+          "id": "insights-listing",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block/v1/block",
+                "template": {
+                  "name": "Insights Listing",
+                  "model": "insights-listing"
+                }
+              }
+            }
+          }
+        },
+        {
           "title": "Language Switcher",
           "id": "language-switcher",
           "plugins": {

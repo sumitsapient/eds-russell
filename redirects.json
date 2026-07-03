@@ -1,0 +1,49 @@
+{
+  "total": 8,
+  "offset": 0,
+  "limit": 256,
+  "data": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "type": "301"
+    },
+    {
+      "source": "/index",
+      "destination": "/",
+      "type": "301"
+    },
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "type": "301"
+    },
+    {
+      "source": "/about-us",
+      "destination": "/about",
+      "type": "301"
+    },
+    {
+      "source": "/contact-us",
+      "destination": "/contact",
+      "type": "301"
+    },
+    {
+      "source": "/blog",
+      "destination": "/insights",
+      "type": "301"
+    },
+    {
+      "source": "/careers",
+      "destination": "https://jobs.russell-investments.com",
+      "type": "302"
+    },
+    {
+      "source": "/old-page",
+      "destination": "/new-page",
+      "type": "301"
+    }
+  ],
+  ":type": "sheet"
+}
+

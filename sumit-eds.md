@@ -129,6 +129,31 @@
     - [PR Template — The Contract](#pr-template--the-contract)
     - [Full Deployment Flow](#full-deployment-flow)
     - [CI/CD Q&A](#cicd-qa)
+17. [Phase 11 — Custom Domain, Redirects & CDN](#phase-11--custom-domain-redirects--cdn)
+    - [robots.txt](#robotstxt)
+    - [Redirects — 301 vs 302](#redirects--301-vs-302)
+    - [Two-Layer Redirect Architecture](#two-layer-redirect-architecture)
+    - [AEM Redirects Template — Step by Step](#aem-redirects-template--step-by-step)
+    - [Custom Domain Setup](#custom-domain-setup)
+    - [Bring Your Own CDN](#bring-your-own-cdn-enterprise)
+    - [Domain Q&A](#domain-qa)
+18. [AEM Page Templates — Complete Guide](#aem-page-templates--complete-guide)
+    - [The Master Pattern](#the-master-pattern)
+    - [Template 1 — Page](#template-1--page)
+    - [Template 2 — Spreadsheet](#template-2--spreadsheet)
+    - [Template 3 — Placeholders](#template-3--placeholders)
+    - [Template 4 — Metadata](#template-4--metadata)
+    - [Template 5 — Taxonomy](#template-5--taxonomy)
+    - [Template 6 — Redirects](#template-6--redirects)
+    - [How All Templates Work Together](#how-all-templates-work-together--a-real-page-example)
+    - [Quick Reference](#quick-reference)
+19. [Phase 12 — Content Fragments & Data Layer](#phase-12--content-fragments--data-layer)
+    - [Content Fragments vs Spreadsheets](#content-fragments-vs-spreadsheets)
+    - [content-fragments.js — The Utility Library](#content-fragmentsjs--the-utility-library)
+    - [The Insights Listing Block](#the-insights-listing-block)
+    - [getPlaceholders — i18n in Blocks](#getplaceholders--i18n-in-blocks)
+    - [GraphQL Persisted Queries](#graphql-persisted-queries)
+    - [Phase 12 Q&A](#phase-12-qa)
 
 ---
 
@@ -4637,7 +4662,658 @@ A: This project is based on the AEM boilerplate template. It runs once on repo c
 
 ---
 
+## Phase 11 — Custom Domain, Redirects & CDN
+
+> How your site moves from `*.aem.live` to a real production URL.
+
+### robots.txt
+
+`robots.txt` tells crawlers what to index. Without it, Google crawls everything — including `/nav`, `/footer`, `/drafts/` — wasting crawl budget.
+
+**Key rules in our file:**
+
+```
+Disallow: /nav               ← fragment page, not a real page
+Disallow: /footer            ← fragment page, not a real page
+Disallow: /drafts/           ← dev/test content
+Disallow: /*.json$           ← data feeds, not pages
+Sitemap: https://...aem.live/sitemap.xml   ← tells Google where your sitemap is
+```
+
+**Important:** `robots.txt` is a request, not a block. `.hlxignore` is the real protection (returns 404). `robots.txt` is for SEO guidance only.
+
+**Verify after push:**
+```
+https://main--eds-russell--sumitsapient.aem.page/robots.txt
+```
+
+---
+
+### Redirects — 301 vs 302
+
+| Code | Name | Use when | Google behaviour |
+|---|---|---|---|
+| **301** | Permanent | Page moved forever — old URL is dead | Transfers all SEO ranking to new URL |
+| **302** | Temporary | Campaign page, seasonal content | Keeps original URL in Google's index |
+
+**Rules of thumb:**
+- Old site migration → all redirects are **301**
+- Campaign landing page that expires → **302**
+- A/B test redirect → **302**
+- URL slug change (e.g., `/about-us` → `/about`) → **301**
+
+---
+
+### Two-Layer Redirect Architecture
+
+```
+Layer 1: AEM Redirects Template (PRODUCTION — recommended)
+  → Author creates page in AEM using "Redirects" template
+  → Adds rows: source | destination | type
+  → Preview → Publish → AEM CDN reads /redirects.json
+  → Redirect happens at edge — before any HTML is served
+  → Zero developer involvement. Takes effect after Publish.
+
+Layer 2: redirects.json in GitHub (DEV FALLBACK)
+  → Static JSON file committed to the code repo
+  → Works on localhost:3000 (no CDN, no AEM content)
+  → In production: AEM content version OVERRIDES this file
+  → Used by scripts/redirects.js client-side fallback
+```
+
+**The priority rule:** In EDS, content always wins over code for the same URL.
+```
+Request: /redirects.json
+  AEM published page exists? → serve AEM content version  ✅ (author-managed)
+  No published page?         → serve GitHub file           ✅ (developer fallback)
+```
+
+**When to use which:**
+
+| Scenario | Approach |
+|---|---|
+| Production redirect management | AEM Redirects template (author-managed) |
+| Localhost development testing | `redirects.json` in code (automatic fallback) |
+| Emergency redirect (no AEM access) | `redirects.json` in code → git push |
+
+---
+
+### AEM Redirects Template — Step by Step
+
+1. AEM Sites → **Create Page** → select **Redirects** template
+2. Save the page at path `/redirects`
+3. Open in Universal Editor — add rows:
+
+   | source | destination | type |
+   |---|---|---|
+   | /about-us | /about | 301 |
+   | /old-blog | /insights | 301 |
+   | /careers | https://jobs.russell-investments.com | 302 |
+
+4. Click **Preview** → test at `https://main--eds-russell--sumitsapient.aem.page/redirects.json`
+5. Click **Publish** → live at `https://main--eds-russell--sumitsapient.aem.live/redirects.json`
+
+No git commit. No code deployment. Immediate effect.
+
+---
+
+### Custom Domain Setup
+
+**3 steps to go from `*.aem.live` to `www.your-domain.com`:**
+
+**Step 1 — Register your domain in AEM**
+
+Via AEM Sidekick → Properties → Custom Domain, OR via AEM Admin API:
+```
+Custom domain: www.russell-investments.com
+```
+AEM provisions a TLS certificate automatically.
+
+**Step 2 — Create a DNS CNAME record**
+
+In your DNS provider (Route53, Cloudflare, etc.):
+```
+Type:  CNAME
+Name:  www
+Value: main--eds-russell--sumitsapient.aem.live
+TTL:   300 (use low TTL during cutover)
+```
+
+**Step 3 — Wait for propagation + verify**
+
+```bash
+nslookup www.russell-investments.com
+# Should resolve to: main--eds-russell--sumitsapient.aem.live
+
+curl -I https://www.russell-investments.com/home
+# Should return: HTTP/2 200
+```
+
+**After cutover — update `robots.txt`:**
+```
+Sitemap: https://www.russell-investments.com/sitemap.xml
+```
+
+---
+
+### Bring Your Own CDN (Enterprise)
+
+Large enterprises (Russell Investments, banks, insurance companies) typically already have CDN contracts with **Akamai**, **Fastly**, or **Cloudflare**. EDS supports this pattern.
+
+```
+User
+  ↓
+Your Enterprise CDN (Akamai/Fastly/Cloudflare)
+  ↓ cache miss
+AEM Edge origin (main--eds-russell--sumitsapient.aem.live)
+  ↓
+Your content
+```
+
+**Setup:**
+1. Configure your CDN to use `main--eds-russell--sumitsapient.aem.live` as the **origin**
+2. Get a **push invalidation key** from AEM (a secret token)
+3. Configure AEM to call your CDN's purge API when content is published
+
+**Why use your own CDN?**
+- Existing contract pricing
+- Existing DDoS protection and WAF rules already tuned for your traffic
+- Existing monitoring and alerting dashboards
+- Compliance requirements (data residency, regional routing)
+
+**The `_headers` file still works** — your CDN forwards the headers AEM sets.
+
+---
+
+### Domain Q&A
+
+**Q: Does AEM EDS handle www vs apex (non-www)?**
+A: Yes. You can configure both `www.domain.com` and `domain.com`. Best practice: redirect apex to www (or vice versa) with a 301. Most DNS providers let you set an ALIAS/ANAME record for apex domains.
+
+**Q: What happens to old `*.aem.live` URLs after custom domain?**
+A: They still work — they're never turned off. This is useful for emergency access if DNS goes wrong. But Google will see two versions of your site — use canonical tags (Phase 5) to ensure only the custom domain is indexed.
+
+**Q: When I push to a feature branch, does my custom domain serve that branch?**
+A: No — custom domain always points to `main`. Feature branches are always accessed via `branch--repo--owner.aem.page`. This is by design — production domain = production code.
+
+**Q: How do I test redirects locally before pushing?**
+A: Run the dev server (`npx @adobe/aem-cli up`) and visit `http://localhost:3000/old-path`. The `redirects.js` client-side fallback fires after 3 seconds and redirects you. You'll see the redirect happen live in the browser address bar.
+
+**Q: Does `redirects.json` support wildcards?**
+A: Not in the basic format. For wildcard redirects (e.g., `/blog/*` → `/insights/*`) you need a CDN-level rewrite rule, or a custom `redirects.js` implementation that uses regex matching instead of exact path comparison.
+
+---
+
+## AEM Page Templates — Complete Guide
+
+> Every template in the "Create Page" wizard creates a different type of structured data page. All of them follow the same pattern: **author in AEM → Preview → Publish → becomes a `.json` feed at that URL path → code or CDN reads it.**
+
+---
+
+### The Master Pattern
+
+Before diving into each template, understand the universal pattern they all follow:
+
+```
+Author creates page with Template X
+         ↓
+Fills in structured data (rows, key-values, etc.)
+         ↓
+Clicks Preview
+         ↓
+Available at: https://*.aem.page/path-of-page.json
+         ↓
+Clicks Publish
+         ↓
+Live at: https://*.aem.live/path-of-page.json
+         ↓
+Your JavaScript / AEM CDN reads the JSON and acts on it
+```
+
+This is the EDS data layer — **no database, no API server, just published JSON files on the CDN.**
+
+---
+
+### Template 1 — Page
+
+**What it creates:** A regular content page editable in Universal Editor.
+
+**Practical use cases:**
+- Home page, About page, Contact page
+- Product/service landing pages
+- Article / blog posts (with `article` template variant)
+- Any page a visitor navigates to
+
+**How it works:**
+```
+Author creates page → adds sections, blocks, text in Universal Editor
+                   ↓
+Previewed at: /my-page.plain.html (raw HTML, no header/footer)
+Published at: /my-page  (full page with header/footer)
+```
+
+**Russell Investments examples:**
+- `/investment-strategies` — list of investment approaches
+- `/about/leadership` — leadership team page
+- `/insights/market-outlook-2026` — article page
+
+---
+
+### Template 2 — Spreadsheet
+
+**What it creates:** A structured data table — rows and columns of any data.
+
+**What it becomes:** A `.json` file at the same path.
+
+**The format:**
+```json
+{
+  "total": 3,
+  "data": [
+    { "column1": "value", "column2": "value" },
+    { "column1": "value", "column2": "value" }
+  ]
+}
+```
+
+**Practical use cases at Russell Investments:**
+
+| Spreadsheet path | Columns | Used for |
+|---|---|---|
+| `/query-index` | path, title, description, image, lastModified | Auto-generated index of all pages — powers search, cards blocks, listing pages |
+| `/nav` | (structured nav data) | Navigation menu items |
+| `/funds` | name, ticker, category, risk, description | Fund listing block reads this to render a fund table |
+| `/team` | name, title, photo, bio | Leadership page reads this to render team cards |
+| `/events` | title, date, location, link | Events listing block |
+
+**Why use a Spreadsheet instead of a block?**
+
+A block requires a dedicated page for each item. A spreadsheet is better when:
+- You have a **list of items** (funds, team members, events)
+- The list needs to be **filtered/sorted** (by date, category)
+- **Non-developers** need to update the data
+- You want to **reuse the data** across multiple pages
+
+**How blocks read spreadsheet data:**
+```javascript
+// In any block's decorate() function:
+const resp = await fetch('/funds.json');
+const { data } = await resp.json();
+data.forEach(fund => {
+  // render each fund as a card
+});
+```
+
+**Russell Investments real example:** A fund comparison block fetches `/funds.json` and renders a filterable table. When a new fund launches, the author adds one row to the spreadsheet, publishes it — the table updates everywhere instantly.
+
+---
+
+### Template 3 — Placeholders
+
+**What it creates:** A key-value store for text strings.
+
+**What it becomes:** `/placeholders.json`
+
+**The format:**
+```json
+{
+  "data": [
+    { "key": "cta-learn-more",     "value": "Learn More" },
+    { "key": "cta-get-started",    "value": "Get Started" },
+    { "key": "nav-investments",    "value": "Investments" },
+    { "key": "error-required",     "value": "This field is required" },
+    { "key": "loading",            "value": "Loading..." }
+  ]
+}
+```
+
+**Why Placeholders exist:**
+
+Without them, text strings are hardcoded in block JS:
+```javascript
+// ❌ Hardcoded — developer must change code to update text
+btn.textContent = 'Learn More';
+```
+
+With Placeholders:
+```javascript
+// ✅ Author-managed — change in AEM → Publish → live everywhere
+const { 'cta-learn-more': ctaText } = await getPlaceholders();
+btn.textContent = ctaText; // "Learn More" — or whatever the author set
+```
+
+**Critical for i18n — each locale has its own Placeholders page:**
+
+```
+/placeholders.json        → English strings
+/fr/placeholders.json     → French strings: "En savoir plus"
+/de/placeholders.json     → German strings: "Mehr erfahren"
+/ar/placeholders.json     → Arabic strings: "اعرف أكثر"
+```
+
+The same block JS works in all languages — it just fetches the locale-appropriate placeholders.
+
+**Russell Investments practical examples:**
+
+| Key | English | French |
+|---|---|---|
+| `cta-invest-now` | Invest Now | Investir maintenant |
+| `fund-performance-label` | 1-Year Return | Rendement sur 1 an |
+| `disclaimer-text` | Past performance does not... | Les performances passées ne... |
+| `nav-about` | About Us | À propos |
+
+**How to use in a block:**
+```javascript
+// scripts/scripts.js already has getPlaceholders() — use it:
+const placeholders = await fetch('/placeholders.json').then(r => r.json());
+const map = Object.fromEntries(placeholders.data.map(({ key, value }) => [key, value]));
+btn.textContent = map['cta-learn-more'] || 'Learn More'; // fallback if key missing
+```
+
+---
+
+### Template 4 — Metadata
+
+**What it creates:** A bulk metadata override table — sets `<meta>` tags for multiple pages at once WITHOUT opening each page.
+
+**What it becomes:** `/metadata.json`
+
+**The format:**
+```json
+{
+  "data": [
+    {
+      "url": "/investment-strategies",
+      "title": "Investment Strategies | Russell Investments",
+      "description": "Explore our range of...",
+      "image": "/images/strategies-og.jpg",
+      "robots": "index, follow"
+    },
+    {
+      "url": "/about/leadership",
+      "title": "Leadership Team | Russell Investments",
+      "robots": "noindex"
+    }
+  ]
+}
+```
+
+**Why Metadata template exists:**
+
+Without it, metadata is set in **Page Properties** — one page at a time. For a site with 500 pages, that's 500 manual edits.
+
+With the Metadata template:
+- SEO team can manage all page titles and descriptions in one spreadsheet
+- One Publish → all pages updated
+
+**How AEM uses it:**
+
+The AEM CDN reads `/metadata.json` and **injects** the meta tags into each page's HTML response — overriding or supplementing what's in Page Properties. This happens at the CDN edge — no page render needed.
+
+**Practical use cases at Russell Investments:**
+
+| Scenario | Without Metadata template | With Metadata template |
+|---|---|---|
+| SEO audit finds 50 pages with weak titles | Developer opens 50 pages, edits each | SEO manager edits one spreadsheet row per page, one Publish |
+| Block all /drafts/ pages from Google | Add `robots: noindex` to Page Properties of each draft | One row in Metadata for `/drafts/**` |
+| Set seasonal OG images for all fund pages | Update each fund page individually | One column in Metadata spreadsheet |
+
+**`robots` field special values:**
+
+| Value | Effect |
+|---|---|
+| `index, follow` | Normal — Google crawls and indexes |
+| `noindex` | Don't index this page (but follow links) |
+| `noindex, nofollow` | Ignore this page completely |
+| `noarchive` | Don't show cached version in search results |
+
+---
+
+### Template 5 — Taxonomy
+
+**What it creates:** A structured hierarchy of categories and tags.
+
+**What it becomes:** `/taxonomy.json`
+
+**The format:**
+```json
+{
+  "data": [
+    { "name": "Asset Classes",   "path": "/insights/asset-classes",   "level": 1, "parent": "" },
+    { "name": "Equities",        "path": "/insights/equities",         "level": 2, "parent": "Asset Classes" },
+    { "name": "Fixed Income",    "path": "/insights/fixed-income",     "level": 2, "parent": "Asset Classes" },
+    { "name": "Alternatives",    "path": "/insights/alternatives",     "level": 2, "parent": "Asset Classes" },
+    { "name": "Market Outlook",  "path": "/insights/market-outlook",   "level": 1, "parent": "" },
+    { "name": "Fund Commentary", "path": "/insights/fund-commentary",  "level": 1, "parent": "" }
+  ]
+}
+```
+
+**Why Taxonomy exists:**
+
+Without it, categories are hardcoded in block JS. When a new category is added, a developer must update the code. With Taxonomy, authors manage the category structure — developers just read `/taxonomy.json`.
+
+**How it connects to the Query Index:**
+
+```
+helix-query.yaml → builds /query-index.json with every page's metadata
+Taxonomy → defines what the category values MEAN and how they relate
+
+A blog post page has:  meta name="category" content="Equities"
+Taxonomy says:         "Equities" belongs to parent "Asset Classes", level 2
+
+A filter block reads both:
+  - query-index.json → all pages + their categories
+  - taxonomy.json    → the category hierarchy for the filter UI
+```
+
+**Russell Investments practical example:**
+
+The Insights/Research section has hundreds of articles. The filter block reads:
+1. `/query-index.json` — all insight articles with their category tags
+2. `/taxonomy.json` — the category tree (Asset Classes > Equities > US Equities)
+
+Authors add new categories by adding rows to the Taxonomy page — no code changes.
+
+---
+
+### Template 6 — Redirects
+
+*(Already covered in detail in Phase 11.)*
+
+**Quick summary:** Source → Destination → Type (301/302) table. AEM CDN applies these at the edge. Author-managed — no code deployment needed.
+
+---
+
+### How all templates work together — A real page example
+
+Imagine the Russell Investments **Insights** listing page:
+
+```
+/insights page loads
+      ↓
+Block: insights-listing (reads /query-index.json)
+  → Fetches all pages tagged as "insights" 
+  → Gets: title, description, image, date, category for each
+
+Block: insights-filter (reads /taxonomy.json)
+  → Builds the filter UI: Asset Classes > Equities | Fixed Income | Alternatives
+
+Block: cta-banner (reads text from /placeholders.json)
+  → Button says "Subscribe to Insights" (or French equivalent)
+
+Page metadata (from /metadata.json)
+  → Title: "Investment Insights | Russell Investments"
+  → OG image: /images/insights-og.jpg
+
+Redirects (/redirects.json)
+  → /research → /insights (301)
+```
+
+**All of this is author-managed. Zero code for the data layer.**
+
+---
+
+### Quick Reference
+
+| Template | JSON path | Who reads it | Update without code? |
+|---|---|---|---|
+| Page | `/*.plain.html` | Browser | ✅ |
+| Spreadsheet | `/*.json` | Your block JS | ✅ |
+| Placeholders | `/placeholders.json` | Your block JS | ✅ |
+| Metadata | `/metadata.json` | AEM CDN (edge) | ✅ |
+| Taxonomy | `/taxonomy.json` | Your block JS | ✅ |
+| Redirects | `/redirects.json` | AEM CDN (edge) | ✅ |
+
+---
+
+## Phase 12 — Content Fragments & Data Layer
+
+> How to fetch, filter, search and render structured data in EDS blocks.
+
+### Content Fragments vs Spreadsheets
+
+Both are ways to get structured content into EDS. They serve different purposes:
+
+| | Spreadsheet / Query Index | Content Fragments (GraphQL) |
+|---|---|---|
+| **Created by** | Author in AEM (Spreadsheet template) | Author in AEM (Content Fragment editor) |
+| **Accessed via** | `fetch('/my-sheet.json')` | GraphQL persisted query |
+| **Best for** | Simple lists (funds, events, team) | Complex content with rich text, nested references |
+| **Offline/local?** | ✅ Works on localhost | ❌ Needs real AEM instance |
+| **Example** | `/query-index.json` — all pages | `/graphql/execute.json/russell/articles` |
+
+**Rule of thumb:**
+- Flat list of data → **Spreadsheet**
+- Rich structured content with relationships → **Content Fragments**
+- All pages on the site → **Query Index** (auto-generated by `helix-query.yaml`)
+
+---
+
+### content-fragments.js — The Utility Library
+
+`scripts/content-fragments.js` is the data layer for EDS blocks.
+
+| Export | What it does |
+|---|---|
+| `fetchJSON(path)` | Fetch any JSON endpoint with 5-min cache |
+| `fetchContentFragments(queryPath, vars)` | Call AEM GraphQL persisted query |
+| `getPlaceholders()` | Locale-aware text strings from `/placeholders.json` |
+| `getTaxonomy()` | Category hierarchy from `/taxonomy.json` |
+| `filterBy(items, key, value)` | Filter array by exact key-value match |
+| `searchBy(items, query, fields)` | Full-text search across multiple fields |
+| `sortBy(items, key, order)` | Sort array by property (asc/desc) |
+| `paginate(items, page, pageSize)` | Slice array with pagination metadata |
+| `renderFragmentList(items, fn, container)` | Render items to DOM via DocumentFragment |
+| `clearCache()` | Clear the in-memory 5-minute cache |
+
+**The cache:**
+
+All fetch functions use a `Map`-based in-memory cache with 5-minute TTL. Multiple blocks on the same page calling `fetchJSON('/query-index.json')` only make one network request.
+
+```javascript
+const fresh = await fetchJSON('/path.json', { noCache: true }); // bypass cache
+```
+
+---
+
+### The Insights Listing Block
+
+The `insights-listing` block is the reference implementation.
+
+**Data flow:**
+```
+helix-query.yaml indexes all pages → /query-index.json
+       ↓
+insights-listing fetches /query-index.json
+       ↓
+filterBy(pages, 'path', '/insights') → insights only
+filterBy(insights, 'category', activeFilter) → category filtered
+searchBy(filtered, query, ['title','description']) → text searched
+sortBy(searched, 'lastModified', 'desc') → newest first
+paginate(sorted, page, 9) → 9 per page
+renderFragmentList(page.items, renderCard, grid) → DOM
+```
+
+**Block config (authored in Universal Editor):**
+```
+| insights listing | all  |  ← default category
+| page-size        | 9    |  ← cards per page
+| sort             | date |  ← sort order
+```
+
+---
+
+### getPlaceholders — i18n in Blocks
+
+```javascript
+// ❌ Hardcoded
+btn.textContent = 'Learn More';
+
+// ✅ Author-managed, locale-aware
+const p = await getPlaceholders();
+btn.textContent = p['cta-learn-more'] || 'Learn More'; // fallback if key missing
+```
+
+**Locale fallback chain:**
+```
+User on /fr/insights
+  → tries /fr/placeholders.json first
+  → falls back to /placeholders.json if not found
+```
+
+---
+
+### GraphQL Persisted Queries
+
+For complex content (rich text, nested references):
+
+```javascript
+import { fetchContentFragments } from '../../scripts/content-fragments.js';
+
+const result = await fetchContentFragments('/russell/articles', { limit: 10 });
+const articles = result.data?.articleList?.items || [];
+```
+
+`head.html` now has:
+```html
+<meta name="aem-endpoint" content="https://author-p146753-e1506305.adobeaemcloud.com"/>
+```
+
+**When to use what:**
+
+| Scenario | Use |
+|---|---|
+| All pages with title/description | `fetchJSON('/query-index.json')` |
+| Fund data table | `fetchJSON('/funds.json')` |
+| Article with rich text body | `fetchContentFragments('/russell/articles')` |
+| Related articles by tag | `fetchContentFragments('/russell/articles', { tag: 'equities' })` |
+
+---
+
+### Phase 12 Q&A
+
+**Q: What is a persisted query?**
+A: A GraphQL query saved on the AEM server with a name. You call it by name instead of sending raw GraphQL. Created in AEM's built-in GraphiQL editor.
+
+**Q: Why `document.createDocumentFragment()` in renderFragmentList?**
+A: Without it, 100 `container.append(el)` calls = 100 DOM reflows. With `DocumentFragment`, all elements build in memory, then one `container.append(fragment)` = one reflow.
+
+**Q: Can the query index power site search?**
+A: Yes — for sites under ~1000 pages. `searchBy(items, query, ['title','description'])` works client-side. For larger sites, use AEM Search API or Algolia/Coveo.
+
+**Q: Why does getPlaceholders fall back silently?**
+A: Blocks should never break because a placeholder is missing. The `p['key'] || 'Default'` pattern ensures text is always present, even before the Placeholders page is published.
+
+---
+
 *Last updated: July 3, 2026*
+*Last updated: July 3, 2026*
+
+
+
+
+
 
 
 

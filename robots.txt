@@ -1,0 +1,28 @@
+# robots.txt for Russell Investments EDS site
+# https://www.robotstxt.org/robotstxt.html
+# Update the Sitemap URL below when a custom domain is configured.
+
+User-agent: *
+
+# Allow all real content pages
+Allow: /
+
+# Block fragment pages — these are layout building blocks, not real pages
+Disallow: /nav
+Disallow: /footer
+Disallow: /header
+
+# Block draft pages — dev/test content, never for production crawling
+Disallow: /drafts/
+
+# Block query indexes and JSON data feeds — not human-readable pages
+Disallow: /query-index.json
+Disallow: /*.json$
+
+# Block AEM-internal paths
+Disallow: /tools/
+
+# Sitemap location — update to custom domain when live
+# Production:  Sitemap: https://www.russell-investments.com/sitemap.xml
+Sitemap: https://main--eds-russell--sumitsapient.aem.live/sitemap.xml
+
