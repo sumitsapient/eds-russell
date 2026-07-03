@@ -3191,5 +3191,332 @@ For visual experiments in production, use Adobe Target via alloy with `renderDec
 
 ---
 
-*Last updated: July 2, 2026*
+## Phase 6 — Real-World Learnings (July 3, 2026)
+
+> What actually happened when we wired up analytics on a real EDS project.
+
+---
+
+### The Big Lesson: Load Launch, Not Alloy Directly
+
+The original plan was to load `alloy.js` directly from Adobe CDN and configure it ourselves. But the company already has **Adobe Launch** with alloy configured, Adobe Analytics rules, and a consent extension already set up.
+
+**The correct approach for any company that already uses Launch:**
+
+```
+❌ Wrong: delayed.js → load alloy.js → configure manually
+✅ Right: delayed.js → load Launch → Launch loads and configures alloy
+```
+
+One function. Five lines:
+
+```javascript
+function loadLaunch() {
+  const script = document.createElement('script');
+  script.src = 'https://assets.adobedtm.com/fbbb5a6f6976/13d6954a51d9/launch-d51eda9acd14-development.min.js';
+  script.async = true;
+  document.head.append(script);
+}
+```
+
+This is the **exact equivalent** of what was in `page.html` in traditional AEM. Same URL. Just loaded differently — from `delayed.js` instead of a server-rendered template.
+
+---
+
+### What Loaded After Launch
+
+When Launch loaded, it immediately loaded one more script:
+
+```
+RC5aa51012537144a594655648555ecdea-source.min.js
+```
+
+That's a **Launch Extension** — in this case, the company's Adobe Privacy / consent management extension. This is the one that showed the consent banner with "Accept All Cookies / Reject All / Cookies Settings".
+
+**Key insight:** Whatever your team configured in Launch (extensions, rules, data elements) loads automatically just by loading the Launch library script. EDS doesn't need to know about any of it.
+
+---
+
+### Two Consent Banners — And How We Fixed It
+
+Initially the page had two banners:
+- **Our custom banner** (from `showConsentBanner()` in `delayed.js`)  
+- **The company's Launch banner** (from the Privacy extension in Launch)
+
+Fix: removed `showConsentBanner()` from the init section of `delayed.js`. The company's Launch banner handles consent. Our custom banner code stays in the file but is no longer called — useful if you ever need it for a project without Launch.
+
+---
+
+### Verifying With AEP Debugger
+
+**The right tool for real-time verification:** [Adobe Experience Platform Debugger](https://chromewebstore.google.com/detail/adobe-experience-platform/bfnnokhpnncpkdmbokanobigaccjkpob) Chrome extension.
+
+| Tool | Delay | Best for |
+|---|---|---|
+| AEP Debugger | 0 seconds | Seeing exact XDM payload during dev |
+| AEP Query Service (`event_ds`) | 15–30 min | Confirming data landed in AEP datasets |
+| AA Real-Time Reports | ~30 seconds | Seeing page views/clicks in Analytics |
+
+**What the debugger showed after clicking an accordion link:**
+
+```
+POST https://edge.adobedc.net/ee/or2/v1/collect
+Status: 204 No Content  ← correct for fire-and-forget
+
+Payload:
+  web.webInteraction.name:   "What is AEM"
+  web.webInteraction.region: "what-is-aem"   ← from Phase 5 heading IDs!
+  web.webInteraction.type:   "other"
+  web.webInteraction.linkClicks: { value: 1 }
+  web.webPageDetails.URL:    "https://main--eds-russell--sumitsapient.aem.page/home"
+```
+
+**The `region: "what-is-aem"` field** is the Phase 5 `decorateHeadingIds()` directly enriching Phase 6 analytics. Every heading on the page got an auto-generated `id` attribute, and alloy's click collection picks up the nearest `id` as the `region` — giving analysts exact page-section context for every click. This happened automatically with zero extra work.
+
+---
+
+### 204 vs 200 — What the Status Code Means
+
+| Status | Endpoint | Meaning |
+|---|---|---|
+| `204 No Content` | `/collect` | Fire-and-forget. Data accepted, nothing to return. Used for analytics beacons. |
+| `200 OK` (with body) | `/interact` | Two-way. Used when browser needs something back — ECID, Target propositions, consent decisions. |
+
+When you see 204 on a collect call → the data IS in the AEP pipeline. It's correct behavior, not an error.
+
+---
+
+### AEP Query Service — Verifying Data Landed
+
+After the 15–30 minute ingestion window, query `event_ds`:
+
+```sql
+-- See today's link clicks from your EDS pages
+SELECT 
+  timestamp,
+  web.webPageDetails.URL     AS page_url,
+  web.webInteraction.name    AS link_clicked,
+  web.webInteraction.region  AS link_region
+FROM event_ds
+WHERE DATE(timestamp) = CURRENT_DATE
+  AND web.webInteraction.name IS NOT NULL
+ORDER BY timestamp DESC
+LIMIT 20;
+
+-- See which pages got the most clicks today
+SELECT 
+  web.webPageDetails.URL  AS page_url,
+  COUNT(*)                AS click_count
+FROM event_ds
+WHERE DATE(timestamp) = CURRENT_DATE
+  AND web.webInteraction.name IS NOT NULL
+GROUP BY web.webPageDetails.URL
+ORDER BY click_count DESC
+LIMIT 10;
+```
+
+---
+
+### What Was NOT Done — Adobe Target Gap
+
+Adobe Target integration via `renderDecisions: true` was **not implemented** in our EDS code. This is intentional — it's a Launch configuration task, not an EDS code task.
+
+**To enable Target personalization:**
+
+| Where | What to do |
+|---|---|
+| AEP UI → Datastreams | Add "Adobe Target" service to your Datastream |
+| Adobe Launch | Ensure the "Send Event" rule has `renderDecisions: true` checked |
+
+Once those two steps are done, Target activities apply automatically to your EDS pages — no code changes needed in `delayed.js`.
+
+Our client-side `setupExperimentation()` in `delayed.js` remains useful for **non-visual A/B tests** (feature flags, tracking variations) where server-side Target isn't required.
+
+---
+
+### Final Architecture (What's Running on the Live EDS Site)
+
+```
+Page loads
+    ↓ (0ms) Eager phase
+    scripts.js → window.adobeDataLayer = []
+    decorateMain() → heading IDs set (Phase 5)
+
+    ↓ (~100ms) Lazy phase
+    lazy-styles.css loads (includes consent banner styles)
+
+    ↓ (3000ms) Delayed phase
+    delayed.js →
+      pushPageLoadEvent()      → ACDL: { event: "page loaded", web: {...} }
+      loadLaunch()             → launch-xxx.js loaded from adobedtm.com
+          ↓ Launch loads...
+          alloy.js             → configured by Launch (Analytics + Target)
+          Privacy extension    → company consent banner appears
+          Analytics rule       → page view beacon fires to AA
+
+    User interaction →
+      alloy auto-tracks link clicks
+        → region field populated from heading IDs (Phase 5 ✅)
+        → 204 to edge.adobedc.net/ee/or2/v1/collect
+        → 15-30 min later: visible in event_ds in AEP
+```
+
+---
+
+## Phase 7 — Internationalization & Localization
+
+> How EDS handles multiple languages — folder structure, auto lang detection, hreflang, RTL, and a language switcher block.
+
+---
+
+### How EDS Does i18n
+
+EDS uses a **folder-based locale structure**. There is no server-side locale detection or URL rewriting — the URL path IS the locale.
+
+```
+/home              → English (default, no prefix)
+/fr/home           → French
+/de/home           → German
+/ar/home           → Arabic (RTL)
+/ja/home           → Japanese
+```
+
+Each locale folder maps to its own SharePoint/Google Drive folder in `fstab.yaml`. Authors create content in the right folder, editors publish it, and EDS serves it from the right path.
+
+---
+
+### What We Implemented
+
+| Feature | File | What it does |
+|---|---|---|
+| Auto locale detection | `scripts/scripts.js` | Reads URL path, sets `lang` + `dir` on `<html>` |
+| hreflang tags | `scripts/scripts.js` | Injects `<link rel="alternate">` from page metadata |
+| RTL support | `styles/lazy-styles.css` | CSS logical properties for Arabic/Hebrew layouts |
+| Language switcher block | `blocks/language-switcher/` | Dropdown to switch between locales |
+| Locale utilities | `scripts/scripts.js` | `formatDate()` and `formatNumber()` per locale |
+| Page metadata | `models/_page.json` | `hreflang` field for authors to declare alternates |
+
+---
+
+### Auto Locale Detection
+
+**Before (hardcoded):**
+```javascript
+// scripts.js — loadEager
+document.documentElement.lang = 'en'; // always English!
+```
+
+**After (auto-detected from URL):**
+```javascript
+function detectLocale() {
+  const [, first] = window.location.pathname.split('/');
+  const supported = ['en','fr','de','es','it','ja','ko','zh','ar','he','pt','nl'];
+  return supported.includes(first) ? first : 'en';
+}
+```
+
+This means `/fr/home` automatically sets `<html lang="fr">` and `/ar/home` sets `<html lang="ar" dir="rtl">`.
+
+**Why `dir="rtl"` matters:**
+- Arabic (`ar`), Hebrew (`he`), Farsi (`fa`), Urdu (`ur`) read right-to-left
+- Setting `dir="rtl"` on `<html>` flips the entire page layout
+- Combined with CSS logical properties (`margin-inline-start` instead of `margin-left`), blocks automatically mirror for RTL without separate stylesheets
+
+---
+
+### hreflang Tags
+
+hreflang tells Google which version of a page is for which language/region. Appears in `<head>`:
+
+```html
+<link rel="alternate" hreflang="en" href="https://site.com/home">
+<link rel="alternate" hreflang="fr" href="https://site.com/fr/home">
+<link rel="alternate" hreflang="de" href="https://site.com/de/home">
+<link rel="alternate" hreflang="x-default" href="https://site.com/home">
+```
+
+`x-default` tells Google which version to show when no other language matches the user's browser.
+
+**How authors set these:** In Universal Editor → Page Properties → "Language Alternates" field. Format: `en:https://site.com/home, fr:https://site.com/fr/home`
+
+`decorateI18n()` in `scripts.js` reads this metadata and injects the link tags in the Eager phase (so search engines always see them).
+
+---
+
+### Language Switcher Block
+
+The block renders as an accessible `<select>` dropdown. Each row authored in the block = one language option.
+
+**Authored structure:**
+```
+| Language Switcher |        |           |
+|-------------------|--------|-----------|
+| English           | en     | /         |  ← label | code | path
+| Français          | fr     | /fr       |
+| Deutsch           | de     | /de       |
+| العربية           | ar     | /ar       |
+```
+
+**What it renders:**
+```html
+<div class="language-switcher">
+  <label for="lang-select">Language</label>
+  <select id="lang-select">
+    <option value="/" selected>English</option>   ← current page highlighted
+    <option value="/fr/home">Français</option>     ← replaces locale in URL
+    <option value="/de/home">Deutsch</option>
+    <option value="/ar/home">العربية</option>
+  </select>
+</div>
+```
+
+When the author changes language → page navigates to the equivalent path in the new locale. The switcher automatically replaces the locale prefix in the current URL.
+
+---
+
+### Locale Utilities
+
+Two utility functions exported from `scripts.js` for use in blocks:
+
+```javascript
+// Format a date for the current locale
+formatDate('2026-07-03', 'fr')
+// → "3 juillet 2026" (French)
+// → "July 3, 2026" (English)
+// → "2026年7月3日" (Japanese)
+
+// Format a number/currency for the current locale
+formatNumber(1234567.89, 'de', { style: 'currency', currency: 'EUR' })
+// → "1.234.567,89 €" (German)
+// → "$1,234,567.89" (English/USD)
+```
+
+These use the browser's built-in `Intl.DateTimeFormat` and `Intl.NumberFormat` APIs — no library needed.
+
+---
+
+### Language Switcher Q&A
+
+---
+
+**Q: How does switching from `/home` to `/fr/home` work when there's no locale prefix?**
+
+The switcher detects whether the current path has a locale prefix:
+```javascript
+// /home → no locale → replace is just prepending /fr
+// /fr/home → has locale fr → replace /fr with /de
+// /de/products/item → has locale → replace /de with /fr
+```
+
+The code strips the current locale (if any) and prepends the new one. If the page is at the root locale (`/home` with no prefix), it's treated as the default English path.
+
+---
+
+**Q: What if a French page doesn't exist? Will the user land on a 404?**
+
+Yes — EDS doesn't auto-fallback to English if a French page doesn't exist. The switcher should only show languages that actually have content. In practice, authors control which languages appear in the Language Switcher block — they only add rows for languages that have been translated.
+
+---
+
+*Last updated: July 3, 2026*
 

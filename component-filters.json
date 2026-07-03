@@ -23,7 +23,8 @@
       "video-embed",
       "breadcrumb",
       "hello-world",
-      "hello-world-with-child"
+      "hello-world-with-child",
+      "language-switcher"
     ]
   },
   {
@@ -57,6 +58,12 @@
     "id": "hello-world-with-child",
     "components": [
       "hello-world-with-child-item"
+    ]
+  },
+  {
+    "id": "language-switcher",
+    "components": [
+      "language-switcher-item"
     ]
   }
 ]

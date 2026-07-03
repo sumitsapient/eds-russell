@@ -85,7 +85,8 @@
         "video-embed",
         "breadcrumb",
         "hello-world",
-        "hello-world-with-child"
+        "hello-world-with-child",
+        "language-switcher"
       ]
     }
   ]

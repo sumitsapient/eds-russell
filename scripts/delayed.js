@@ -18,9 +18,6 @@
 
 const getMeta = (name) => document.querySelector(`meta[name="${name}"]`)?.content || '';
 
-// ── CONFIG ────────────────────────────────────────────────────────────────────
-const CONSENT_KEY = 'aep-consent'; // localStorage: "in" | "out"
-
 // ── 1. ADOBE CLIENT DATA LAYER ────────────────────────────────────────────────
 // ACDL is already initialized as [] in scripts.js (eager phase).
 // Here we push the initial page-load state.
@@ -63,73 +60,6 @@ function loadLaunch() {
   script.src = 'https://assets.adobedtm.com/fbbb5a6f6976/13d6954a51d9/launch-d51eda9acd14-development.min.js';
   script.async = true;
   document.head.append(script);
-}
-
-// ── 3. CONSENT MANAGEMENT ─────────────────────────────────────────────────────
-
-/**
- * Tells alloy the user's consent decision using the Adobe 1.0 standard.
- * @param {'in'|'out'} value
- */
-function setAlloyConsent(value) {
-  window.alloy?.('setConsent', {
-    consent: [{ standard: 'Adobe', version: '1.0', value: { general: value } }],
-  });
-}
-
-/**
- * Shows a GDPR/consent banner if the user hasn't decided yet.
- * On accept → setConsent('in') + ACDL event.
- * On decline → setConsent('out') + ACDL event.
- * Skips if consent already stored in localStorage.
- */
-function showConsentBanner() {
-  const stored = localStorage.getItem(CONSENT_KEY);
-  if (stored) {
-    // Page reload — sync alloy with the already-stored decision
-    setAlloyConsent(stored);
-    return;
-  }
-
-  const banner = document.createElement('div');
-  banner.className = 'consent-banner';
-  banner.setAttribute('role', 'region');
-  banner.setAttribute('aria-label', 'Cookie consent');
-  banner.setAttribute('aria-live', 'polite');
-
-  const textEl = document.createElement('p');
-  textEl.className = 'consent-banner-text';
-  textEl.textContent = getMeta('cookie-banner-text')
-    || 'We use Adobe Experience Platform to improve your experience and measure site performance.';
-
-  const actions = document.createElement('div');
-  actions.className = 'consent-banner-actions';
-
-  const acceptBtn = document.createElement('button');
-  acceptBtn.className = 'button primary';
-  acceptBtn.textContent = getMeta('cookie-accept-text') || 'Accept All';
-
-  const declineBtn = document.createElement('button');
-  declineBtn.className = 'button secondary';
-  declineBtn.textContent = getMeta('cookie-decline-text') || 'Decline';
-
-  const dismiss = (decision) => {
-    localStorage.setItem(CONSENT_KEY, decision);
-    banner.classList.add('consent-banner-hiding');
-    banner.addEventListener('transitionend', () => banner.remove(), { once: true });
-    setAlloyConsent(decision);
-    window.adobeDataLayer.push({ event: 'consent decision', consent: { value: decision } });
-  };
-
-  acceptBtn.addEventListener('click', () => dismiss('in'));
-  declineBtn.addEventListener('click', () => dismiss('out'));
-
-  actions.append(acceptBtn, declineBtn);
-  banner.append(textEl, actions);
-  document.body.append(banner);
-
-  // Slide in on next frame (CSS transition needs one tick to register initial state)
-  requestAnimationFrame(() => banner.classList.add('consent-banner-visible'));
 }
 
 // ── 4. CUSTOM EVENT TRACKING ─────────────────────────────────────────────────
@@ -286,7 +216,7 @@ function setupExperimentation() {
 // ── INIT ─────────────────────────────────────────────────────────────────────
 pushPageLoadEvent();
 loadLaunch();
-showConsentBanner();
+// Consent is managed by Adobe Launch (Privacy extension) — no custom banner needed
 trackCTAClicks();
 trackScrollDepth();
 trackVideoEngagement();

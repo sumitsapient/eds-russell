@@ -16,6 +16,79 @@ import {
 // delayed.js pushes events into this array; ACDL listeners subscribe to it.
 window.adobeDataLayer = window.adobeDataLayer || [];
 
+// Supported locale codes — first path segment is treated as locale if it matches
+const SUPPORTED_LOCALES = ['en', 'fr', 'de', 'es', 'it', 'ja', 'ko', 'zh', 'ar', 'he', 'pt', 'nl'];
+// Locales that read right-to-left
+const RTL_LOCALES = ['ar', 'he', 'fa', 'ur'];
+
+/**
+ * Detects the current locale from the URL path.
+ * /fr/home → 'fr'  |  /home → 'en' (default)
+ * @returns {string} BCP 47 locale code
+ */
+export function getLocale() {
+  const [, first] = window.location.pathname.split('/');
+  return SUPPORTED_LOCALES.includes(first) ? first : 'en';
+}
+
+/**
+ * Formats a date string using Intl.DateTimeFormat for the current locale.
+ * @param {string} dateStr ISO date string (e.g. '2026-07-03')
+ * @param {string} [locale] Override locale (defaults to current page locale)
+ * @returns {string} Formatted date (e.g. "3 juillet 2026" in French)
+ */
+export function formatDate(dateStr, locale) {
+  const loc = locale || getLocale();
+  return new Intl.DateTimeFormat(loc, { year: 'numeric', month: 'long', day: 'numeric' })
+    .format(new Date(dateStr));
+}
+
+/**
+ * Formats a number using Intl.NumberFormat for the current locale.
+ * @param {number} value
+ * @param {string} [locale] Override locale
+ * @param {Intl.NumberFormatOptions} [options] e.g. { style: 'currency', currency: 'USD' }
+ * @returns {string} Formatted number (e.g. "1.234,56 €" in German)
+ */
+export function formatNumber(value, locale, options = {}) {
+  const loc = locale || getLocale();
+  return new Intl.NumberFormat(loc, options).format(value);
+}
+
+/**
+ * Sets lang/dir on <html> and injects hreflang alternate links.
+ * Runs in the Eager phase so search engines see correct language metadata.
+ */
+function decorateI18n() {
+  const locale = getLocale();
+
+  // Set language attribute on <html>
+  document.documentElement.lang = locale;
+
+  // Set reading direction for RTL languages (Arabic, Hebrew, etc.)
+  if (RTL_LOCALES.includes(locale)) {
+    document.documentElement.dir = 'rtl';
+  }
+
+  // Inject hreflang alternate links from page metadata
+  // Metadata format: "en:https://site.com/home, fr:https://site.com/fr/home"
+  const hreflangMeta = getMetadata('hreflang');
+  if (hreflangMeta) {
+    hreflangMeta.split(',').forEach((pair) => {
+      const [lang, href] = pair.trim().split(':').map((s) => s.trim());
+      if (!lang || !href) return;
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = lang;
+      // href may be split by the colon in https:// — rejoin if needed
+      link.href = hreflangMeta.includes('https')
+        ? pair.trim().substring(pair.trim().indexOf(':') + 1).trim()
+        : href;
+      document.head.append(link);
+    });
+  }
+}
+
 /**
  * Moves all the attributes from a given elmenet to another given element.
  * @param {Element} from the element to copy attributes from
@@ -390,6 +463,7 @@ async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
   decorateSEO();
+  decorateI18n();
   injectOrganizationSchema();
   const main = doc.querySelector('main');
   if (main) {

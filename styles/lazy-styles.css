@@ -1,4 +1,4 @@
-﻿/* === SECTION BACKGROUND IMAGE === */
+/* === SECTION BACKGROUND IMAGE === */
 main .section.has-background {
   background-size: cover;
   background-position: center;
@@ -132,6 +132,34 @@ html {
 ::selection {
   background-color: var(--color-primary);
   color: var(--color-text-inverse);
+}
+
+/* === RTL SUPPORT (Phase 7) === */
+
+/* When dir="rtl" is set on <html> by decorateI18n(), these rules mirror the layout.
+   CSS logical properties (inline-start/end) flip automatically with dir.
+   Block-level properties (block-start/end = top/bottom) stay the same. */
+
+/* Flip text alignment for RTL */
+[dir="rtl"] body {
+  text-align: right;
+}
+
+/* Flip button padding so icon spacing is correct in RTL */
+[dir="rtl"] a.button,
+[dir="rtl"] button.button {
+  flex-direction: row-reverse;
+}
+
+/* Flip section content padding direction */
+[dir="rtl"] main > .section > div {
+  padding-inline: var(--content-padding-inline, 16px) var(--content-padding-inline, 16px);
+}
+
+/* Flip border-left accent (e.g. hello-world block) to border-right in RTL */
+[dir="rtl"] .section.accent {
+  border-inline-start: none;
+  border-inline-end: 4px solid var(--color-primary, #3b63fb);
 }
 
 /* === CONSENT BANNER (Phase 6) === */

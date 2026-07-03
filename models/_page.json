@@ -69,7 +69,7 @@
           "description": "Assign this page to an A/B test (e.g. hero-cta-test). Visitors are randomly split 50/50 between control and variant-a."
         },
         {
-          "component": "select",
+          "component": "text",
           "valueType": "string",
           "name": "experiment-variant",
           "label": "Force Experiment Variant (QA)",
@@ -80,6 +80,13 @@
             { "name": "Variant A", "value": "variant-a" },
             { "name": "Variant B", "value": "variant-b" }
           ]
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "hreflang",
+          "label": "Language Alternates (hreflang)",
+          "description": "Comma-separated lang:url pairs e.g. en:https://site.com/home, fr:https://site.com/fr/home, x-default:https://site.com/home"
         }
       ]
     }

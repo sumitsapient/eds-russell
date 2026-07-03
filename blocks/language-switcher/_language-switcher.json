@@ -1,0 +1,57 @@
+{
+  "definitions": [
+    {
+      "title": "Language Switcher",
+      "id": "language-switcher",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block",
+            "template": {
+              "name": "Language Switcher"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "language-switcher",
+      "fields": []
+    },
+    {
+      "id": "language-switcher-item",
+      "fields": [
+        {
+          "component": "text",
+          "name": "label",
+          "label": "Language Name",
+          "valueType": "string",
+          "description": "Display name e.g. English, Français, Deutsch"
+        },
+        {
+          "component": "text",
+          "name": "code",
+          "label": "Locale Code",
+          "valueType": "string",
+          "description": "BCP 47 code e.g. en, fr, de, ar"
+        },
+        {
+          "component": "text",
+          "name": "basePath",
+          "label": "Base Path",
+          "valueType": "string",
+          "description": "URL prefix e.g. / for English, /fr for French"
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "id": "language-switcher",
+      "components": ["language-switcher-item"]
+    }
+  ]
+}
+

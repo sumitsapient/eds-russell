@@ -89,7 +89,7 @@
         "description": "Assign this page to an A/B test (e.g. hero-cta-test). Visitors are randomly split 50/50 between control and variant-a."
       },
       {
-        "component": "select",
+        "component": "text",
         "valueType": "string",
         "name": "experiment-variant",
         "label": "Force Experiment Variant (QA)",
@@ -112,6 +112,13 @@
             "value": "variant-b"
           }
         ]
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "hreflang",
+        "label": "Language Alternates (hreflang)",
+        "description": "Comma-separated lang:url pairs e.g. en:https://site.com/home, fr:https://site.com/fr/home, x-default:https://site.com/home"
       }
     ]
   },
@@ -519,6 +526,36 @@
         "value": "",
         "label": "Text",
         "valueType": "string"
+      }
+    ]
+  },
+  {
+    "id": "language-switcher",
+    "fields": []
+  },
+  {
+    "id": "language-switcher-item",
+    "fields": [
+      {
+        "component": "text",
+        "name": "label",
+        "label": "Language Name",
+        "valueType": "string",
+        "description": "Display name e.g. English, Français, Deutsch"
+      },
+      {
+        "component": "text",
+        "name": "code",
+        "label": "Locale Code",
+        "valueType": "string",
+        "description": "BCP 47 code e.g. en, fr, de, ar"
+      },
+      {
+        "component": "text",
+        "name": "basePath",
+        "label": "Base Path",
+        "valueType": "string",
+        "description": "URL prefix e.g. / for English, /fr for French"
       }
     ]
   },

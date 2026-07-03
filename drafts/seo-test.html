@@ -1,0 +1,97 @@
+<html>
+<head>
+  <title>Phase 5 SEO Test — Understanding Edge Delivery Services</title>
+  <meta name="description" content="A comprehensive guide to understanding how AEM Edge Delivery Services works, from block loading to performance optimization.">
+  <meta name="template" content="article">
+  <meta name="author" content="Sumit Yadav">
+  <meta name="published-date" content="2026-07-02">
+  <meta name="og:image" content="https://placehold.co/1200x630/3b63fb/ffffff?text=EDS+SEO+Guide">
+  <meta name="site-name" content="Sumit's EDS Lab">
+</head>
+<body>
+  <header></header>
+  <main>
+    <!-- SECTION 1: Article Hero content -->
+    <div>
+      <h1>Understanding Edge Delivery Services</h1>
+      <p>This is a test article page to verify Phase 5 SEO & Structured Data features work correctly.</p>
+      <p>The article template adds a reading progress bar, reading time badge, and auto Table of Contents.</p>
+    </div>
+    <hr>
+
+    <!-- SECTION 2: Article content with headings (for TOC + heading IDs) -->
+    <div>
+      <h2>What is Edge Delivery Services</h2>
+      <p>Edge Delivery Services (EDS) is Adobe's CDN-first architecture for AEM Sites. Pages are pre-rendered as static HTML and cached on Fastly's global CDN edge, achieving sub-50ms Time to First Byte worldwide.</p>
+
+      <h2>How Three-Phase Loading Works</h2>
+      <p>EDS splits page loading into three phases to maximize Lighthouse scores: Eager (LCP), Lazy (everything else), and Delayed (analytics/martech).</p>
+
+      <h3>Eager Phase</h3>
+      <p>Only the first section loads in the eager phase. This gets to LCP as fast as possible without loading anything unnecessary.</p>
+
+      <h3>Lazy Phase</h3>
+      <p>All remaining sections, header, footer, fonts, and lazy styles load after LCP is achieved. Each block's JS and CSS only loads if that block is on the page.</p>
+
+      <h3>Delayed Phase</h3>
+      <p>Analytics, chat widgets, and martech load 3 seconds after the page is interactive. They never block rendering.</p>
+
+      <h2>Core Web Vitals in EDS</h2>
+      <p>EDS achieves Lighthouse 100 by default because of strict phase separation, CDN edge delivery, no JavaScript framework, and automatic image optimization.</p>
+
+      <h2>Structured Data and SEO</h2>
+      <p>Phase 5 adds Organization, BlogPosting, FAQPage, and BreadcrumbList JSON-LD schemas to pages automatically.</p>
+    </div>
+    <hr>
+
+    <!-- SECTION 3: FAQ Accordion — tests FAQPage JSON-LD schema injection -->
+    <div>
+      <h2>Frequently Asked Questions</h2>
+      <p>The accordion below has the <code>faq</code> class, which triggers FAQPage JSON-LD injection.</p>
+      <div class="accordion faq">
+        <div>
+          <div>What Lighthouse score does EDS achieve?</div>
+          <div><p>EDS achieves a perfect 100 score across all four Lighthouse categories: Performance, Accessibility, Best Practices, and SEO. This is possible because pages are pre-rendered HTML served from CDN with no server processing overhead.</p></div>
+        </div>
+        <div>
+          <div>Do I need a JavaScript framework with EDS?</div>
+          <div><p>No. EDS uses vanilla JavaScript (ES6+) with no transpiling or build steps. Blocks are self-contained ES modules that are loaded on-demand, only when the block appears on a page. This eliminates framework bundle overhead and hydration costs.</p></div>
+        </div>
+        <div>
+          <div>How do authors create content for EDS?</div>
+          <div><p>Authors use Universal Editor — a WYSIWYG editor that works directly in the browser, showing a live preview of the page as it will appear to visitors. Content is stored in AEM's JCR repository and rendered to plain HTML at preview/publish time.</p></div>
+        </div>
+        <div>
+          <div>What is a Content Fragment in AEM?</div>
+          <div><p>A Content Fragment is a piece of structured, schema-driven content stored in AEM. Unlike page content, CFs are reusable across multiple pages and channels. They can be queried via GraphQL API, enabling dynamic blocks that fetch and render data at runtime.</p></div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- SECTION 4: CTA Banner — tests updated cta-banner block structure -->
+    <div>
+      <div class="cta-banner">
+        <div>
+          <div>
+            <picture>
+              <img src="https://placehold.co/1200x400/131313/ffffff?text=CTA+Background" alt="" width="1200" height="400">
+            </picture>
+          </div>
+        </div>
+        <div>
+          <div>Start Your EDS Journey Today</div>
+        </div>
+        <div>
+          <div>
+            <p>Learn how to build blazing-fast websites with Adobe Edge Delivery Services. Zero config, zero framework, 100 Lighthouse.</p>
+            <p><strong><a href="/drafts/block-showcase">Explore Blocks</a></strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer></footer>
+</body>
+</html>
+
