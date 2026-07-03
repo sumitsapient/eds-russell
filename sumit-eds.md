@@ -118,6 +118,17 @@
     - [.hlxignore — File Protection](#hlxignore--file-protection)
     - [Authentication Hooks — Gated Content](#authentication-hooks--gated-content)
     - [Security Q&A](#security-qa)
+16. [Phase 10 — CI/CD, Testing & Deployment](#phase-10--cicd-testing--deployment)
+    - [The Three Environments](#the-three-environments)
+    - [AEM Code Sync — Built-in Deployment](#aem-code-sync--built-in-deployment)
+    - [GitHub Actions — What We Have](#github-actions--what-we-have)
+    - [The Build Workflow](#the-build-workflow)
+    - [The PR Quality Workflow](#the-pr-quality-workflow)
+    - [The build:json Guard](#the-buildjson-guard)
+    - [PageSpeed Insights in CI](#pagespeed-insights-in-ci)
+    - [PR Template — The Contract](#pr-template--the-contract)
+    - [Full Deployment Flow](#full-deployment-flow)
+    - [CI/CD Q&A](#cicd-qa)
 
 ---
 
@@ -4446,6 +4457,188 @@ A: Yes — `*.aem.page` and `*.aem.live` are always HTTPS. Custom domains also g
 
 ---
 
+## Phase 10 — CI/CD, Testing & Deployment
+
+> How code gets from your laptop to production safely and automatically.
+
+### The Three Environments
+
+```
+localhost:3000           *.aem.page               *.aem.live
+──────────────           ──────────               ──────────
+Your working copy        Preview environment       Production
+(even uncommitted)       (author-previewed         (author-published
+                          content)                  content)
+
+Code: your disk          Code: GitHub branch       Code: main branch
+Content: previewed       Content: previewed        Content: published
+```
+
+**Key insight:** Code and content are independent. `main--repo--owner.aem.page` = main code + previewed content. `branch--repo--owner.aem.page` = feature branch code + previewed content.
+
+---
+
+### AEM Code Sync — Built-in Deployment
+
+AEM Code Sync is a GitHub App — the deployment mechanism. No Docker, no Kubernetes, no build servers.
+
+```
+git push feature-branch
+       ↓ (< 30 seconds)
+https://feature-branch--eds-russell--sumitsapient.aem.page/ is live
+```
+
+For `main`:
+```
+PR merged to main
+       ↓
+https://main--eds-russell--sumitsapient.aem.page/  (preview content)
+https://main--eds-russell--sumitsapient.aem.live/  (published content)
+```
+
+No cache invalidation — CDN edges pick up new code on the next request automatically.
+
+---
+
+### GitHub Actions — What We Have
+
+| Workflow | Trigger | Jobs |
+|---|---|---|
+| `main.yaml` | Every push | lint + build:json guard |
+| `pr-quality.yaml` | PRs to `main` | lint + PageSpeed Insights |
+| `cleanup-on-create.yaml` | Repo creation | Template cleanup (one-time) |
+
+---
+
+### The Build Workflow (`main.yaml`)
+
+Runs on **every push** to any branch.
+
+```yaml
+- run: npm ci           # clean install from package-lock.json
+- run: npm run lint     # ESLint + Stylelint
+- run: npm run build:json + git diff --quiet
+  # Fails if developer forgot to run build:json after changing _*.json partials
+```
+
+**Why the `build:json` guard?**
+
+`component-definition.json`, `component-models.json`, `component-filters.json` are aggregated from partial `_*.json` files. If you edit `_accordion.json` but forget `npm run build:json`, Universal Editor won't see your changes — silently broken.
+
+CI output when forgotten:
+```
+❌ component-definition.json is out of date.
+Run 'npm run build:json' and commit the changes.
+```
+
+---
+
+### The PR Quality Workflow (`pr-quality.yaml`)
+
+Runs on **pull requests to `main`** only.
+
+**Job 1: Lint** — parallel to `main.yaml`.
+
+**Job 2: Performance** — only if `PSI_API_KEY` secret is set.
+
+```
+PR: feature-branch → main
+       ↓
+Preview URL derived: https://feature-branch--eds-russell--sumitsapient.aem.page/home
+       ↓
+PageSpeed Insights API called (mobile strategy)
+       ↓
+Score table posted to GitHub Actions summary:
+  Performance    | 98 | ✅
+  Accessibility  | 95 | ✅
+  Best Practices | 100| ✅
+  SEO            | 100| ✅
+       ↓
+Fails if any score < 90
+```
+
+**Setup:**
+1. `https://console.developers.google.com` → enable PageSpeed Insights API → create API key
+2. GitHub repo: `Settings → Secrets → Actions → New secret → PSI_API_KEY`
+
+---
+
+### PageSpeed Insights in CI
+
+**Why mobile?** Google uses mobile scores for ranking. EDS targets 100 on mobile.
+
+**Why threshold 90, not 100?** PSI scores fluctuate ±3-5 points between runs due to server load. 90 catches real regressions without false failures.
+
+**Lab vs Field data:** CI uses **lab data** (Lighthouse) — consistent and reproducible. Field data (CrUX) needs real traffic — preview URLs have none.
+
+---
+
+### PR Template — The Contract
+
+`.github/pull_request_template.md` enforces quality on every PR:
+
+| Section | What it catches |
+|---|---|
+| Test URLs | No PR without a visible before/after link |
+| Performance checklist | PSI score, no render-blocking resources |
+| Accessibility checklist | axe-core 0 violations, keyboard nav |
+| SEO checklist | h1 present, title/description set |
+| Content model checklist | max 4 fields, build:json run |
+| Security checklist | no secrets, HTML sanitized |
+
+**Without the preview URL the PR is rejected** — there's no way to review a visual change without seeing it.
+
+---
+
+### Full Deployment Flow
+
+```
+1. git checkout -b feat/my-feature
+
+2. npx @adobe/aem-cli up
+   → Develop at localhost:3000
+
+3. git push origin feat/my-feature
+   → AEM Code Sync: live at feat-my-feature--eds-russell--sumitsapient.aem.page in ~30s
+   → GitHub Actions: lint + build:json check run
+
+4. Open PR → main
+   → pr-quality.yaml: lint + PSI scores
+   → Fill in PR template with preview URL
+
+5. Human reviewer opens preview URL, reviews code, approves
+
+6. Merge to main
+   → AEM Code Sync: live on main--eds-russell--sumitsapient.aem.page and .aem.live
+```
+
+---
+
+### CI/CD Q&A
+
+**Q: Why no Docker / build step / artifact upload?**
+A: EDS serves JS/CSS **directly from GitHub** via CDN. No bundling, no transpiling. AEM Code Sync reads your raw files. What you write is exactly what the browser downloads — this is why performance is so good.
+
+**Q: `npm ci` vs `npm install`?**
+A: `npm ci` does a clean install from `package-lock.json` — exact same versions every time. Always use in CI.
+
+**Q: How do I protect `main` from direct pushes?**
+A: GitHub: `Settings → Branches → Add rule → main`
+- ✅ Require pull request before merging
+- ✅ Require status checks: select `build` from `main.yaml`
+- ✅ Require branches to be up to date
+- ✅ Include administrators
+
+**Q: What if CI fails after a push to `main`?**
+A: AEM Code Sync deploys immediately — CI doesn't block it. Fix and push again. Branch protection on `main` (requiring PR reviews) is the real gate.
+
+**Q: Why does `cleanup-on-create.yaml` exist?**
+A: This project is based on the AEM boilerplate template. It runs once on repo creation to replace `{repo}` and `{owner}` placeholders with real values, then deletes itself.
+
+---
+
 *Last updated: July 3, 2026*
+
+
 
 

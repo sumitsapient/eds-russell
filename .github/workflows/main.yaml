@@ -1,14 +1,27 @@
 name: Build
+
 on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - name: Use Node.js 20
-      uses: actions/setup-node@v6
-      with:
-        node-version: 24
-    - run: npm ci
-    - run: npm run lint
+      - uses: actions/checkout@v4
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      # Verify component JSON is up to date — catch forgotten `npm run build:json`
+      - name: Check component JSON is up to date
+        run: |
+          npm run build:json
+          if ! git diff --quiet; then
+            echo "❌ component-definition.json / component-models.json / component-filters.json are out of date."
+            echo "Run 'npm run build:json' and commit the changes."
+            git diff
+            exit 1
+          fi
+          echo "✅ Component JSON is up to date."

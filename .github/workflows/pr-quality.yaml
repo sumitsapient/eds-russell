@@ -1,0 +1,75 @@
+name: PR Quality Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── 1. LINT ──────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint (ESLint + Stylelint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+
+  # ── 2. PERFORMANCE ───────────────────────────────────────────────────────────
+  # Runs Lighthouse via PageSpeed Insights API against the feature preview URL.
+  # Fails if any Core Web Vital category drops below 90.
+  performance:
+    name: Performance (PageSpeed Insights)
+    runs-on: ubuntu-latest
+    # Only run if PSI_API_KEY secret is configured in the repository
+    if: ${{ secrets.PSI_API_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Derive preview URL
+        id: url
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          REPO="eds-russell"
+          OWNER="sumitsapient"
+          # Use the path from the PR description if set, otherwise use /home
+          PREVIEW_URL="https://${BRANCH}--${REPO}--${OWNER}.aem.page/home"
+          echo "preview_url=${PREVIEW_URL}" >> "$GITHUB_OUTPUT"
+          echo "Testing: ${PREVIEW_URL}"
+
+      - name: Run PageSpeed Insights
+        id: psi
+        run: |
+          URL="${{ steps.url.outputs.preview_url }}"
+          API_KEY="${{ secrets.PSI_API_KEY }}"
+          RESULT=$(curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${URL}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo&key=${API_KEY}")
+
+          PERF=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(int(d['lighthouseResult']['categories']['performance']['score']*100))")
+          A11Y=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(int(d['lighthouseResult']['categories']['accessibility']['score']*100))")
+          BEST=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(int(d['lighthouseResult']['categories']['best-practices']['score']*100))")
+          SEO=$(echo "$RESULT"  | python3 -c "import sys,json; d=json.load(sys.stdin); print(int(d['lighthouseResult']['categories']['seo']['score']*100))")
+
+          echo "performance=${PERF}"   >> "$GITHUB_OUTPUT"
+          echo "accessibility=${A11Y}" >> "$GITHUB_OUTPUT"
+          echo "best_practices=${BEST}" >> "$GITHUB_OUTPUT"
+          echo "seo=${SEO}"            >> "$GITHUB_OUTPUT"
+
+          echo "## Lighthouse Scores for ${URL}" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Category | Score | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Performance    | ${PERF}  | $([ $PERF  -ge 90 ] && echo '✅' || echo '❌') |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Accessibility  | ${A11Y}  | $([ $A11Y  -ge 90 ] && echo '✅' || echo '❌') |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Best Practices | ${BEST}  | $([ $BEST  -ge 90 ] && echo '✅' || echo '❌') |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| SEO            | ${SEO}   | $([ $SEO   -ge 90 ] && echo '✅' || echo '❌') |" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail if scores below threshold
+        run: |
+          FAIL=0
+          [ "${{ steps.psi.outputs.performance }}"    -lt 90 ] && echo "❌ Performance below 90"    && FAIL=1
+          [ "${{ steps.psi.outputs.accessibility }}"  -lt 90 ] && echo "❌ Accessibility below 90"  && FAIL=1
+          [ "${{ steps.psi.outputs.best_practices }}" -lt 90 ] && echo "❌ Best Practices below 90" && FAIL=1
+          [ "${{ steps.psi.outputs.seo }}"            -lt 90 ] && echo "❌ SEO below 90"            && FAIL=1
+          [ $FAIL -eq 0 ] && echo "✅ All scores pass (≥ 90)" || exit 1
+
