@@ -86,7 +86,8 @@
         "breadcrumb",
         "hello-world",
         "hello-world-with-child",
-        "language-switcher"
+        "language-switcher",
+        "insights-listing"
       ]
     }
   ]
