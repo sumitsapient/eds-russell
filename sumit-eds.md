@@ -5307,8 +5307,786 @@ A: Blocks should never break because a placeholder is missing. The `p['key'] || 
 
 ---
 
-*Last updated: July 3, 2026*
-*Last updated: July 3, 2026*
+### Phase 12 — Real Testing Session (July 3, 2026)
+
+#### What we discovered: query-index.json only had 3 columns
+
+The initial `/query-index.json` only had `path`, `lastModified`, `robots`. Our `insights-listing` block needs `title`, `description`, `image`, `category` to render cards. We updated `helix-query.yaml` to add these columns.
+
+**The lesson:** `helix-query.yaml` is the contract between your pages and your blocks. Always check what columns exist before building a block that reads the query index.
+
+#### Step by step what we did
+
+**1. Updated `helix-query.yaml`** — added `title`, `description`, `image`, `category`, `template`, `author` properties with CSS selectors pointing to `<meta>` tags in the page `<head>`.
+
+**2. Created 3 insight pages in AEM** with Page Properties filled in:
+
+| Page | Title | Category |
+|---|---|---|
+| `/insights/market-outlook-q3-2026` | Market Outlook Q3 2026 | Equities |
+| `/insights/fixed-income-outlook` | Fixed Income Outlook 2026 | Fixed Income |
+| `/insights/alternative-investments` | The Case for Alternative Investments | Alternatives |
+
+Each page was Previewed → triggered the indexer → new columns appeared in `/query-index.json`.
+
+**3. Created `/placeholders` page** using **Spreadsheet** template (should use **Placeholders** template — same result, dedicated template is better practice).
+
+**4. Created `/taxonomy` page** using **Spreadsheet** template (should use **Taxonomy** template).
+
+**5. Added `insights-listing` block** to the `/insights` page in Universal Editor.
+
+**Block not showing in UE?** → The component definition is in `component-definition.json` served from GitHub. After pushing, UE needs a **hard refresh (Ctrl+Shift+R)** to reload it.
+
+#### All 3 tests passed ✅
+
+- **Category filter:** Click Equities → only Market Outlook card shown
+- **Text search:** Type "Fixed" → only Fixed Income card shown
+- **Reset:** Click All → all 3 cards return
+
+#### Key lesson: Use dedicated templates
+
+| Creating | Wrong | Right |
+|---|---|---|
+| Text strings | Spreadsheet | **Placeholders** template |
+| Category hierarchy | Spreadsheet | **Taxonomy** template |
+| Redirect rules | Spreadsheet | **Redirects** template |
+| Custom data | ✅ Spreadsheet | ✅ Spreadsheet |
+
+Dedicated templates pre-configure the correct column names and show a friendlier UE editing UI. The JSON output is identical — but no risk of typo in column names.
+
+---
+
+## Phase 13 — A/B Testing & Experimentation
+
+> The most unique capability in EDS. Authors can run experiments without a single code deploy.
+
+---
+
+### Why This Phase is Special
+
+In traditional AEM you need a developer to add Target activities, create mbox calls, configure VEC, and deploy code. In EDS, once you wire the plugin in once, **authors run every future experiment from a spreadsheet** — zero code deploys.
+
+---
+
+### Two Levels of EDS Experimentation
+
+#### Level 1: Section-Level Experiments (Inline Variants)
+
+Both variants live on the same page. The plugin randomly shows one section and hides the other.
+
+**How author sets it up in Universal Editor:**
+1. Add two sections to the same page
+2. On Section 1 → Section Metadata → `Style: experiment-hero-test-control`
+3. On Section 2 → Section Metadata → `Style: experiment-hero-test-variant-a`
+4. Page Properties → `Experiment: hero-test`
+5. Preview & Publish — done!
+
+**Best for:** Headline copy tests, CTA copy tests, layout experiments within a section.
+
+```
+URL stays the same: /insights
+Body gets: data-experiment="hero-test" data-variant="control" (or variant-a)
+Plugin hides: .section.experiment-hero-test-variant-a
+Plugin shows: .section.experiment-hero-test-control
+```
+
+#### Level 2: Page-Level Experiments (Full Variant Pages)
+
+A completely different version of the page is served based on variant assignment.
+
+**How author sets it up:**
+1. Duplicate the page in AEM: `/home` → `/home--variant-a`
+2. Edit the variant page with completely different content
+3. On the original `/home` page properties:
+   - `experiment: hero-layout-test`
+   - `instant-experiment: /home--variant-a`
+   - `experiment-split: 50`
+4. Preview & Publish both pages — done!
+
+**Best for:** Completely different layouts, design tests, multi-section changes.
+
+```
+URL stays the same: /home
+Plugin: fetches /home--variant-a <main> HTML and swaps it in
+Zero content flash: happens in Eager phase before decorateMain runs
+```
+
+---
+
+### The Plugin: @adobe/aem-experimentation
+
+The official plugin from Adobe. Lives at `https://cdn.jsdelivr.net/npm/@adobe/aem-experimentation@1/src/index.js`.
+
+**What it does that the old `setupExperimentation()` in delayed.js could not:**
+
+| Feature | Old (delayed.js) | New (plugin) |
+|---------|-----------------|--------------|
+| When it runs | 3 seconds after load | Eager phase, before decorateMain |
+| Content flash (FOUC) | ❌ Users see control then variant | ✅ Zero flash |
+| Persistence | sessionStorage (same tab only) | Cookie (across sessions, devices) |
+| Multi-variant support | 2 variants only | Unlimited variants |
+| QA tools | None | Preview bar on *.aem.page |
+| Force variant for testing | None | `?experiment=id&variant=variant-a` |
+| Campaign tracking | None | UTM parameters tracked automatically |
+| RUM reporting | None | Automatic via EDS RUM dashboard |
+| New experiment needs | Code deploy | Author sets metadata — no deploy! |
+
+---
+
+### How It's Wired In (Three-Phase Pattern)
+
+The plugin exports three functions matching EDS's three loading phases:
+
+```js
+// scripts.js — constants
+const EXPERIMENT_PLUGIN = 'https://cdn.jsdelivr.net/npm/@adobe/aem-experimentation@1/src/index.js';
+
+// EAGER PHASE — runs before decorateMain, MUST be first to avoid FOUC
+async function loadEager(doc) {
+  // ... decorateTemplateAndTheme, decorateSEO, decorateI18n ...
+
+  if (getMetadata('experiment')) {
+    const { loadEager: runExperiment } = await import(EXPERIMENT_PLUGIN);
+    await runExperiment(document, {
+      prodHost: 'main--eds-russell--sumitsapient.aem.live',
+    });
+  }
+
+  // THEN decorateMain — operates on the correct variant content
+  decorateMain(main);
+}
+
+// LAZY PHASE — fires impression events, handles audience content
+async function loadLazy(doc) {
+  await loadSections(main);
+
+  if (document.body.dataset.experiment) {
+    const { loadLazy: runExperimentLazy } = await import(EXPERIMENT_PLUGIN);
+    await runExperimentLazy(document);
+  }
+}
+
+// DELAYED PHASE — campaign/UTM tracking, analytics reporting
+function loadDelayed() {
+  window.setTimeout(async () => {
+    if (document.body.dataset.experiment) {
+      const { loadDelayed: runExperimentDelayed } = await import(EXPERIMENT_PLUGIN);
+      runExperimentDelayed(document);
+    }
+    import('./delayed.js');
+  }, 3000);
+}
+```
+
+**Why the `prodHost` config?** The plugin shows a floating "preview bar" on non-production URLs (localhost, *.aem.page). The preview bar shows the experiment name, current variant, and lets you switch variants. On `prodHost` (*.aem.live), the bar is hidden.
+
+---
+
+### The Metadata Contract
+
+Authors set these in Page Properties (no code changes ever needed after initial setup):
+
+| Metadata Key | Value | Example |
+|---|---|---|
+| `experiment` | Unique experiment ID | `hero-cta-test` |
+| `instant-experiment` | Variant page paths (page-level only) | `/home--variant-a, /home--variant-b` |
+| `experiment-split` | % of traffic to variant (remaining goes to control) | `34` (34% variant-a, 34% variant-b, 32% control) |
+| `experiment-start-date` | ISO date when experiment starts | `2026-07-10` |
+| `experiment-end-date` | ISO date when experiment ends | `2026-07-24` |
+
+---
+
+### How to Verify an Experiment is Running
+
+**1. Check the cookie:**
+```
+DevTools → Application → Cookies → hlx-experiment
+Value: hero-cta-test/control  OR  hero-cta-test/variant-a
+```
+
+**2. Check the body element:**
+```html
+<body data-experiment="hero-cta-test" data-variant="control">
+```
+
+**3. Look for the preview bar:**
+On `*.aem.page` URLs, a floating bar appears at the bottom:
+```
+[Experiment: hero-cta-test] Variant: control  [Switch to variant-a]
+```
+
+**4. Force a variant for QA:**
+```
+https://main--eds-russell--sumitsapient.aem.page/home?experiment=hero-cta-test&variant=variant-a
+```
+Share this URL with QA team or stakeholders to review specific variants.
+
+**5. Check the console:**
+The plugin logs experiment assignment in the browser console.
+
+---
+
+### CSS Pattern for Variant-Specific Styles
+
+Once the plugin sets `data-variant` on `<body>`, you can use CSS to show/hide or restyle content per variant:
+
+```css
+/* Default: hide variant-specific content */
+.hero .variant-content { display: none; }
+
+/* Show only for variant-a */
+body[data-variant="variant-a"] .hero .variant-content {
+  display: block;
+}
+
+/* Change CTA color for variant-b */
+body[data-variant="variant-b"] .hero .button.primary {
+  background-color: var(--color-accent);
+}
+```
+
+This lets you do subtle style experiments (button color, font size, spacing) without needing separate variant pages.
+
+---
+
+### CSP Update Required
+
+The plugin is loaded from `cdn.jsdelivr.net`. Add it to your `_headers` Content Security Policy:
+
+```
+script-src 'self' ... https://cdn.jsdelivr.net ...
+```
+
+This was already added in our `_headers` file during Phase 13.
+
+---
+
+### Demo Page
+
+A demo experiment page was created at `drafts/experiment-demo.html`. It shows:
+- Section-level experiment with two variants on the same page
+- Explanation of what the plugin does vs the old approach
+- How to verify the experiment is running
+- How authors create experiments without code deploys
+
+Start the dev server with `--html-folder drafts` and open `http://localhost:3000/experiment-demo`.
+
+---
+
+### The Critical Insight: Author-Controlled Experimentation
+
+This is the core power of EDS experimentation. Once the plugin is wired in (one-time code change), here's the full workflow **without any developer involvement**:
+
+```
+Author workflow (no code deploy!):
+1. Duplicate page in AEM Sites: /home → /home--variant-a
+2. Edit variant page content
+3. Set metadata on /home: experiment=hero-test, instant-experiment=/home--variant-a
+4. Preview both pages
+5. Publish both pages
+6. Experiment is live — 50% of users see variant-a
+7. After 2 weeks, check RUM dashboard for conversion data
+8. Winner declared → author unpublishes loser page, removes experiment metadata
+9. Experiment complete — zero developer involvement after step 5
+```
+
+This is fundamentally different from Adobe Target where developers configure activities, set up mboxes, and approve VEC changes. In EDS, experimentation is a content operation.
+
+---
+
+### Q&A
+
+**Q: What is FOUC and why does it matter?**
+A: Flash of Uncontrolled Content. With the old approach (running in delayed.js at 3 seconds), users would briefly see the control variant, then the page would "jump" to the experiment variant. This creates a jarring experience and inflates bounce rates. The plugin runs in the Eager phase (before any content renders) so the correct variant is shown from the first paint — zero flash.
+
+**Q: How does the plugin persist variant assignment across sessions?**
+A: It uses a cookie named `hlx-experiment`. The cookie is set once on first visit and used on every subsequent page load. This ensures the same user always sees the same variant (essential for valid A/B test results). The old sessionStorage approach lost assignment when the browser was closed.
+
+**Q: Can I have more than 2 variants?**
+A: Yes. Use multiple paths in `instant-experiment`:
+```
+instant-experiment: /home--variant-a, /home--variant-b, /home--variant-c
+experiment-split: 25
+```
+25% each to variants a, b, c → 25% to control.
+
+**Q: What happens when the experiment ends?**
+A: Author removes the `experiment` metadata tag and unpublishes the variant pages. All traffic goes back to control. No code changes needed.
+
+**Q: How do I see experiment results?**
+A: EDS RUM Dashboard at `https://main--eds-russell--sumitsapient.aem.live/.rum/` — this is Phase 15 of our journey. The plugin automatically reports variant assignments to RUM.
+
+---
+
+## Phase 15 — Real User Monitoring (RUM) Dashboard
+
+> EDS ships with RUM built in. You have been collecting live performance and behaviour data since Day 1 — without writing a single line of analytics code.
+
+---
+
+### What is EDS RUM?
+
+Real User Monitoring (RUM) is a lightweight data collection system baked into `aem.js`. Every page that loads `aem.js` automatically sends performance and interaction events to Adobe's edge infrastructure.
+
+Key facts:
+- **1% sampling by default** — only 1 in 100 page views is measured, to avoid impacting performance. On high-traffic pages this is still thousands of data points.
+- **No cookies, no PII** — RUM is privacy-safe by design. It stores a random ID in sessionStorage, never personal data.
+- **Zero setup** — it was collecting data on your first page view. No configuration needed.
+- **Separate from Analytics** — RUM is about *performance and engagement patterns*, not marketing attribution. Think of it as engineering/UX intelligence vs. Adobe Analytics = marketing intelligence.
+
+---
+
+### What EDS RUM Automatically Collects
+
+These checkpoints fire without any code from us:
+
+| Checkpoint | When it fires | What it tells you |
+|---|---|---|
+| `top` | Page starts loading | Total page views, traffic trends |
+| `load` | Full page loaded | Load time distribution |
+| `lazy` | Lazy phase completes | How long after top the lazy phase took |
+| `cwv` | Core Web Vitals measured | LCP, CLS, INP values per page |
+| `viewblock` | A block enters the viewport | Which blocks users actually scroll to |
+| `viewmedia` | An image enters viewport | Image engagement |
+| `click` | User clicks a link or button | Click-through rates |
+| `navigate` | SPA/back-forward navigation | Navigation patterns |
+| `404` | A 404 page is served | Broken link detection |
+| `error` | JavaScript errors | Runtime error tracking |
+| `experiment` | Experiment variant assigned | Variant distribution (Phase 13) |
+
+---
+
+### Accessing the RUM Dashboard
+
+#### Option 1: AEM Sidekick (easiest)
+1. Open `https://main--eds-russell--sumitsapient.aem.page/home`
+2. Click the Sidekick extension icon in Chrome
+3. Click **Performance** tab
+4. You see LCP, CLS, INP for the current page — real user data
+
+#### Option 2: RUM Explorer (full dashboard)
+Open this URL in your browser (replace domain with yours):
+```
+https://www.aem.live/tools/rum/explorer.html#domain=main--eds-russell--sumitsapient.aem.page
+```
+
+The explorer shows:
+- **Traffic**: Page views over time, top pages by views
+- **Performance**: CWV breakdown — what % of users get Good/Needs Improvement/Poor
+- **Engagement**: Top clicked elements, scroll depth distribution
+- **Experiments**: Variant assignment counts from Phase 13
+
+#### Option 3: Direct data endpoint
+```
+https://main--eds-russell--sumitsapient.aem.live/.rum/
+```
+This returns raw JSON data — useful for building custom dashboards or exporting to a BI tool.
+
+---
+
+### Force 100% Sampling for Testing
+
+By default RUM only samples 1 in 100 visits (to protect performance). During development you can force all events to be captured:
+
+```
+http://localhost:3000/insights?rum=on
+```
+
+The `?rum=on` parameter sets the sampling rate to 100% for that session. You will see RUM events fire in the Network tab (requests to `/.rum/` endpoint) for every interaction.
+
+Other values:
+- `?rum=off` — disable RUM for this session
+- `?rum=high` — 1 in 10 (10%)
+- `?rum=low` — 1 in 1000 (0.1%)
+
+---
+
+### Custom RUM Events We Added
+
+In Phase 15 we added custom `sampleRUM` calls to the `insights-listing` block to track business-meaningful interactions beyond page views.
+
+#### What we track
+
+```js
+// Card clicked — which articles are most popular?
+sampleRUM('click', { source: '.insights-listing-card a', target: '/insights/market-outlook-q3-2026' });
+
+// Category filter applied — which topics interest users most?
+sampleRUM('filter', { source: 'insights-listing', target: 'Equities' });
+
+// Search query entered (after 3+ chars, debounced) — what are users looking for?
+sampleRUM('search', { source: 'insights-listing', target: 'alternatives' });
+
+// Pagination used — do users go beyond page 1?
+sampleRUM('paginate', { source: 'insights-listing', target: '2' });
+```
+
+#### Why these specific events?
+
+| Event | Business Question Answered |
+|---|---|
+| `click` on card | Which insights are most engaging? → Informs content strategy |
+| `filter` by category | Which investment topics drive the most interest? |
+| `search` queries | What are users looking for that isn't in the menu? |
+| `paginate` | Are users finding what they need on page 1? |
+
+Without these events, you can only see that someone visited `/insights`. With them, you can see exactly what they engaged with.
+
+---
+
+### The `trackRUM` Utility in scripts.js
+
+We added a `trackRUM` wrapper function to `scripts.js` that any block can import. It enforces the consistent `{source, target}` data convention:
+
+```js
+// In any block — import from scripts.js
+import { trackRUM } from '../../scripts/scripts.js';
+
+// Use it like this:
+trackRUM('click', '.hero .button', '/contact');
+trackRUM('convert', 'newsletter-form', 'email-submitted');
+trackRUM('view', 'cta-banner', 'summer-campaign');
+```
+
+**Convention:**
+- `source` = where (block name or element selector)
+- `target` = what (URL, category name, value, or label)
+
+This convention makes your RUM data consistent and queryable — you can filter by `source=insights-listing` to see all interactions in that block.
+
+---
+
+### How sampleRUM Works Internally
+
+```
+User interaction (click, scroll, etc.)
+       ↓
+sampleRUM('checkpoint', { source, target })
+       ↓
+window.hlx.rum.collector queues the event (in-memory)
+       ↓
+Every few seconds, queue is flushed via navigator.sendBeacon()
+       ↓
+POST to https://rum.aem.live/collect  (fire-and-forget, 1% of sessions)
+       ↓
+Data stored in AEM edge infrastructure
+       ↓
+RUM Explorer dashboard reads the data
+```
+
+`navigator.sendBeacon` is used (not `fetch`) because:
+- It fires even when the page is being unloaded (tab close, navigation away)
+- It never blocks the main thread
+- Zero performance impact
+
+---
+
+### Connecting RUM to Experimentation (Phase 13)
+
+The `@adobe/aem-experimentation` plugin automatically fires:
+```js
+sampleRUM('experiment', { source: 'hero-cta-test', target: 'variant-a' });
+```
+
+In the RUM Explorer, you can then:
+1. Filter by checkpoint = `experiment`
+2. Group by `target` (variant name)
+3. Compare conversion events (`click`, `convert`) between control and variant-a
+
+This gives you statistically valid A/B test results without needing a separate analytics tool.
+
+---
+
+### CWV in the RUM Dashboard — What to Look For
+
+The RUM dashboard shows Core Web Vitals as traffic-weighted percentiles:
+
+| Metric | Good | Needs Work | Poor | Your Target |
+|---|---|---|---|---|
+| **LCP** (Largest Contentful Paint) | < 2.5s | 2.5–4s | > 4s | < 1.5s |
+| **CLS** (Cumulative Layout Shift) | < 0.1 | 0.1–0.25 | > 0.25 | < 0.05 |
+| **INP** (Interaction to Next Paint) | < 200ms | 200–500ms | > 500ms | < 100ms |
+
+If you see a spike in LCP on a specific page, the RUM data shows you exactly which element caused it (from the `viewmedia` checkpoint that captures which image was the LCP element).
+
+---
+
+### Q&A
+
+**Q: Is RUM the same as Adobe Analytics?**
+A: No. RUM is **engineering intelligence** — performance, engagement patterns, errors. Adobe Analytics is **marketing intelligence** — attribution, funnels, conversions with user identity. You need both. RUM is free and built in; Analytics requires your Launch configuration (already set up in Phase 6).
+
+**Q: Why 1% sampling — won't I miss data?**
+A: At 1% sampling, a page with 10,000 views generates 100 RUM data points — statistically significant for CWV. For lower-traffic pages (< 1,000 views), use `?rum=on` during development or increase the rate via the `data-rate` attribute on the script tag.
+
+**Q: Can I query the raw RUM data for a BI tool?**
+A: Yes. The `/.rum/` endpoint returns JSON. You can pipe it into Tableau, PowerBI, or any BI tool. For Russell Investments this could be useful for executive dashboards showing site performance alongside investment data.
+
+**Q: How does the 1% sampling work for experiments?**
+A: The experimentation plugin bumps the sampling rate for experiment pages so you get statistically valid variant data. It uses `sampleRUM.enhance()` to override the default rate.
+
+**Q: What does it cost?**
+A: Nothing — included in your AEM Sites as a Cloud Service license. No separate tag, no additional DTM property, no third-party contract.
+
+---
+
+## Phase 14 — Adobe Target + Personalization
+
+> Target is the "marketing team's" personalization tool. EDS Experimentation (Phase 13) is the "dev/content team's" tool. Together they cover every personalization use case.
+
+---
+
+### Target vs EDS Experimentation — When to Use Which
+
+| | EDS Experimentation (Phase 13) | Adobe Target (Phase 14) |
+|---|---|---|
+| **Who controls it** | Author / content team | Marketing team / business users |
+| **How variants are defined** | Full variant pages or section styles | VEC drag-and-drop or JSON offers |
+| **Audience targeting** | All visitors (traffic split only) | Segments: geo, device, RTCDP profile |
+| **Scheduling** | Start/end metadata on page | Activity start/end dates in Target UI |
+| **Reporting** | EDS RUM dashboard | Target reports + AA integration |
+| **Personalization type** | A/B test (same offer to everyone in a variant) | 1:1 personalization (each user gets tailored offer) |
+| **Best for** | Copy/layout tests, content experiments | Segment-specific promotions, logged-in personalization |
+
+**Rule of thumb:**
+- Testing a new headline on the homepage? → EDS Experimentation
+- Showing a different hero to users in the "High Net Worth" RTCDP segment? → Adobe Target
+
+---
+
+### The Flicker Problem (and How We Solve It)
+
+**What is flicker?**
+When Target applies modifications client-side, there's a brief moment where the browser shows the "original" content before Target swaps it. Users see a visual "jump". This is called FOUC — Flash Of Unstyled/Unchanged Content.
+
+**Why it's worse in EDS**
+Traditional AEM loads analytics in the `<head>`. EDS loads Launch 3 seconds delayed (to protect Core Web Vitals). So without mitigation, users see the original for 3 seconds, then Target changes it.
+
+**Our solution: Section-level prehiding**
+
+Instead of hiding the entire `<body>` (which would destroy LCP), we hide only the specific sections that will be personalized:
+
+```
+1. hero.js runs (Lazy phase)
+   ↓ markPersonalizationRegion(section, 'hero-banner')
+   ↓ section.classList.add('personalization-pending')
+   ↓ CSS: .personalization-pending { visibility: hidden }
+   → Hero section is invisible
+
+2. 3 seconds later — delayed.js loads Launch
+   ↓ loadLaunch() appends <script> tag
+   ↓ Launch script executes, alloy fires sendEvent with renderDecisions: true
+   ↓ Target returns offer, alloy applies DOM modifications
+   ↓ applyPersonalization() is called
+   ↓ section.classList.remove('personalization-pending')
+   → Hero section appears with Target content applied
+
+3. Safety timeout (2000ms) kicks in if Target is slow
+   → Section reveals even without Target content
+```
+
+**The CSS (in styles.css):**
+```css
+.personalization-pending { visibility: hidden !important; }
+.personalization-applied { visibility: visible; }
+```
+
+`visibility: hidden` (not `display: none`) is used because:
+- The element still takes up space — no layout shift when revealed
+- Other content around it doesn't jump
+- Better CLS score
+
+---
+
+### Files Created / Modified
+
+#### `scripts/personalization.js` (new)
+
+Three exported functions:
+
+```js
+// 1. MARK a section for Target personalization (hides it)
+markPersonalizationRegion(element, regionName);
+// Sets: element.dataset.personalizationRegion = 'hero-banner'
+//       element.classList.add('personalization-pending')
+
+// 2. REVEAL after Target has applied modifications
+applyPersonalization();
+// Calls alloy sendEvent with renderDecisions: true
+// Then removes personalization-pending after Target responds (or timeout)
+
+// 3. TRACK a conversion goal
+trackTargetConversion(goalName, params);
+// Fires window._satellite.track('target-conversion', ...) for Launch rules
+// Also fires alloy sendEvent as fallback for non-Launch setups
+
+// 4. PUSH a page-view event for Target audience rules
+sendPersonalizationPageView(extra);
+// Pushes {event: 'target page view', page: {section, template, locale, ...}}
+// to ACDL — Launch picks this up for Target "landing page" conditions
+```
+
+#### `blocks/hero/hero.js` (implemented)
+
+The hero block now:
+- Marks its parent section as `hero-banner` personalization region
+- Moves the picture element to be a CSS full-bleed background
+- Tracks every link click as both a RUM event AND a Target conversion goal
+
+```js
+// Marks section as personalization target (hidden until Target fires)
+markPersonalizationRegion(section, 'hero-banner');
+
+// Tracks CTA clicks as Target conversion goals
+trackTargetConversion('hero-cta-click', { ctaText, ctaUrl });
+```
+
+#### `scripts/delayed.js` (updated)
+
+After `loadLaunch()` starts:
+```js
+import('./personalization.js').then(({ sendPersonalizationPageView, applyPersonalization }) => {
+  sendPersonalizationPageView();  // tell Target which page/section/template we're on
+  setTimeout(() => applyPersonalization(), 100); // reveal after Target applies offers
+});
+```
+
+---
+
+### Setting Up Target in Adobe Launch
+
+Since you use Adobe Launch, Target is configured there, not in your code. Here's what your Launch admin needs to do:
+
+#### Step 1: Configure alloy with renderDecisions
+
+In your Launch property → Extensions → AEP Web SDK → configure:
+```
+Personalization: renderDecisions = Enabled
+```
+This tells alloy to request Target offers on every sendEvent call.
+
+#### Step 2: Create a Target "Page Load" rule in Launch
+
+| Field | Value |
+|---|---|
+| Event | Adobe Client Data Layer → Data Pushed |
+| Condition | event.event = "target page view" |
+| Action | AEP Web SDK → Send Event |
+| Action config | renderDecisions = true |
+
+This means: whenever our `sendPersonalizationPageView()` pushes to ACDL, Launch fires an alloy event that requests Target personalization.
+
+#### Step 3: Create a Target Conversion rule in Launch
+
+| Field | Value |
+|---|---|
+| Event | Core → Direct Call |
+| Direct Call Identifier | `target-conversion` |
+| Action | AEP Web SDK → Send Event |
+| Action config | xdm.eventType = "decisioning.propositionInteract" |
+
+This means: whenever our `trackTargetConversion('hero-cta-click')` fires, Launch sends the conversion to Target.
+
+---
+
+### Creating a Target Activity (Visual Experience Composer)
+
+Once Launch is configured, here's how the marketing team creates a personalization activity:
+
+**1. Go to Adobe Target UI → Activities → Create Activity → A/B Test (or Experience Targeting)**
+
+**2. Set the URL to your page:**
+```
+https://main--eds-russell--sumitsapient.aem.live/home
+```
+
+**3. VEC loads your page. Click on the hero section** (it has `data-personalization-region="hero-banner"` — VEC can identify it).
+
+**4. Modify content via VEC:**
+- Change hero headline text
+- Swap the background image
+- Change CTA button copy/URL
+- Show/hide elements
+
+**5. Set your success metric:**
+- Type: Custom Conversion
+- Goal name: `hero-cta-click` (must match our `trackTargetConversion` call)
+
+**6. Set your audience:**
+- All visitors (A/B test) OR
+- Specific segments (e.g., "High Net Worth Investors" from RTCDP)
+
+**7. Activate the activity.** Target serves the modified content to matching visitors.
+
+---
+
+### Form-Based Activities (Alternative to VEC)
+
+The VEC is drag-and-drop but requires a browser to render the page. For headless/API use cases, use Form-Based activities with JSON offers:
+
+**In Target UI → Activities → Experience Targeting → Form-based:**
+
+1. Set location: `hero-banner` (matches our `data-personalization-region`)
+2. Create an offer (type = JSON):
+   ```json
+   {
+     "headline": "Tailored Solutions for High Net Worth Investors",
+     "ctaText": "Schedule a Consultation",
+     "ctaUrl": "/contact/private-wealth"
+   }
+   ```
+3. In your block JS, read the offer:
+   ```js
+   // alloy returns propositions when renderDecisions: true
+   window.alloy('sendEvent', { renderDecisions: true })
+     .then(({ propositions }) => {
+       const heroOffer = propositions
+         ?.find(p => p.scope === 'hero-banner')
+         ?.items?.[0]?.data?.content;
+       if (heroOffer) {
+         block.querySelector('h1').textContent = heroOffer.headline;
+       }
+     });
+   ```
+
+---
+
+### RTCDP Segments → Target Audiences
+
+Russell Investments already uses AEP/RTCDP. Segments built in RTCDP (e.g., "Institutional Investor", "Retail Investor", "High Net Worth") can flow directly into Target:
+
+```
+RTCDP Segment → AEP Edge Network → alloy.js (identity resolved) → Target (audience matched)
+                                              ↓
+                              Target serves the matching experience
+```
+
+**The key:** alloy.js uses the ECID (Experience Cloud ID) to stitch the anonymous web visitor to their known RTCDP profile. If the visitor is logged in (you have their email), the match is deterministic. If not, it's probabilistic based on cookie/device.
+
+---
+
+### Q&A
+
+**Q: If Launch loads 3 seconds delayed, doesn't the hero stay hidden for 3 seconds?**
+A: Yes — that's the fundamental tension between "EDS performance" and "Target personalization". Solutions:
+  1. **Accept it** for sections below the fold (hero is above fold, other sections can be personalized without flicker)
+  2. **Move Launch earlier** — remove the 3-second delay for pages that need personalization (accept the performance trade-off)
+  3. **Use Edge Decisioning** — configure Target in the Datastream to run server-side at the CDN edge — zero client-side delay, zero flicker, best of both worlds. This is the enterprise-grade solution.
+
+**Q: What is Edge Decisioning?**
+A: Adobe Target can run its decisioning at the CDN edge, meaning the personalized content is determined *before* it even reaches the browser — at the network request level. The response already contains the Target offer. Zero client-side JS needed for the decision. Requires Datastream configuration and "on-device decisioning" rules deployed to edge nodes.
+
+**Q: Can I use Target with the EDS Experimentation Plugin at the same time?**
+A: Yes — they're independent. EDS Experimentation runs in the Eager phase and controls HTML-level variants. Target runs in the Delayed phase and makes offer decisions. The experiment plugin sets `data-variant` on `<body>` which Target can use as audience criteria ("show this offer only to visitors in variant-a").
+
+**Q: Where do Target reports go?**
+A: Target's built-in reports plus AA integration. Your ACDL events (pageView, ctaClick) are sent to AA via Launch. Target can pull AA metrics as success criteria. So you can set "AA Metric: Revenue" as a Target goal rather than click-counting.
+
+---
+
+*Last updated: July 5, 2026*
+
+*Last updated: July 4, 2026*
 
 
 

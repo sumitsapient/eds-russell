@@ -8,6 +8,7 @@ import {
   getPlaceholders,
   getTaxonomy,
 } from '../../scripts/content-fragments.js';
+import { sampleRUM } from '../../scripts/aem.js';
 
 /**
  * Insights Listing Block
@@ -80,6 +81,10 @@ function renderCard(item) {
   const link = document.createElement('a');
   link.href = item.path;
   link.textContent = item.title || item.path;
+  // Track card click in RUM — tells us which insight articles are most popular
+  link.addEventListener('click', () => {
+    sampleRUM('click', { source: '.insights-listing-card a', target: item.path });
+  });
   title.append(link);
   body.append(title);
 
@@ -218,6 +223,8 @@ export default async function decorate(block) {
     (cat) => { // eslint-disable-line no-use-before-define
       activeCategory = cat;
       currentPage = 1;
+      // Track category filter usage — tells us which topics users care about
+      sampleRUM('filter', { source: 'insights-listing', target: cat });
       render(); // eslint-disable-line no-use-before-define
     },
   );
@@ -268,6 +275,8 @@ export default async function decorate(block) {
       paginationWrap.append(
         renderPagination(result.page, result.totalPages, (p) => {
           currentPage = p;
+          // Track pagination — tells us how deep users browse
+          sampleRUM('paginate', { source: 'insights-listing', target: String(p) });
           render();
           block.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, placeholders),
@@ -282,6 +291,10 @@ export default async function decorate(block) {
     searchTimer = setTimeout(() => {
       searchQuery = searchInput.value;
       currentPage = 1;
+      // Track search after 300ms debounce — only fires when user pauses typing
+      if (searchQuery.length >= 3) {
+        sampleRUM('search', { source: 'insights-listing', target: searchQuery });
+      }
       render();
     }, 300);
   });

@@ -13,10 +13,10 @@
 
   # Content Security Policy
   # - default-src 'self'              : block all by default
-  # - script-src  'self' + CDNs       : allow our scripts + Adobe Launch + axe-core
+  # - script-src  'self' + CDNs       : allow our scripts + Adobe Launch + axe-core + experimentation plugin
   # - style-src   'self' 'unsafe-inline': AEM adds inline styles during decoration
   # - img-src     'self' data: blob:  : AEM optimized images + inline SVGs
   # - connect-src 'self' + AEP Edge   : alloy.js calls to Edge Network
   # - frame-src   youtube-nocookie    : video-embed block
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://assets.adobedtm.com https://cdnjs.cloudflare.com https://cdn1.adoberesources.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.adobeaemcloud.com https://placehold.co; connect-src 'self' https://edge.adobedc.net https://dpm.demdex.net https://cm.everesttech.net; frame-src https://www.youtube-nocookie.com https://www.youtube.com; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://assets.adobedtm.com https://cdnjs.cloudflare.com https://cdn1.adoberesources.net https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.adobeaemcloud.com https://placehold.co; connect-src 'self' https://edge.adobedc.net https://dpm.demdex.net https://cm.everesttech.net; frame-src https://www.youtube-nocookie.com https://www.youtube.com; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';
 

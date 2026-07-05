@@ -1,0 +1,152 @@
+<html>
+<head>
+  <title>Experiment Demo — A/B Testing with EDS</title>
+  <meta name="description" content="Demonstrates EDS native A/B experimentation plugin">
+  <!--
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  HOW EXPERIMENTS WORK IN EDS                                        │
+    │                                                                     │
+    │  Two modes:                                                         │
+    │  1. SECTION-LEVEL (used on this demo page)                         │
+    │     → Both variants live on the same page                          │
+    │     → Author adds style "experiment-{id}-{variant}" to sections    │
+    │     → Plugin shows one variant, hides the rest                     │
+    │     → Good for: headline/CTA copy tests, layout experiments        │
+    │                                                                     │
+    │  2. PAGE-LEVEL (used in production for big changes)                │
+    │     → Control page:  /home  (with experiment metadata below)       │
+    │     → Variant page:  /home--variant-a  (full alternate page)       │
+    │     → Plugin fetches variant <main> and swaps it in                │
+    │     → Good for: completely different layouts, design tests         │
+    │                                                                     │
+    │  METADATA for page-level:                                          │
+    │    experiment:         hero-cta-test                               │
+    │    instant-experiment: /home--variant-a, /home--variant-b          │
+    │    experiment-split:   34                  ← % per variant         │
+    └─────────────────────────────────────────────────────────────────────┘
+
+    For SECTION-LEVEL (this page), no extra metadata needed.
+    Just style the sections — the plugin reads the class names.
+  -->
+
+  <!--
+    UNCOMMENT TO TEST PAGE-LEVEL EXPERIMENT:
+    (Create /drafts/experiment-demo--variant-a.html first)
+
+    <meta name="experiment" content="hero-cta-test">
+    <meta name="instant-experiment" content="/drafts/experiment-demo--variant-a">
+    <meta name="experiment-split" content="50">
+  -->
+</head>
+<body>
+  <header></header>
+  <main>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECTION-LEVEL EXPERIMENT: "hero-cta-test"
+         Both variants are on this page.
+         The plugin randomly picks one and hides the other.
+         Styles follow the naming pattern: experiment-{id}-{variant}
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- CONTROL — shown to 50% of visitors -->
+    <div class="section-metadata">
+      <div>
+        <div>style</div>
+        <div>experiment-hero-cta-test-control</div>
+      </div>
+    </div>
+    <div>
+      <h1>Insights for the Modern Investor</h1>
+      <p>Access research from Russell Investments' global team of analysts.</p>
+      <p><strong><a href="/insights">Explore Research →</a></strong></p>
+    </div>
+    <hr>
+
+    <!-- VARIANT A — shown to the other 50% -->
+    <div class="section-metadata">
+      <div>
+        <div>style</div>
+        <div>experiment-hero-cta-test-variant-a</div>
+      </div>
+    </div>
+    <div>
+      <h1>Make Smarter Investment Decisions</h1>
+      <p>Expert analysis, market outlooks, and portfolio strategies — all in one place.</p>
+      <p><strong><a href="/insights">Read Our Latest Analysis →</a></strong></p>
+    </div>
+    <hr>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         COMMON CONTENT BELOW — same for all variants
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <div>
+      <h2>How to Verify This Experiment</h2>
+      <ol>
+        <li>Open DevTools → Application → Cookies → look for <code>hlx-experiment</code></li>
+        <li>The cookie value will be <code>hero-cta-test/control</code> OR <code>hero-cta-test/variant-a</code></li>
+        <li>The <code>&lt;body&gt;</code> element will have <code>data-experiment="hero-cta-test"</code> and <code>data-variant="control"</code> (or <code>variant-a</code>)</li>
+        <li>Force a variant for QA: add <code>?experiment=hero-cta-test&amp;variant=variant-a</code> to the URL</li>
+        <li>The preview bar at the bottom of the page shows experiment status</li>
+      </ol>
+    </div>
+    <hr>
+
+    <div>
+      <h2>How Authors Create an Experiment (No Code Deploy Needed!)</h2>
+      <p>This is the magic of EDS experimentation. Once the plugin is wired in,
+         authors can run new experiments without touching any JavaScript:</p>
+      <ol>
+        <li>Open the page in Universal Editor</li>
+        <li>Add a Section → in Section Metadata, add a row: <strong>Style</strong> → <code>experiment-my-test-control</code></li>
+        <li>Add another Section → Style → <code>experiment-my-test-variant-a</code></li>
+        <li>Set Page Properties: <strong>Experiment</strong> → <code>my-test</code></li>
+        <li>Preview and Publish — the plugin handles traffic split automatically</li>
+        <li>Check results in RUM Dashboard or Adobe Analytics</li>
+      </ol>
+    </div>
+    <hr>
+
+    <div>
+      <h2>What the Plugin Does (vs. the Old Approach)</h2>
+      <div class="cards">
+        <div>
+          <div>
+            <h3>❌ Old: delayed.js setupExperimentation()</h3>
+          </div>
+          <div>
+            <ul>
+              <li>Ran 3 seconds after page load</li>
+              <li>Users saw control content flash before variant appeared (FOUC)</li>
+              <li>Random assignment — not sticky across sessions</li>
+              <li>No preview bar for QA</li>
+              <li>No campaign tracking</li>
+              <li>Needed a code deploy for every new experiment</li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <div>
+            <h3>✅ New: @adobe/aem-experimentation Plugin</h3>
+          </div>
+          <div>
+            <ul>
+              <li>Runs in <strong>Eager phase</strong> — before decorateMain, zero flash</li>
+              <li>Cookie-based assignment — consistent across sessions</li>
+              <li>Preview bar on *.aem.page for QA team</li>
+              <li>Force variant via URL param: ?variant=variant-a</li>
+              <li>UTM/campaign tracking built in</li>
+              <li>Authors create experiments without code deploys</li>
+              <li>Reports to EDS RUM dashboard automatically</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+  <footer></footer>
+</body>
+</html>
+

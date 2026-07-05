@@ -1,26 +1,13 @@
 /**
- * delayed.js — AEP Web SDK (Alloy.js) analytics, consent, and personalization.
+ * delayed.js - AEP Web SDK (Alloy.js) analytics, consent, and tracking.
  * Loaded 3 seconds after page load to protect Core Web Vitals.
  *
- * Configuration — add these <meta> tags to head.html:
- *   <meta name="aep-org-id"        content="ABCDEF@AdobeOrg">
- *   <meta name="aep-datastream-id" content="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
- *
- * Features:
- *   1. Adobe Client Data Layer (ACDL) — sync with scripts.js init
- *   2. Alloy.js — AEP Web SDK (Analytics + Target + RTCDP)
- *   3. Consent banner — cookie banner drives alloy setConsent
- *   4. CTA click tracking — every .button element
- *   5. Scroll depth tracking — 25 / 50 / 75 / 100%
- *   6. Video engagement — video-embed block play events
- *   7. A/B Experimentation — metadata-driven with Target rendering
+ * NOTE: A/B Experimentation is handled by @adobe/aem-experimentation plugin
+ * in scripts.js (Eager phase) - NOT here. The plugin runs before decorateMain
+ * to avoid content flash (FOUC). See EXPERIMENT_PLUGIN in scripts.js.
  */
-
 const getMeta = (name) => document.querySelector(`meta[name="${name}"]`)?.content || '';
-
-// ── 1. ADOBE CLIENT DATA LAYER ────────────────────────────────────────────────
-// ACDL is already initialized as [] in scripts.js (eager phase).
-// Here we push the initial page-load state.
+// 1. ADOBE CLIENT DATA LAYER
 function pushPageLoadEvent() {
   window.adobeDataLayer.push({
     event: 'page loaded',
@@ -41,38 +28,26 @@ function pushPageLoadEvent() {
     },
   });
 }
-
-// ── 2. AEP WEB SDK (ALLOY.JS) ─────────────────────────────────────────────────
-
+// 2. ADOBE LAUNCH
 /**
  * Loads the Adobe Launch library (Tag Management).
- * Launch handles alloy.js, Adobe Analytics, and Adobe Target internally —
- * no need to load alloy directly. Our ACDL pushes are picked up by
- * Launch rules via the Adobe Client Data Layer extension.
- *
- * Switch between environments by changing the src URL:
- *   Development: launch-d51eda9acd14-development.min.js
- *   Staging:     launch-d51eda9acd14-staging.min.js
- *   Production:  launch-d51eda9acd14.min.js
+ * Launch handles alloy.js, Adobe Analytics, and Adobe Target internally.
  */
 function loadLaunch() {
   const script = document.createElement('script');
+  // eslint-disable-next-line max-len
   script.src = 'https://assets.adobedtm.com/fbbb5a6f6976/13d6954a51d9/launch-d51eda9acd14-development.min.js';
   script.async = true;
   document.head.append(script);
 }
-
-// ── 4. CUSTOM EVENT TRACKING ─────────────────────────────────────────────────
-
+// 4. CUSTOM EVENT TRACKING
 /**
  * Tracks clicks on every .button element (CTA, nav, etc.).
- * Fires ACDL event + alloy web.webInteraction.linkClicks XDM event.
  */
 function trackCTAClicks() {
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('a.button, button.button');
     if (!btn) return;
-
     const ctaData = {
       text: btn.textContent.trim(),
       url: btn.href || '',
@@ -80,9 +55,7 @@ function trackCTAClicks() {
         || btn.closest('.section')?.dataset?.id
         || '',
     };
-
     window.adobeDataLayer.push({ event: 'cta clicked', cta: ctaData });
-
     window.alloy?.('sendEvent', {
       xdm: {
         eventType: 'web.webInteraction.linkClicks',
@@ -98,26 +71,19 @@ function trackCTAClicks() {
     });
   });
 }
-
 /**
  * Tracks scroll depth at 25%, 50%, 75%, 100%.
- * Each milestone fires once per page view.
- * Maps to AA events via data.__adobe.analytics.
  */
 function trackScrollDepth() {
   const milestones = [25, 50, 75, 100];
   const reached = new Set();
-
-  // AA event mapping: 25%→event1, 50%→event2, 75%→event3, 100%→event4
   const eventMap = {
     25: 'event1', 50: 'event2', 75: 'event3', 100: 'event4',
   };
-
   window.addEventListener('scroll', () => {
     const docHeight = document.documentElement.scrollHeight - window.innerHeight;
     if (docHeight <= 0) return;
     const pct = Math.round((window.scrollY / docHeight) * 100);
-
     milestones.forEach((milestone) => {
       if (pct >= milestone && !reached.has(milestone)) {
         reached.add(milestone);
@@ -141,10 +107,8 @@ function trackScrollDepth() {
     });
   }, { passive: true });
 }
-
 /**
  * Tracks the first play on each video-embed block.
- * Fires ACDL event + alloy media.play XDM event.
  */
 function trackVideoEngagement() {
   document.querySelectorAll('.video-embed-placeholder').forEach((placeholder) => {
@@ -153,9 +117,7 @@ function trackVideoEngagement() {
       const videoSrc = embed?.querySelector('iframe')?.src
         || embed?.querySelector('video source')?.src
         || 'unknown';
-
       window.adobeDataLayer.push({ event: 'video play', video: { url: videoSrc } });
-
       window.alloy?.('sendEvent', {
         xdm: {
           eventType: 'media.play',
@@ -167,64 +129,18 @@ function trackVideoEngagement() {
           },
         },
       });
-    }, { once: true }); // fire only on first play per block
+    }, { once: true });
   });
 }
-
-// ── 5. A/B EXPERIMENTATION ───────────────────────────────────────────────────
-
-/**
- * Metadata-driven A/B experimentation with Adobe Target.
- *
- * How it works:
- *   1. Author sets "experiment: my-test-id" in Page Properties
- *   2. Code randomly assigns "control" or "variant-a" (50/50)
- *   3. Assignment stored in sessionStorage (consistent in-session)
- *   4. data-experiment + data-variant added to <body>
- *   5. CSS in blocks can show/hide content per variant:
- *        body[data-variant="variant-a"] .my-block .variant-content { display: block; }
- *   6. alloy sendEvent fires — Target can override with server-side decisioning
- *
- * For QA: set "experiment-variant: variant-a" in Page Properties to force a variant.
- */
-function setupExperimentation() {
-  const experimentId = getMeta('experiment');
-  if (!experimentId) return;
-
-  const storageKey = `exp-${experimentId}`;
-  const forcedVariant = getMeta('experiment-variant');
-
-  const variant = forcedVariant
-    || sessionStorage.getItem(storageKey)
-    || (Math.random() < 0.5 ? 'control' : 'variant-a');
-
-  if (!forcedVariant) sessionStorage.setItem(storageKey, variant);
-
-  document.body.dataset.experiment = experimentId;
-  document.body.dataset.variant = variant;
-
-  window.adobeDataLayer.push({ event: 'experiment assigned', experiment: { id: experimentId, variant } });
-
-  window.alloy?.('sendEvent', {
-    xdm: { eventType: 'decisioning.propositionDisplay' },
-    data: {
-      __adobe: { analytics: { eVar2: experimentId, eVar3: variant, events: 'event5' } },
-    },
-  });
-}
-
-// ── 6. ACCESSIBILITY AUDIT (DEV / PREVIEW ONLY) ──────────────────────────────
-
+// 6. ACCESSIBILITY AUDIT (DEV / PREVIEW ONLY)
 /**
  * Loads axe-core and runs an automated accessibility audit.
- * Only runs on localhost and *.aem.page — never on *.aem.live (production).
- * Logs violations to the browser console grouped by severity.
+ * Only runs on localhost and *.aem.page - never on *.aem.live (production).
  */
 function runAccessibilityAudit() {
   const { hostname } = window.location;
   const isDev = hostname === 'localhost' || hostname.includes('.aem.page');
   if (!isDev) return;
-
   const script = document.createElement('script');
   script.src = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.1/axe.min.js';
   script.onload = () => {
@@ -254,18 +170,22 @@ function runAccessibilityAudit() {
   };
   document.head.append(script);
 }
-
-// ── INIT ─────────────────────────────────────────────────────────────────────
-
-// Apply client-side redirects (CDN handles these in production; this is the
-// localhost / fallback handler).
+// INIT
+// Apply client-side redirects (CDN handles these in production).
 import('./redirects.js').then(({ applyRedirects }) => applyRedirects());
+
+// Phase 14: send structured page-view for Target audience matching, then
+// reveal personalization-pending sections after Target applies modifications.
+import('./personalization.js').then(({ sendPersonalizationPageView, applyPersonalization }) => {
+  sendPersonalizationPageView();
+  setTimeout(() => applyPersonalization(), 100);
+});
 
 pushPageLoadEvent();
 loadLaunch();
-// Consent is managed by Adobe Launch (Privacy extension) — no custom banner needed
 trackCTAClicks();
 trackScrollDepth();
 trackVideoEngagement();
-setupExperimentation();
+// NOTE: setupExperimentation() removed - handled by @adobe/aem-experimentation
+// plugin in scripts.js loadEager() phase. See EXPERIMENT_PLUGIN constant.
 runAccessibilityAudit();

@@ -10,7 +10,28 @@ import {
   loadSections,
   loadCSS,
   getMetadata,
+  sampleRUM,
 } from './aem.js';
+
+/**
+ * Fires a RUM event for a meaningful business interaction.
+ * Wraps sampleRUM with a consistent source/target convention.
+ * Import this in blocks instead of importing sampleRUM directly.
+ *
+ * @param {string} checkpoint - Event name (click|search|filter|convert|view)
+ * @param {string} source     - Where: block name or CSS selector
+ * @param {string} target     - What: URL, category, search term, or value
+ *
+ * @example
+ * // Track a CTA click in the hero block
+ * trackRUM('click', '.hero .button', '/contact');
+ *
+ * // Track a form submission convert event
+ * trackRUM('convert', 'newsletter-form', 'subscribed');
+ */
+export function trackRUM(checkpoint, source, target) {
+  sampleRUM(checkpoint, { source, target });
+}
 
 // Initialize Adobe Client Data Layer early (before delayed.js loads analytics).
 // delayed.js pushes events into this array; ACDL listeners subscribe to it.
@@ -532,6 +553,12 @@ function injectOrganizationSchema() {
   document.head.append(script);
 }
 
+// ── EXPERIMENTATION PLUGIN ────────────────────────────────────────────────────
+// Loaded from CDN so EDS Code Sync can serve it without a build step.
+// Production alternative: copy node_modules/@adobe/aem-experimentation/src/
+// into plugins/experimentation/ and import from there instead.
+const EXPERIMENT_PLUGIN = 'https://cdn.jsdelivr.net/npm/@adobe/aem-experimentation@1/src/index.js';
+
 /**
  * Loads everything needed to get to LCP.
  * @param {Element} doc The container element
@@ -542,6 +569,33 @@ async function loadEager(doc) {
   decorateSEO();
   decorateI18n();
   injectOrganizationSchema();
+
+  // ── A/B EXPERIMENTATION (EAGER PHASE) ──────────────────────────────────
+  // MUST run before decorateMain to avoid a flash of control content (FOUC).
+  // The plugin reads "experiment" metadata, assigns the visitor to a variant
+  // (persisted in a cookie), and for page-level experiments fetches the
+  // variant page's <main> HTML and swaps it in before decoration runs.
+  //
+  // Author sets in Page Properties:
+  //   experiment:         hero-cta-test          ← unique experiment ID
+  //   instant-experiment: /home--variant-a       ← variant page path(s)
+  //   experiment-split:   50                     ← % of traffic to variant
+  //
+  // Force a variant for QA:  ?experiment=hero-cta-test&variant=variant-a
+  if (getMetadata('experiment')) {
+    try {
+      const { loadEager: runExperiment } = await import(EXPERIMENT_PLUGIN);
+      await runExperiment(document, {
+        // Tells the plugin which hostname is "production" (live).
+        // On *.aem.page and localhost the plugin shows a preview bar.
+        prodHost: 'main--eds-russell--sumitsapient.aem.live',
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[experimentation] Plugin failed to load:', e);
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────────
 
   // ── PAGE-LEVEL AUTH GATING ──────────────────────────────────────────────
   // If author sets "auth-required: true" in Page Properties,
@@ -644,6 +698,20 @@ async function loadLazy(doc) {
   const main = doc.querySelector('main');
   await loadSections(main);
 
+  // ── A/B EXPERIMENTATION (LAZY PHASE) ───────────────────────────────────
+  // Fires experiment impression events and applies audience-based content.
+  // Only runs on pages that have an active experiment.
+  if (document.body.dataset.experiment) {
+    try {
+      const { loadLazy: runExperimentLazy } = await import(EXPERIMENT_PLUGIN);
+      await runExperimentLazy(document);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[experimentation] Lazy phase failed:', e);
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   // Auto-generate id attributes on headings for deep-linking
   decorateHeadingIds(main);
 
@@ -676,9 +744,23 @@ async function loadLazy(doc) {
  * without impacting the user experience.
  */
 function loadDelayed() {
-  // eslint-disable-next-line import/no-cycle
-  window.setTimeout(() => import('./delayed.js'), 3000);
-  // load anything that can be postponed to the latest here
+  window.setTimeout(async () => {
+    // ── A/B EXPERIMENTATION (DELAYED PHASE) ──────────────────────────────
+    // Handles campaign parameter tracking (UTM → experiment attribution)
+    // and sends final experiment engagement data to analytics.
+    if (document.body.dataset.experiment) {
+      try {
+        const { loadDelayed: runExperimentDelayed } = await import(EXPERIMENT_PLUGIN);
+        runExperimentDelayed(document);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[experimentation] Delayed phase failed:', e);
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────
+    // eslint-disable-next-line import/no-cycle
+    import('./delayed.js');
+  }, 3000);
 }
 
 async function loadPage() {

@@ -476,10 +476,26 @@ main .block[data-block-status='loaded'] {
   visibility: visible;
 }
 
-/* 4.3 INP â€” Optimize transitions to not trigger layout/paint.
-   Only animate transform and opacity â€” these are GPU-composited
+/* 4.3 INP â€" Optimize transitions to not trigger layout/paint.
+   Only animate transform and opacity â€" these are GPU-composited
    and don't trigger layout recalculation. */
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* =============================================================================
+   PHASE 14: TARGET ANTI-FLICKER
+   Sections marked by personalization.js markPersonalizationRegion() are hidden
+   until applyPersonalization() reveals them after Target applies modifications.
+   REVEAL_TIMEOUT_MS (2000ms) ensures content always shows even if Target fails.
+   Only applies to sections that have been explicitly marked for personalization.
+   ============================================================================= */
+.personalization-pending {
+  visibility: hidden !important;
+}
+
+.personalization-applied {
+  visibility: visible;
+}
+
