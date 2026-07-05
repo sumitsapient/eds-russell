@@ -185,3 +185,75 @@ export function sortBy(items, key, order = 'asc') {
 
 /** Clears the in-memory cache. */
 export function clearCache() { CF_CACHE.clear(); }
+
+// =============================================================================
+// GRAPHQL RESPONSE HELPERS
+// =============================================================================
+
+/**
+ * Extracts items from a standard AEM GraphQL list/byPath/paginated response.
+ *
+ * AEM GraphQL responses follow a predictable naming convention:
+ *   List query:      data.teamMemberList.items          → Array
+ *   ByPath query:    data.teamMemberByPath.item         → single Object (wrapped in Array)
+ *   Paginated query: data.teamMemberPaginated.edges[].node → Array
+ *
+ * This helper handles all three patterns so blocks don't need to know
+ * which query type was used.
+ *
+ * @param {Object} response - Raw GraphQL response from fetchContentFragments()
+ * @returns {Array} Flat array of CF item objects
+ *
+ * @example
+ * const response = await fetchContentFragments('/my-project/team-members');
+ * const members = extractCFItems(response);
+ * // members = [{ name: 'John', role: 'PM', ... }, ...]
+ */
+export function extractCFItems(response) {
+  if (!response?.data) return [];
+
+  const keys = Object.keys(response.data);
+
+  // Pattern 1: {Model}List → { items: [...] }
+  const listKey = keys.find((k) => k.endsWith('List'));
+  if (listKey) return response.data[listKey]?.items || [];
+
+  // Pattern 2: {Model}Paginated → { edges: [{ node: {...} }] }
+  const paginatedKey = keys.find((k) => k.endsWith('Paginated'));
+  if (paginatedKey) {
+    return (response.data[paginatedKey]?.edges || []).map((e) => e.node).filter(Boolean);
+  }
+
+  // Pattern 3: {Model}ByPath → { item: {...} }
+  const byPathKey = keys.find((k) => k.endsWith('ByPath'));
+  if (byPathKey) {
+    const item = response.data[byPathKey]?.item;
+    return item ? [item] : [];
+  }
+
+  return [];
+}
+
+/**
+ * Resolves an AEM DAM asset URL from a CF image reference.
+ *
+ * CF image fields return an object like:
+ *   { _path: "/content/dam/project/photo.jpg", _publishUrl: "https://publish-p.../photo.jpg" }
+ *
+ * Strategy:
+ *   1. Use _publishUrl if available (production publish)
+ *   2. Fall back to {aem-endpoint}{_path} (preview / author)
+ *   3. Return '' if no image data
+ *
+ * @param {Object|null} imageRef - The image reference object from GraphQL
+ * @returns {string} Absolute image URL or empty string
+ */
+export function resolveCFImageUrl(imageRef) {
+  if (!imageRef) return '';
+  if (imageRef._publishUrl) return imageRef._publishUrl; // eslint-disable-line no-underscore-dangle
+  if (imageRef._path) { // eslint-disable-line no-underscore-dangle
+    const endpoint = document.querySelector('meta[name="aem-endpoint"]')?.content || '';
+    return `${endpoint}${imageRef._path}`; // eslint-disable-line no-underscore-dangle
+  }
+  return '';
+}

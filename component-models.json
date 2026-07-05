@@ -777,6 +777,40 @@
     ]
   },
   {
+    "id": "team-grid",
+    "fields": [
+      {
+        "component": "text",
+        "name": "query",
+        "label": "GraphQL Persisted Query Path",
+        "description": "Path to the AEM GraphQL persisted query. Format: /project-name/query-name",
+        "valueType": "string",
+        "default": "/eds-russell/team-members"
+      },
+      {
+        "component": "text",
+        "name": "filterDepartment",
+        "label": "Filter by Department",
+        "description": "Optional: show only team members in this department",
+        "valueType": "string"
+      },
+      {
+        "component": "number",
+        "name": "limit",
+        "label": "Max Team Members",
+        "valueType": "number",
+        "default": 12
+      },
+      {
+        "component": "boolean",
+        "name": "showBio",
+        "label": "Show Bio Text",
+        "valueType": "boolean",
+        "default": true
+      }
+    ]
+  },
+  {
     "id": "video-embed",
     "fields": [
       {

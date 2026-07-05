@@ -6707,3 +6707,460 @@ A: Branch protection + staged rollout. Deploy to a feature branch, test against 
 A: It's publicly readable (same as all EDS content). Never put secrets in it. Use it for UI config only (theme, logo, labels). Authentication keys belong in environment variables or AEM's secure config, not in content.
 ---
 *Last updated: July 5, 2026*
+## Phase 20 -- GraphQL Content Fragments
+> Content Fragments are AEM's headless content model. Phase 12 used the flat /query-index.json (page metadata). Phase 20 uses real structured CF Models queried via GraphQL -- the enterprise-grade approach for team bios, product cards, event listings, fund data.
+---
+### query-index.json vs Content Fragments -- When to Use Which
+| | query-index.json (Phase 12) | Content Fragments (Phase 20) |
+|---|---|---|
+| **What it is** | Flat index of page metadata | Structured headless content with a schema |
+| **Who authors it** | Page authors (metadata = page properties) | Content editors (dedicated CF editor) |
+| **Field types** | Text only | Text, rich text, numbers, dates, references, images, arrays |
+| **Schema enforcement** | None | Strict -- CF Model defines required fields and types |
+| **GraphQL API** | No | Yes -- persisted queries with variables and filters |
+| **Best for** | Listing pages, search, navigation | Team pages, product catalogs, events, structured data |
+| **Reuse across pages** | No (tied to a specific page) | Yes (one CF referenced on many pages) |
+---
+### The Three-Layer Architecture
+```
+AEM Content Fragment Model   <- defines the schema (like a database table)
+         ↓
+Content Fragment             <- instance of the model (like a database row)
+         ↓
+GraphQL Persisted Query      <- named, cached query stored in AEM
+         ↓
+fetchContentFragments()      <- our EDS client fetches the query
+         ↓
+team-grid block              <- renders the data
+```
+---
+### Step 1: Create the Content Fragment Model in AEM
+Navigate to: Tools → Assets → Content Fragment Models → Create
+For "Team Member", add these fields:
+| Field Label | Field Type | Required | Notes |
+|---|---|---|---|
+| name | Single-line text | Yes | Member's full name |
+| role | Single-line text | Yes | Job title |
+| department | Single-line text | No | Equities, Fixed Income, etc. |
+| bio | Multi-line text | No | Rich text enabled |
+| photo | Content Reference | No | Points to DAM image |
+| linkedin | Single-line text | No | LinkedIn profile URL |
+| email | Single-line text | No | Professional email |
+---
+### Step 2: Create Content Fragments
+Navigate to: Assets → Files → Create → Content Fragment
+Select model "Team Member", fill in the fields, Save.
+Create one fragment per team member.
+Store them in a logical path: /content/dam/eds-russell/team/
+---
+### Step 3: Create a GraphQL Persisted Query
+Navigate to: Tools → GraphQL → Persisted Queries → Create
+Query path: /eds-russell/team-members
+Query body:
+```graphql
+{
+  teamMemberList {
+    items {
+      name
+      role
+      department
+      bio {
+        plaintext
+        html
+      }
+      photo {
+        _path
+        _publishUrl
+        width
+        height
+      }
+      linkedin
+      email
+    }
+  }
+}
+```
+With optional department filter variable:
+```graphql
+query ($department: String) {
+  teamMemberList(
+    filter: {
+      department: {
+        _expressions: [{ value: $department, _operator: EQUALS }]
+      }
+    }
+  ) {
+    items {
+      name
+      role
+      department
+      bio { plaintext }
+      photo { _path _publishUrl }
+      linkedin
+      email
+    }
+  }
+}
+```
+Save and Publish the persisted query.
+---
+### Step 4: Test the Query Directly
+Once saved, test via browser or curl:
+```
+https://author-p146753-e1506305.adobeaemcloud.com/graphql/execute.json/eds-russell/team-members
+# With variable:
+https://author-p146753-e1506305.adobeaemcloud.com/graphql/execute.json/eds-russell/team-members;department=Equities
+```
+You should see a JSON response like:
+```json
+{
+  "data": {
+    "teamMemberList": {
+      "items": [
+        { "name": "Sarah Chen", "role": "CIO", "department": "Executive", ... }
+      ]
+    }
+  }
+}
+```
+---
+### Step 5: Add the Block to a Page in AEM
+In Universal Editor, add "Team Grid" block to any page:
+- query: /eds-russell/team-members
+- filter-department: Equities (optional)
+- limit: 6
+- show-bio: true
+The block fetches the persisted query and renders cards.
+---
+### New Utilities in content-fragments.js
+Two helpers were added (Phase 20):
+**extractCFItems(response)**
+```js
+const response = await fetchContentFragments('/eds-russell/team-members');
+const members = extractCFItems(response);
+// Handles: List, ByPath, and Paginated query patterns automatically
+// Returns: flat array of CF item objects
+```
+**resolveCFImageUrl(imageRef)**
+```js
+const imgUrl = resolveCFImageUrl(member.photo);
+// Tries _publishUrl first (production), falls back to {endpoint}{_path} (preview)
+// Returns: absolute image URL or ''
+```
+---
+### What the team-grid Block Demonstrates
+1. **Graceful degradation**: If CF endpoint is missing or query fails, shows sample data + yellow dev banner. Site never breaks.
+2. **Variable passing**: `filterDepartment` config row passes as GraphQL variable `$department`.
+3. **Image resolution**: Uses `resolveCFImageUrl()` -- works in author/preview AND production.
+4. **Bio rich text handling**: CF bio may be a string OR an object `{ plaintext, html }`. Block handles both.
+5. **Initials avatar**: When no photo exists, generates colored circle with initials.
+6. **Responsive**: 1-col mobile → 2-col horizontal tablet → 3-col grid desktop → 4-col with `wide` variant.
+7. **RUM tracking**: `sampleRUM('viewblock', ...)` reports how many members were shown.
+---
+### Extending to Other CF Models
+The same pattern works for ANY structured content type. Just change the CF Model and persisted query:
+| Use Case | CF Model Fields | Block |
+|---|---|---|
+| Upcoming Events | title, date, location, description, registrationUrl | event-listing |
+| Fund Performance | fundName, ytdReturn, oneYearReturn, category | fund-table |
+| Office Locations | city, country, address, phone, mapUrl | office-map |
+| Leadership Quotes | quote, author, authorRole, photo | quote-carousel |
+The `fetchContentFragments()` + `extractCFItems()` + `resolveCFImageUrl()` utilities work identically for all of them.
+---
+### Q&A
+**Q: Why use persisted queries instead of inline GraphQL?**
+A: Persisted queries are cached at the CDN edge in AEM, reducing response time and server load. They also prevent arbitrary queries from clients (security). Named queries are also easier to version and audit.
+**Q: Does the CF endpoint require authentication?**
+A: The publish endpoint is public (no auth needed). The author endpoint requires authentication. Since EDS pages are rendered client-side, you'd typically use the publish endpoint in production. During development (author endpoint configured in head.html), the browser sends cookies for authentication if the user is logged into AEM.
+**Q: What's the difference between _path and _publishUrl on an image?**
+A: _path is always available -- it's the DAM path (/content/dam/...). _publishUrl is the CDN-optimized URL on the publish instance. In production, use _publishUrl for best performance. In preview/author, _publishUrl may be null, so we fall back to building the URL from the endpoint + _path.
+**Q: Can I paginate CF results?**
+A: Yes -- use the Paginated query type instead of List:
+```graphql
+teamMemberPaginated(first: 6, after: $cursor) {
+  edges { node { name role bio { plaintext } } }
+  pageInfo { hasNextPage endCursor }
+}
+```
+The extractCFItems() helper handles the edges/node pattern automatically.
+---
+*Last updated: July 5, 2026*
+---
+## Before You Go -- Production Readiness Checklist
+This learning project is complete, but before deploying a real site for Russell Investments, work through this checklist.
+---
+### Code Changes Required
+- [ ] **Replace dev Launch URL** in `scripts/delayed.js`
+  Change `launch-d51eda9acd14-development.min.js` to the staging or production URL.
+  ```
+  Dev:  launch-d51eda9acd14-development.min.js
+  Stage: launch-d51eda9acd14-staging.min.js
+  Prod:  launch-d51eda9acd14.min.js
+  ```
+- [ ] **Update `prodHost` in `scripts.js`** (EXPERIMENT_PLUGIN config)
+  Must match your actual `*.aem.live` production domain.
+  ```js
+  prodHost: 'main--your-actual-repo--your-org.aem.live'
+  ```
+- [ ] **Update `aem-endpoint` in `head.html`**
+  Switch from the author URL to the **publish** URL for CF queries in production.
+  Author endpoint requires login; publish endpoint is public.
+  ```html
+  <!-- Dev/Preview -->
+  <meta name="aem-endpoint" content="https://author-p146753-e1506305.adobeaemcloud.com"/>
+  <!-- Production -->
+  <meta name="aem-endpoint" content="https://publish-p146753-e1506305.adobeaemcloud.com"/>
+  ```
+  Or better: remove it from `head.html` and set it per-environment in the AEM page template.
+- [ ] **Update `robots.txt` sitemap URL** with the real production domain.
+- [ ] **Update `structured-data.js`** social links -- `sameAs` should point to real Russell Investments social profiles, not placeholder values.
+---
+### AEM Content Required
+- [ ] Create `/site-config.json` spreadsheet (Phase 19) with real values: site-name, logo, social links.
+- [ ] Create `/placeholders.json` (Phase 12) with real UI labels for all supported locales.
+- [ ] Create `/taxonomy.json` (Phase 12) with real category taxonomy.
+- [ ] Create `/search` page in AEM (Phase 18) with the search block configured.
+- [ ] Create real nav (`/nav`) and footer (`/footer`) pages.
+- [ ] Ensure all pages have been **Previewed then Published** so `/query-index.json` is populated.
+---
+### Common Gotchas (Things That Bite in Production)
+**1. `npm run build:json` not committed**
+When you add a new block with a `_block.json` file, you MUST run `npm run build:json` and commit the regenerated `component-definition.json`, `component-models.json`, `component-filters.json`. The block won't appear in Universal Editor otherwise.
+**2. `helix-query.yaml` changes need re-publishing**
+Adding a new column to `helix-query.yaml` (e.g., `author` or `category`) doesn't retroactively update `/query-index.json`. You need to Preview then Publish every existing page again for the new column to populate. For large sites, write a script to batch-preview all pages via the Admin API.
+**3. Content Fragments on publish vs. author**
+Content Fragments must be **Published** (not just saved/previewed) to appear on the publish GraphQL endpoint. If your `team-grid` shows sample data in production, check that CFs are published, not just drafted.
+**4. CSP blocks new third-party scripts**
+Every new third-party script (A/B testing tool, chat widget, etc.) must be added to `script-src` in the `_headers` file AND committed before it will work. The CSP we set up will silently block anything not on the allowlist.
+**5. Experimentation plugin loads from CDN**
+`EXPERIMENT_PLUGIN` in `scripts.js` imports from `cdn.jsdelivr.net`. If that CDN is blocked by your corporate network or firewall, the plugin silently fails (try/catch handles it). For enterprise deployments, copy the plugin to `plugins/experimentation/` and import locally.
+**6. RUM sampling on localhost is always 0%**
+RUM data is not collected on `localhost` unless you add `?rum=on` to the URL. This is intentional — development traffic would pollute production data. Always test RUM on the preview URL (`*.aem.page`).
+**7. `auth-required: true` blocks search engine crawlers**
+If you gate a page with auth, Google cannot crawl it. Make sure auth-gated content is excluded from the sitemap and has `robots: noindex` in Page Properties.
+**8. Theme CSS loads async even in loadEager**
+`loadCSS()` adds a `<link rel="stylesheet">` tag, which is non-blocking. If the theme changes colors dramatically, you may see a brief flash on first load (similar to FOUC). Mitigate by inlining critical theme tokens in `styles.css` for the default theme, and only using theme files for overrides.
+---
+### Performance Targets Before Go-Live
+Run PageSpeed Insights at https://developers.google.com/speed/pagespeed/insights/ against your production preview URL.
+| Metric | Target | Fail |
+|---|---|---|
+| Performance Score | 100 | < 90 |
+| LCP | < 1.5s | > 2.5s |
+| CLS | < 0.05 | > 0.1 |
+| INP | < 100ms | > 200ms |
+| FCP | < 1.0s | > 1.8s |
+| TTFB | < 0.8s | > 1.8s |
+If you're under target: check image sizes, ensure hero image has `fetchpriority="high"`, ensure no render-blocking scripts in `<head>`, verify fonts are preloaded in `head.html`.
+---
+### Google Search Console Setup
+1. Verify ownership of your domain in Google Search Console
+2. Submit sitemap: `https://your-domain.com/sitemap.xml`
+3. Monitor for:
+   - Indexing errors (pages blocked by robots.txt or noindex)
+   - Rich result eligibility (BreadcrumbList, BlogPosting from Phase 17)
+   - Core Web Vitals field data (real user data, takes 30+ days to collect)
+---
+### Final Thought
+You now have a complete, production-ready EDS implementation covering every major capability:
+- Analytics, personalization, and experimentation
+- Search, forms, multi-brand theming
+- GraphQL content, structured data, accessibility
+- Security, CI/CD, redirects
+The `sumit-eds.md` document in this repository is your living reference. Every decision, pattern, and gotcha is documented there. Update it as you learn more.
+Good luck with the Russell Investments production launch.
+---
+*Journey completed: July 5, 2026*
+*Total phases: 20 (Phases 3-20, with 21-22 intentionally skipped)*
+
+---
+
+## Pre-Production Checklist
+
+> These are the things that will trip you up when moving from a learning project to a real production site. Work through this list **before** your first PR to `main` on a production repo.
+
+---
+
+### Content Modeling & Universal Editor
+
+- [ ] Every block has a `_blockname.json` with `definitions`, `models`, and `filters` sections
+- [ ] Every block `id` in JSON matches the folder name, the CSS class, and the section filter entry exactly (all kebab-case)
+- [ ] Child-item blocks use `resourceType: "core/franklin/components/block/v1/block/item"` (not `/block`)
+- [ ] Every new block or model change has been followed by `npm run build:json` AND all three root JSON files committed (`component-definition.json`, `component-models.json`, `component-filters.json`)
+- [ ] New blocks have been added to the section filter in `models/_section.json` so authors can actually insert them
+- [ ] `npm run lint` passes with zero errors on all JSON model files (check `eslint-plugin-xwalk` rules)
+- [ ] Block field names are semantically meaningful (`title`, `description`, `image`) — not technical (`field1`, `col2`)
+- [ ] No field is named `classes` unless it is the EDS variant selector — that name has special reserved behavior
+- [ ] Every block's `decorate()` handles **missing fields gracefully** — if an author leaves a field empty, the block must not throw
+
+---
+
+### Performance & Core Web Vitals
+
+- [ ] **LCP ≤ 2.5s** — the hero image (or first above-fold element) loads in Eager phase, not Lazy
+- [ ] The LCP image uses `fetchpriority="high"` and does **not** have `loading="lazy"`
+- [ ] `createOptimizedPicture()` is used (or the AEM-rendered `<picture>` is preserved) — never a raw `<img src="...">` for content images
+- [ ] All `<img>` tags have explicit `width` and `height` attributes to prevent CLS
+- [ ] **CLS = 0** — no images, fonts, or ads resize the layout after first render
+- [ ] Web fonts are declared in `fonts.css` with `font-display: swap` and preloaded in `head.html`
+- [ ] No `<script src="...">` or `<link rel="stylesheet">` is added to `<head>` without a performance review — both are render-blocking
+- [ ] Third-party scripts (chat, analytics, A/B testing) live in `delayed.js` only — never in block JS or `scripts.js`
+- [ ] `styles.css` is kept minimal — only what is needed for LCP. Everything else goes in `lazy-styles.css`
+- [ ] No npm packages are imported in block JS (they create unbundled waterfall requests — EDS has no build step)
+- [ ] PageSpeed Insights score = 100 on the feature branch preview URL before merging: `https://{branch}--{repo}--{owner}.aem.page/`
+- [ ] All images committed to git (icons, logos, backgrounds) are compressed and ≤ 20KB each
+
+---
+
+### SEO & Structured Data
+
+- [ ] Every page has a unique `<title>` and `<meta name="description">` set in Page Properties
+- [ ] `<meta property="og:image">` is set on pages that will be shared on social media
+- [ ] The `canonical` URL is set on any page that can be reached via multiple paths (avoids duplicate content penalties)
+- [ ] Pages that should not be indexed (staging pages, drafts, thank-you pages) have `<meta name="robots" content="noindex">` set
+- [ ] `helix-sitemap.yaml` is configured and the sitemap is validated at `https://main--{repo}--{owner}.aem.live/sitemap.xml`
+- [ ] `robots.txt` allows crawling of production and blocks `*.aem.page` (preview) subdomains from search engines
+- [ ] Organization JSON-LD schema is present on all pages (via `structured-data.js`)
+- [ ] Article template pages include `BlogPosting` schema with `datePublished`, `author`, `image`
+- [ ] FAQ / Accordion blocks emit `FAQPage` schema so Google shows rich snippets
+- [ ] All heading IDs are unique on each page (duplicate IDs break deep-link anchors and screen readers)
+- [ ] Heading hierarchy is correct on every page: one `<h1>`, followed by `<h2>`, `<h3>` in order — never skip levels
+
+---
+
+### Accessibility
+
+- [ ] Run `axe-core` (or equivalent) on every page template — zero critical violations
+- [ ] Every `<img>` has meaningful `alt` text (or `alt=""` if purely decorative)
+- [ ] Every interactive element (`<button>`, `<a>`, custom controls) is keyboard-focusable and has a visible focus ring
+- [ ] Every form field has an associated `<label>` (not just a placeholder)
+- [ ] Color contrast ratio ≥ 4.5:1 for body text, ≥ 3:1 for large text (WCAG 2.1 AA)
+- [ ] Modals trap focus correctly and return focus to the trigger element on close
+- [ ] A skip-to-content link exists and is the first focusable element on the page
+- [ ] ARIA roles, `aria-label`, and `aria-current` are used correctly — no redundant or mismatched ARIA
+- [ ] Scroll animations respect `prefers-reduced-motion` (`@media (prefers-reduced-motion: reduce)` overrides are in `lazy-styles.css`)
+- [ ] Video embeds have captions or a transcript linked nearby
+
+---
+
+### Security & Headers
+
+- [ ] `_headers` file is committed with all security headers:
+  - `Content-Security-Policy` — explicitly lists allowed script and style sources
+  - `X-Frame-Options: SAMEORIGIN` — prevents clickjacking
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy` — disables unused browser features (camera, microphone, geolocation)
+- [ ] CSP `script-src` includes every third-party domain used (Adobe Launch, Alloy, chat widgets, etc.) — test in DevTools console for CSP violations before launch
+- [ ] All user-supplied or CMS-rendered content inserted via JS goes through DOMPurify before being set as `innerHTML`
+- [ ] `.hlxignore` blocks access to internal files: `AGENTS.md`, `CLAUDE.md`, draft pages, model partials (`_*.json`)
+- [ ] No API keys, tokens, or secrets are committed to the repo — use `.hlxignore` + server-side proxies for anything sensitive
+- [ ] Authentication gating (`scripts/auth.js`) is in place on all pages that require login
+- [ ] `redirects.json` has been reviewed — no open redirects pointing to external untrusted domains
+
+---
+
+### Analytics & Martech
+
+- [ ] `delayed.js` loads all analytics and martech — nothing fires before the 3-second delay
+- [ ] Adobe Client Data Layer (ACDL) is initialized before any analytics events fire
+- [ ] Alloy.js (AEP Web SDK) uses the stub pattern so early `alloy("sendEvent", ...)` calls queue correctly before the real SDK loads
+- [ ] Consent banner fires **before** any tracking pixels — GDPR / CCPA compliance confirmed with your legal team
+- [ ] Custom event tracking covers: page view, CTA clicks, form submissions, video plays, search queries
+- [ ] A/B experiment IDs, variant names, and traffic splits are documented — never hardcode experiment logic into production blocks
+- [ ] Analytics is verified in a staging environment against a real data stream — not just `console.log` statements
+
+---
+
+### Internationalization & Localization
+
+- [ ] Locale detection logic handles all supported locales gracefully — unknown locales fall back to the default locale without a JavaScript error
+- [ ] `<html lang="...">` is set correctly per locale — search engines and screen readers depend on this
+- [ ] `<link rel="alternate" hreflang="...">` tags are in `<head>` for every locale variant of every page
+- [ ] RTL locales (`ar`, `he`, `fa`) have `dir="rtl"` on `<html>` and CSS layout uses logical properties (`margin-inline-start` not `margin-left`)
+- [ ] The placeholders spreadsheet (`/placeholders.json`) exists for every locale and is fully translated — no English fallback strings in production non-English locales
+- [ ] Dates, numbers, and currency use `Intl.DateTimeFormat` / `Intl.NumberFormat` — never hardcoded locale-specific patterns
+- [ ] The language switcher block is tested end-to-end: switching language navigates to the correct path AND persists the choice in `localStorage`
+
+---
+
+### Custom Domain & CDN
+
+- [ ] DNS CNAME from `www.yourdomain.com` → `main--{repo}--{owner}.aem.live` is configured and propagated
+- [ ] SSL certificate is provisioned and HTTPS redirects HTTP (301) correctly
+- [ ] `fstab.yaml` `mountpoints` section uses the correct AEM author URL for each path (not localhost or feature branch URLs)
+- [ ] 301 redirects for old URLs (legacy site migration) are in the redirects spreadsheet — tested with `curl -I`
+- [ ] `robots.txt` disallows `*.aem.page` and `*.aem.live` subdomains — only the custom domain should be indexed by Google
+- [ ] Bring-Your-Own-CDN (BYOCDN) config is documented if the enterprise routes traffic through their own CDN in front of EDS
+
+---
+
+### CI/CD & Deployment
+
+- [ ] GitHub Actions workflows include at minimum: ESLint + Stylelint check, `build:json` guard, and PageSpeed Insights test
+- [ ] PR template (`PULL_REQUEST_TEMPLATE.md`) requires a preview URL link — no PR should be mergeable without a live demo URL
+- [ ] Branch protection rules on `main` require at least one human approver and all CI checks passing before merge
+- [ ] `npm run lint` passes cleanly — zero ESLint and Stylelint warnings (CI treats warnings as errors)
+- [ ] AEM Code Sync bot (`@aem-code-sync`) is installed on the GitHub repo and responding to every push within a few seconds
+- [ ] The full deployment flow is documented for the whole team: push branch → feature preview URL → PageSpeed → PR → review → merge → production live
+- [ ] A rollback plan exists: if a bad deploy reaches `main`, know how to `git revert` and who holds merge rights for an emergency push
+
+---
+
+### Content Operations
+
+- [ ] Authors know the difference between **Preview** (▶) and **Publish** (🌐) — content does not go live until explicitly published
+- [ ] A content review workflow is agreed — who approves content before it goes to `*.aem.live`?
+- [ ] The `/nav` and `/footer` fragment pages are **published**, not just previewed — unpublished fragments cause broken navigation for every real visitor
+- [ ] `/sitemap.xml` is submitted to Google Search Console after the first production publish
+- [ ] All placeholder spreadsheets are **published** — unpublished placeholders silently render as empty strings in production
+- [ ] Content fragments used by query-driven blocks (Insights Listing, etc.) are published to the correct AEM environment
+- [ ] Authors have been trained on block variants — they know the "Layout" dropdown exists and what each visual option looks like
+
+---
+
+### Final Sign-Off
+
+Run this sequence end-to-end before declaring production-ready:
+
+```bash
+# 1. Lint everything
+npm run lint
+
+# 2. Regenerate JSON models and verify no root file is stale
+npm run build:json
+git diff --name-only  # component-definition.json etc. should be clean
+
+# 3. Push to feature branch
+git add -A && git commit -m "pre-production review pass" && git push
+
+# 4. Check PageSpeed on the feature preview URL (target: 100 mobile + desktop)
+# https://pagespeed.web.dev/?url=https://{branch}--{repo}--{owner}.aem.page/
+
+# 5. Confirm key pages are published to live (not just preview)
+curl "https://admin.hlx.page/status/{owner}/{repo}/main/"
+
+# 6. Verify all PR CI checks pass
+gh pr checks
+
+# 7. Confirm the PR description contains a real preview URL that a reviewer can click
+```
+
+**The non-negotiables before go-live:**
+
+| Check | Tool | Pass condition |
+|-------|------|----------------|
+| Performance | PageSpeed Insights | 100 mobile, 100 desktop |
+| Accessibility | axe DevTools | 0 critical violations |
+| Security headers | securityheaders.com | Grade A or A+ |
+| SEO | Google Search Console URL Inspection | Page indexable, no errors |
+| Content published | Admin API status endpoint | `live.status = 200` for all key pages |
+| CI green | `gh pr checks` | All checks pass |
+
+> **The single most common production incident on EDS projects:**
+> Authors forget to click **Publish** after editing. Content looks perfect on `*.aem.page` (preview) but is hours or days behind on the live site. Solve this with a documented publish checklist for the content team — not a code change.
+
+---
+
+*Last updated: July 5, 2026*
+
