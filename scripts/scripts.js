@@ -17,6 +17,7 @@ import {
   injectWebPageSchema,
   injectBreadcrumbSchema,
 } from './structured-data.js';
+import { loadThemeCSS } from './site-config.js';
 
 /**
  * Fires a RUM event for a meaningful business interaction.
@@ -553,6 +554,11 @@ async function loadEager(doc) {
   decorateTemplateAndTheme();
   decorateSEO();
   decorateI18n();
+
+  // Phase 19: load brand/site theme CSS before first paint to avoid CLS.
+  // Reads theme from page meta or /site-config.json spreadsheet.
+  // e.g. <meta name="theme" content="dark"> loads styles/themes/dark.css
+  await loadThemeCSS(loadCSS, window.hlx.codeBasePath);
 
   // Inject JSON-LD structured data (Phase 17)
   // Organization + WebSite + SearchAction: on every page
