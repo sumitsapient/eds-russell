@@ -1,0 +1,58 @@
+{
+  "definitions": [
+    {
+      "title": "Search",
+      "id": "search",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block",
+            "template": {
+              "name": "Search",
+              "model": "search",
+              "placeholder": "Search insights, topics..."
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "search",
+      "fields": [
+        {
+          "component": "text",
+          "name": "placeholder",
+          "label": "Search Input Placeholder",
+          "valueType": "string",
+          "default": "Search insights, topics..."
+        },
+        {
+          "component": "text",
+          "name": "index",
+          "label": "Search Index URL",
+          "description": "Defaults to /query-index.json",
+          "valueType": "string",
+          "default": "/query-index.json"
+        },
+        {
+          "component": "text",
+          "name": "fields",
+          "label": "Searchable Fields",
+          "description": "Comma-separated field names from the query index",
+          "valueType": "string",
+          "default": "title, description, category"
+        },
+        {
+          "component": "number",
+          "name": "pageSize",
+          "label": "Results Per Page",
+          "valueType": "number",
+          "default": 10
+        }
+      ]
+    }
+  ],
+  "filters": []
+}

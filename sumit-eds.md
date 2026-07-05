@@ -6310,6 +6310,129 @@ A: Not currently. Add `type: file` field support by creating an `<input type="fi
 
 ---
 
+## Phase 18 — Site Search
+
+> Client-side search powered by the query index. Works for up to ~1000 pages with zero backend infrastructure. For larger sites, swap the data source for Coveo or Algolia.
+
+---
+
+### Architecture
+
+```
+User types query
+      ↓
+search.js fetches /query-index.json (once, 5-min cache)
+      ↓
+searchBy() filters all pages client-side
+      ↓
+Autocomplete: top 5 matches shown as dropdown while typing
+Full search:  paginated results rendered below input
+      ↓
+URL updated with ?q=query (bookmarkable, shareable)
+      ↓
+sampleRUM('search', { source: 'search-block', target: query })
+```
+
+---
+
+### Features Built
+
+| Feature | How it works |
+|---|---|
+| **Autocomplete suggestions** | Appear after 2+ chars, 250ms debounce |
+| **Keyboard navigation** | Down/Up arrows cycle suggestions, Enter navigates, Escape dismisses |
+| **Full results** | Press Enter or Search button — paginated list below |
+| **Term highlighting** | Matched text wrapped in `<mark>` (yellow background) |
+| **URL state** | `?q=query` in URL — shareable, bookmarkable, browser back/forward works |
+| **Result metadata** | Category badge + path shown per result |
+| **No-results state** | "No results found" message with hint |
+| **Error state** | "Index unavailable" if /query-index.json fails |
+| **RUM tracking** | `sampleRUM('search', ...)` fires on every search |
+
+---
+
+### Content Structure
+
+```
+| search       |                                    |
+| placeholder  | Search insights, market research...| <- input placeholder
+| fields       | title, description, category       | <- which fields to search
+| page-size    | 10                                 | <- results per page
+```
+
+All rows are optional — defaults work out of the box.
+
+---
+
+### The `highlight()` Function — XSS-Safe
+
+```js
+function highlight(text, query) {
+  // Step 1: escape HTML special chars BEFORE injecting
+  const safe = text.replace(/[<>&"]/g, (c) => ({
+    '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;'
+  }[c]));
+  // Step 2: wrap matched terms in <mark>
+  const escapedQ = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return safe.replace(new RegExp(`(${escapedQ})`, 'gi'), '<mark>$1</mark>');
+}
+```
+
+Without step 1, a page titled `<script>alert(1)</script>` would execute. Always escape before injecting into innerHTML.
+
+---
+
+### URL State — Why It Matters
+
+```
+User searches "equity" -> URL becomes /search?q=equity
+User shares URL -> colleague sees same results
+User presses Back -> previous search restored
+User presses Forward -> equity results shown again
+```
+
+Implemented with `window.history.pushState()` + `popstate` listener. No page reload.
+
+---
+
+### Scaling to Enterprise: Coveo / Algolia
+
+Client-side search works up to ~1000 pages. For scale:
+
+```js
+// Replace fetchJSON + searchBy with an API call:
+const results = await fetch(
+  `https://platform.cloud.coveo.com/rest/search/v2?q=${query}`,
+  { headers: { Authorization: `Bearer ${coveoToken}` } }
+).then(r => r.json());
+```
+
+The block UI is unchanged — only the data source is swapped.
+
+---
+
+### Q&A
+
+**Q: Why 250ms debounce for autocomplete?**
+A: Waits for user to pause typing before running search. Without it, every keystroke triggers a search — janky on slow devices.
+
+**Q: Why filter out `/nav`, `/footer`, `/header`?**
+A: These are fragment pages (nav HTML, not content). The `EXCLUDED_PATHS` array keeps them out of results.
+
+**Q: How does the 5-minute cache work?**
+A: `fetchJSON()` in `content-fragments.js` stores the response in a `Map` with a timestamp. Only one network request per session.
+
+**Q: Can I search only within a section (e.g., only insights)?**
+A: Filter `allItems` by path prefix before `searchBy`:
+```js
+const insightsOnly = allItems.filter(item => item.path.startsWith('/insights'));
+const matches = searchBy(insightsOnly, query, config.fields);
+```
+
+---
+
+*Last updated: July 5, 2026*
+
 *Last updated: July 5, 2026*
 
 ---
@@ -6317,12 +6440,89 @@ A: Not currently. Add `type: file` field support by creating an `<input type="fi
 *Last updated: July 5, 2026*
 
 *Last updated: July 4, 2026*
-
-
-
-
-
-
-
-
-
+## Phase 17 -- JSON-LD Structured Data
+> JSON-LD is how you talk to Google's Knowledge Graph. Without it, Google guesses your page's meaning. With it, you get rich results (breadcrumbs, article dates, author bylines, search box) that increase click-through rates by 20-30%.
+---
+### What Already Existed (Before Phase 17)
+| Schema Type | Where | Status before |
+|---|---|---|
+| Organization | scripts.js | Basic version (name, url, logo) |
+| BlogPosting | templates/article/article.js | Existed but duplicated getMeta logic |
+| FAQPage | blocks/accordion/accordion.js | When accordion faq variant |
+### What Phase 17 Added
+| Schema Type | Where | What it enables |
+|---|---|---|
+| Organization | structured-data.js | Enhanced: @id, sameAs social profiles |
+| WebSite + SearchAction | structured-data.js | Google sitelinks search box |
+| WebPage | structured-data.js | Page identity, breadcrumb link |
+| BreadcrumbList | structured-data.js | Breadcrumbs in Google results |
+| BlogPosting | Moved to structured-data.js | All article schemas in one place |
+---
+### The New File: scripts/structured-data.js
+Centralises all JSON-LD logic:
+```js
+export function injectOrganizationSchema() { }  // Organization + WebSite
+export function injectWebPageSchema() { }        // WebPage identity
+export function injectBreadcrumbSchema() { }     // BreadcrumbList from URL
+export function injectArticleSchema() { }        // BlogPosting for articles
+```
+Why centralise? DRY principle. getMeta() and injectSchema() utilities are shared across all functions. article.js previously had its own copy of injectArticleSchema() -- now it just imports.
+---
+### BreadcrumbList -- Auto-generated from URL
+URL: /insights/market-outlook-q3-2026
+Generates:
+```json
+{
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "position": 1, "name": "Home", "item": "https://site.com" },
+    { "position": 2, "name": "Insights", "item": "https://site.com/insights" },
+    { "position": 3, "name": "Market Outlook Q3 2026", "item": "https://site.com/insights/market-outlook-q3-2026" }
+  ]
+}
+```
+Google shows the breadcrumb in search results:
+```
+russell.com > Insights > Market Outlook Q3 2026
+```
+Custom label: Set breadcrumb-label in Page Properties to override the auto-generated last segment.
+---
+### WebSite + SearchAction -- Sitelinks Search Box
+```json
+{
+  "@type": "WebSite",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://site.com/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+```
+When Google sees this schema, it may show a search box directly in the brand search results. Requires the /search page built in Phase 18.
+---
+### Organization with sameAs
+Add to home page Page Properties:
+```
+social-linkedin: https://www.linkedin.com/company/russell-investments
+social-twitter:  https://twitter.com/russellinvests
+```
+injectOrganizationSchema() reads these and adds sameAs to the Organization JSON-LD.
+---
+### How to Verify
+```js
+// In browser console on any page:
+[...document.querySelectorAll('script[type="application/ld+json"]')]
+  .map(s => JSON.parse(s.textContent))
+  .forEach(s => console.log(s['@type'], s));
+```
+Or use: https://search.google.com/test/rich-results
+---
+### Q&A
+**Q: Does JSON-LD hurt page performance?**
+A: No. script[type="application/ld+json"] tags are not executed as JavaScript. Zero render-blocking overhead.
+**Q: When does Google show rich results?**
+A: Typically 2-6 weeks after indexing. Request via Google Search Console to speed up.
+**Q: Why use @id URIs?**
+A: Creates reusable entities. Without it, every BlogPosting duplicates the publisher. With @id, Google understands all articles on this site share the same publisher entity.
+---
+*Last updated: July 5, 2026*

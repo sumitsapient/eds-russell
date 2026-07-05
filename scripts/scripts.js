@@ -12,6 +12,11 @@ import {
   getMetadata,
   sampleRUM,
 } from './aem.js';
+import {
+  injectOrganizationSchema,
+  injectWebPageSchema,
+  injectBreadcrumbSchema,
+} from './structured-data.js';
 
 /**
  * Fires a RUM event for a meaningful business interaction.
@@ -533,26 +538,6 @@ function decorateSEO() {
   });
 }
 
-/**
- * Injects Organization JSON-LD structured data into <head>.
- * Runs on every page — tells Google the site's identity.
- * Uses metadata "site-name" if authored, otherwise falls back to hostname.
- */
-function injectOrganizationSchema() {
-  const siteName = getMetadata('site-name') || window.location.hostname;
-  const schema = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: siteName,
-    url: window.location.origin,
-    logo: `${window.location.origin}/favicon.ico`,
-  };
-  const script = document.createElement('script');
-  script.type = 'application/ld+json';
-  script.textContent = JSON.stringify(schema);
-  document.head.append(script);
-}
-
 // ── EXPERIMENTATION PLUGIN ────────────────────────────────────────────────────
 // Loaded from CDN so EDS Code Sync can serve it without a build step.
 // Production alternative: copy node_modules/@adobe/aem-experimentation/src/
@@ -568,7 +553,14 @@ async function loadEager(doc) {
   decorateTemplateAndTheme();
   decorateSEO();
   decorateI18n();
+
+  // Inject JSON-LD structured data (Phase 17)
+  // Organization + WebSite + SearchAction: on every page
   injectOrganizationSchema();
+  // WebPage: gives Google explicit identity for this page
+  injectWebPageSchema();
+  // BreadcrumbList: auto-generated from URL path (/insights/article -> Home > Insights > Article)
+  injectBreadcrumbSchema();
 
   // ── A/B EXPERIMENTATION (EAGER PHASE) ──────────────────────────────────
   // MUST run before decorateMain to avoid a flash of control content (FOUC).

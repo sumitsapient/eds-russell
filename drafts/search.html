@@ -1,0 +1,64 @@
+<html>
+<head>
+  <title>Search — Russell Investments</title>
+  <meta name="description" content="Search insights, research, and market commentary">
+  <meta name="robots" content="noindex">
+</head>
+<body>
+  <header></header>
+  <main>
+    <div>
+      <h1>Search</h1>
+      <p>Find insights, research, and market commentary across all topics.</p>
+    </div>
+    <hr>
+    <!--
+      SEARCH BLOCK
+      No config rows needed for defaults.
+      Optionally add rows: index, fields, page-size, placeholder
+    -->
+    <div>
+      <div class="search">
+        <div>
+          <div>placeholder</div>
+          <div>Search insights, market research, topics...</div>
+        </div>
+        <div>
+          <div>fields</div>
+          <div>title, description, category</div>
+        </div>
+        <div>
+          <div>page-size</div>
+          <div>10</div>
+        </div>
+      </div>
+    </div>
+    <hr>
+    <!--
+      HOW TO TEST
+      1. Start dev server: aem up --html-folder drafts
+      2. Open: http://localhost:3000/search
+      3. Type "equity" -- autocomplete suggestions appear after 250ms
+      4. Press Enter or click Search -- full results shown, URL updates to ?q=equity
+      5. Open: http://localhost:3000/search?q=insights -- results pre-populated from URL
+      6. Press Escape -- suggestions dismissed
+      7. Use Arrow Down/Up to navigate suggestions, Enter to select
+      8. Click Back button -- previous search restored
+    -->
+    <div>
+      <h2>How to Test</h2>
+      <ul>
+        <li>Type 2+ characters -- watch autocomplete suggestions appear</li>
+        <li>Press ↓ / ↑ arrows to navigate suggestions</li>
+        <li>Press Enter with a suggestion highlighted -- navigate to that page</li>
+        <li>Click Search button or press Enter -- full results shown</li>
+        <li>Check the URL -- it updates to ?q=your-search-term</li>
+        <li>Share or bookmark the URL -- search results are preserved</li>
+        <li>Open DevTools Network -- look for /query-index.json request (once, cached)</li>
+        <li>Open DevTools Console with ?rum=on -- look for sampleRUM "search" event</li>
+      </ul>
+    </div>
+  </main>
+  <footer></footer>
+</body>
+</html>
