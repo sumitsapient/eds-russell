@@ -1,0 +1,136 @@
+<html>
+<head>
+  <title>Form Block Demo — Contact & Newsletter</title>
+  <meta name="description" content="Demonstrates the EDS form block with validation, submission, and analytics">
+</head>
+<body>
+  <header></header>
+  <main>
+
+    <div>
+      <h1>Form Block Demo</h1>
+      <p>Two form examples below — a contact form and a newsletter signup.</p>
+    </div>
+    <hr>
+
+    <!-- ═══════════════════════════════════════════
+         CONTACT FORM
+         Config rows: action, success-url, submit-label
+         Field rows: label | type config | placeholder or options
+         ═══════════════════════════════════════════ -->
+    <div>
+      <h2>Contact an Advisor</h2>
+      <div class="form">
+        <div>
+          <div>action</div>
+          <div>/api/contact</div>
+        </div>
+        <div>
+          <div>success-url</div>
+          <div>/thank-you</div>
+        </div>
+        <div>
+          <div>submit-label</div>
+          <div>Send Message</div>
+        </div>
+        <!-- FIELDS -->
+        <div>
+          <div>Full Name</div>
+          <div>text, required</div>
+          <div>Enter your full name</div>
+        </div>
+        <div>
+          <div>Email Address</div>
+          <div>email, required</div>
+          <div>your@email.com</div>
+        </div>
+        <div>
+          <div>Phone Number</div>
+          <div>tel</div>
+          <div>+1 (555) 000-0000</div>
+        </div>
+        <div>
+          <div>Investment Interest</div>
+          <div>select, required</div>
+          <div>Equities, Fixed Income, Alternatives, Multi-Asset, Other</div>
+        </div>
+        <div>
+          <div>How did you hear about us?</div>
+          <div>radio</div>
+          <div>Search Engine, LinkedIn, Referral, Conference, Other</div>
+        </div>
+        <div>
+          <div>Message</div>
+          <div>textarea, required</div>
+          <div>How can we help you?</div>
+        </div>
+        <div>
+          <div>Subscribe</div>
+          <div>checkbox</div>
+          <div>Subscribe me to Russell Investments market insights</div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- ═══════════════════════════════════════════
+         NEWSLETTER SIGNUP (simple 2-field form)
+         ═══════════════════════════════════════════ -->
+    <div>
+      <h2>Newsletter Signup</h2>
+      <p>Stay updated with our latest market insights and investment strategies.</p>
+      <div class="form">
+        <div>
+          <div>action</div>
+          <div>/api/newsletter</div>
+        </div>
+        <div>
+          <div>submit-label</div>
+          <div>Subscribe</div>
+        </div>
+        <div>
+          <div>First Name</div>
+          <div>text, required</div>
+          <div>Your first name</div>
+        </div>
+        <div>
+          <div>Email</div>
+          <div>email, required</div>
+          <div>your@email.com</div>
+        </div>
+        <div>
+          <div>Investor Type</div>
+          <div>select, required</div>
+          <div>Individual Investor, Financial Advisor, Institutional Investor</div>
+        </div>
+        <div>
+          <div>Consent</div>
+          <div>checkbox, required</div>
+          <div>I agree to receive marketing emails from Russell Investments. I can unsubscribe at any time.</div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- ═══════════════════════════════════════════
+         WHAT THIS BLOCK DEMONSTRATES
+         ═══════════════════════════════════════════ -->
+    <div>
+      <h2>What to Test</h2>
+      <ul>
+        <li>Try clicking Submit with empty fields — validation errors appear per field</li>
+        <li>Tab through the form — fully keyboard accessible</li>
+        <li>Submit the contact form — since /api/contact doesn't exist, check the error message</li>
+        <li>Open DevTools Network tab — look for the POST request to /api/contact</li>
+        <li>Open DevTools Console — look for the ACDL event: "form submitted"</li>
+        <li>Open DevTools Network with ?rum=on — look for sampleRUM "convert" event</li>
+        <li>Resize to mobile — single column layout</li>
+        <li>Resize to 600px+ — 2-column grid layout</li>
+      </ul>
+    </div>
+
+  </main>
+  <footer></footer>
+</body>
+</html>
+

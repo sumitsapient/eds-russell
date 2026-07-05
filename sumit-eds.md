@@ -6084,6 +6084,236 @@ A: Target's built-in reports plus AA integration. Your ACDL events (pageView, ct
 
 ---
 
+## Phase 16 — AEM Forms
+
+> Forms are one of the most common enterprise requirements. EDS handles them with pure vanilla HTML — no AEM Forms license required for simple use cases, but full AEM Forms integration is available when you need it.
+
+---
+
+### Two Approaches to Forms in EDS
+
+| Approach | When to use | Complexity |
+|---|---|---|
+| **Custom Form Block** (what we built) | Contact forms, newsletter signups, simple data collection | Low |
+| **AEM Forms Integration** (Adaptive Forms Block) | Multi-step wizards, conditional logic, regulatory forms, signature, payment | High |
+
+We built the custom form block. The AEM Forms integration approach is documented at the end of this section.
+
+---
+
+### The Form Block — What We Built
+
+A complete form block supporting 7 field types, client-side validation, honeypot spam protection, ACDL tracking, and success/error states.
+
+#### Authoring Structure (Universal Editor)
+
+Authors define the form as a table. Configuration rows come first (key-value pairs), then field rows:
+
+```
+| action       | /api/contact               |  ← POST endpoint
+| success-url  | /thank-you                 |  ← optional redirect
+| submit-label | Send Message               |  ← button label
+
+| Full Name    | text, required             |  ← label | type config
+| Email        | email, required            |  Enter your email...  ← placeholder
+| Phone        | tel                        |
+| Interest     | select, required           |  Equities, Fixed Income, Alternatives
+| Preference   | radio                      |  Email, Phone, Video Call
+| Message      | textarea, required         |  How can we help?
+| Subscribe    | checkbox                   |  Subscribe to market insights
+```
+
+#### Field Type Config Format
+
+Column 2 is `type[, required][, pattern:<regex>]`:
+- `text` → `<input type="text">`
+- `email, required` → required email with browser format validation
+- `select, required` → `<select>` with options from column 3 (comma-separated)
+- `radio` → radio button group with options from column 3
+- `textarea, required` → multi-line text area
+- `checkbox` → single checkbox; column 3 is the label text
+- `tel, pattern:^\+?[0-9\s\-()]+$` → telephone with custom regex
+
+#### Key Features
+
+**Client-side validation:**
+- Uses browser's Constraint Validation API — no library needed
+- Shows inline error messages per field on blur (when user leaves a field)
+- Re-validates on submit before sending
+- Focuses the first invalid field on submit attempt (accessibility)
+
+**Honeypot spam protection:**
+```html
+<!-- Added automatically — invisible to humans, bots fill it, we reject -->
+<input type="text" name="form-bot-field" tabindex="-1" aria-hidden="true">
+```
+If `form-bot-field` has any value, submission is silently rejected.
+
+**Analytics tracking on submit:**
+```js
+// 1. ACDL push — Launch picks up for AA + Target
+window.adobeDataLayer.push({ event: 'form submitted', form: { name: '/api/contact' } });
+
+// 2. RUM conversion event
+sampleRUM('convert', { source: 'form', target: '/api/contact' });
+
+// 3. Target conversion goal
+trackTargetConversion('form-submit', { formName: '/api/contact' });
+```
+
+**Submit flow:**
+```
+Click Submit
+  → validate() all fields
+  → if invalid: show errors, focus first invalid field
+  → if valid: button disabled + "Sending…"
+  → POST JSON to config.action
+  → on success: hide form, show success message, redirect after 2s
+  → on error:   re-enable button, show error banner
+```
+
+---
+
+### Responsive Layout
+
+- **Mobile**: Single column stack
+- **Tablet (600px+)**: Auto 2-column CSS Grid
+- **Textarea, checkbox, radio, submit**: Always full width (span both columns)
+
+```css
+@media (width >= 600px) {
+  .form .form-el {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+  }
+
+  /* These span the full width */
+  .form .form-field:has(textarea),
+  .form .form-field-checkbox,
+  .form .form-actions {
+    grid-column: 1 / -1;
+  }
+}
+```
+
+---
+
+### Files Created
+
+| File | Purpose |
+|---|---|
+| `blocks/form/form.js` | Block decorator — parses config, builds DOM, validates, submits |
+| `blocks/form/form.css` | Responsive, accessible styles |
+| `blocks/form/_form.json` | Universal Editor component model |
+| `drafts/form-demo.html` | Test page with contact form + newsletter signup |
+
+---
+
+### Testing the Form
+
+Start the dev server with `--html-folder drafts`:
+```
+aem up --html-folder drafts
+```
+Open: `http://localhost:3000/form-demo`
+
+**What to verify:**
+1. **Validation** — click Submit with empty fields → errors appear per field
+2. **Tab navigation** — Tab through all fields → focus order is logical
+3. **Select dropdown** — custom arrow icon, keyboard navigable
+4. **Radio group** — arrow keys cycle through options
+5. **Checkbox** — Space to toggle, proper label click target
+6. **Submit** — POST to `/api/contact` → network error → error banner appears
+7. **Mobile layout** — single column below 600px
+8. **Console** — look for `form submitted` ACDL event after submit attempt
+
+---
+
+### Connecting to a Real Endpoint
+
+For a working form backend, you have several options:
+
+**Option 1: AEM Forms Submissions (recommended for Russell Investments)**
+AEM provides a form submission service at `/adobe/forms/af/submit/<form-guid>`. Submit JSON there and AEM handles storage, email notification, and workflow routing.
+
+**Option 2: Netlify / Vercel Functions**
+Add a `functions/contact.js` edge function to your project that receives the POST and forwards to an email service or CRM.
+
+**Option 3: External API**
+```js
+// In your form block config:
+// action: https://api.russell.com/v1/contact
+// The block POSTs JSON to this URL
+```
+
+**Option 4: `formsubmit.co` (quick testing)**
+```
+action: https://formsubmit.co/sumit@yourdomain.com
+```
+
+---
+
+### AEM Forms Integration (Advanced)
+
+For complex enterprise forms, AEM has a dedicated **Adaptive Forms** service. To use it with EDS:
+
+**1. Create form in AEM Forms Editor**
+- AEM Forms has a dedicated Form Editor (separate from Universal Editor)
+- Supports: conditional logic, multi-step wizards, DocuSign signatures, Salesforce integration
+- Authors create the form once, it renders everywhere
+
+**2. Add the Adaptive Forms Block**
+The official `adaptiveForm` block (from Adobe) embeds an AEM Form on any EDS page:
+```
+| adaptiveForm |                                       |
+| path         | /content/forms/af/contact-form        |
+```
+The block fetches the form definition from AEM and renders it client-side.
+
+**3. Submit to AEM Forms submit handler**
+Forms submit to AEM where you can configure:
+- Submit actions: Store in AEM, email, Salesforce, Marketo, REST API
+- Prefill data: from AEM user profile, URL parameters
+- Rules: conditional field visibility, calculations
+
+**When to use AEM Forms vs custom form block:**
+
+| Requirement | Use |
+|---|---|
+| Simple contact/newsletter | Custom form block |
+| 3+ form steps with progress | AEM Forms |
+| Conditional field show/hide | AEM Forms |
+| Pre-fill from login session | AEM Forms |
+| DocuSign / eSignature | AEM Forms |
+| CRM integration (Salesforce, HubSpot) | AEM Forms |
+| Regulatory compliance (audit trail) | AEM Forms |
+
+---
+
+### Q&A
+
+**Q: Can the form block work without a backend endpoint?**
+A: Yes — just leave `action` empty. The form validates and tracks analytics but doesn't submit. Useful for demo pages or when you're wiring up the backend separately. The ACDL/RUM events still fire.
+
+**Q: How do I handle CORS on the submit endpoint?**
+A: Your `/api/contact` endpoint (wherever it lives) must send `Access-Control-Allow-Origin: https://main--eds-russell--sumitsapient.aem.live` in the response headers. If using AEM as the backend, this is handled automatically for the same-domain case.
+
+**Q: Is there server-side validation?**
+A: Our form block only does client-side validation. Always validate on the server too — client-side validation is for UX (fast feedback), server-side is for security (never trust client data).
+
+**Q: How does the 2-column grid work on mobile without JavaScript?**
+A: It's pure CSS Grid with `min-width` media queries. No JavaScript involved. The layout shifts at exactly 600px regardless of script loading state.
+
+**Q: Can the form block handle file uploads?**
+A: Not currently. Add `type: file` field support by creating an `<input type="file">` in `buildTextField()` and using `FormData` for the POST (change `Content-Type` to `multipart/form-data`).
+
+---
+
+*Last updated: July 5, 2026*
+
+---
+
 *Last updated: July 5, 2026*
 
 *Last updated: July 4, 2026*

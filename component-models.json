@@ -425,6 +425,33 @@
     ]
   },
   {
+    "id": "form",
+    "fields": [
+      {
+        "component": "text",
+        "name": "action",
+        "label": "Form Action (POST endpoint)",
+        "description": "The URL this form submits to (e.g. /api/contact). Leave empty to disable submission.",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "successUrl",
+        "label": "Success URL",
+        "description": "Redirect here after successful submission. Optional.",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "submitLabel",
+        "label": "Submit Button Label",
+        "description": "Text for the submit button.",
+        "valueType": "string",
+        "default": "Submit"
+      }
+    ]
+  },
+  {
     "id": "fragment",
     "fields": [
       {
