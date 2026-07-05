@@ -1,0 +1,52 @@
+/*
+ * Theme: dark
+ * A dark-mode brand variant for Russell Investments.
+ * Applied when: <meta name="theme" content="dark"> in Page Properties
+ *               OR section metadata: Style = theme-dark
+ *
+ * Override strategy: redefine CSS custom properties under the [data-theme="dark"]
+ * attribute (set on <body> by theme.js) or under the .theme-dark class
+ * (set by decorateTemplateAndTheme in aem.js for page-level themes).
+ *
+ * Block CSS is unchanged — blocks use the same token names, they just resolve
+ * to different values. Zero code duplication.
+ */
+/* Page-level dark theme */
+body.theme-dark,
+[data-theme="dark"] {
+  --color-primary: #6b8fff;
+  --color-primary-hover: #8fa8ff;
+  --color-primary-light: #1a2a5e;
+  --color-secondary: #a0a0a0;
+  --color-secondary-hover: #c0c0c0;
+  --color-accent: #ff8c5a;
+  --color-accent-hover: #ffaa7a;
+  --color-background: #0f1117;
+  --color-surface: #1a1d27;
+  --color-surface-alt: #242736;
+  --color-text: #e8eaf0;
+  --color-text-muted: #9da3b4;
+  --color-text-inverse: #0f1117;
+  --color-border: #2d3148;
+  --color-border-strong: #3d4260;
+  /* Legacy aliases */
+  --background-color: var(--color-background);
+  --light-color: var(--color-surface);
+  --dark-color: var(--color-secondary);
+  --text-color: var(--color-text);
+  --link-color: var(--color-primary);
+  --link-hover-color: var(--color-primary-hover);
+}
+/* Section-level dark theme (author adds style "theme-dark" to section metadata) */
+.section.theme-dark {
+  --color-primary: #6b8fff;
+  --color-primary-hover: #8fa8ff;
+  --color-primary-light: #1a2a5e;
+  --color-background: #0f1117;
+  --color-surface: #1a1d27;
+  --color-text: #e8eaf0;
+  --color-text-muted: #9da3b4;
+  --color-border: #2d3148;
+  background: var(--color-background);
+  color: var(--color-text);
+}

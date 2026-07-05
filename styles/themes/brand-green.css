@@ -1,0 +1,45 @@
+/*
+ * Theme: brand-green
+ * An alternate brand theme for a subsidiary or white-label product.
+ * Applied when: <meta name="theme" content="brand-green"> in Page Properties
+ *
+ * This demonstrates how a second brand can share ALL block code from the
+ * same repository but have a completely different visual identity.
+ * No block JS/CSS changes needed — only token values differ.
+ */
+body.theme-brand-green,
+[data-theme="brand-green"] {
+  --color-primary: #00875a;
+  --color-primary-hover: #006644;
+  --color-primary-light: #e3fcef;
+  --color-secondary: #403294;
+  --color-secondary-hover: #2d2067;
+  --color-accent: #ff8b00;
+  --color-accent-hover: #d17000;
+  --color-background: #ffffff;
+  --color-surface: #f4f5f7;
+  --color-surface-alt: #ebecf0;
+  --color-text: #172b4d;
+  --color-text-muted: #5e6c84;
+  --color-text-inverse: #ffffff;
+  --color-border: #dfe1e6;
+  --color-border-strong: #c1c7d0;
+  /* Override typography for this brand */
+  --body-font-family: inter, inter-fallback, sans-serif;
+  --heading-font-family: inter, inter-fallback, sans-serif;
+  /* Legacy aliases */
+  --background-color: var(--color-background);
+  --light-color: var(--color-surface);
+  --dark-color: var(--color-secondary);
+  --text-color: var(--color-text);
+  --link-color: var(--color-primary);
+  --link-hover-color: var(--color-primary-hover);
+}
+.section.theme-brand-green {
+  --color-primary: #00875a;
+  --color-primary-light: #e3fcef;
+  --color-background: #f4f5f7;
+  --color-text: #172b4d;
+  background: var(--color-background);
+  color: var(--color-text);
+}

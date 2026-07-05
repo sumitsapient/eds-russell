@@ -6526,3 +6526,184 @@ A: Typically 2-6 weeks after indexing. Request via Google Search Console to spee
 A: Creates reusable entities. Without it, every BlogPosting duplicates the publisher. With @id, Google understands all articles on this site share the same publisher entity.
 ---
 *Last updated: July 5, 2026*
+## Phase 19 -- Multi-Site / Multi-Brand
+> One codebase, many brands. EDS is built for this — the same GitHub repo powers multiple sites with completely different content, URLs, and visual identities. Only the configuration differs.
+---
+### The Core Concept: fstab.yaml
+fstab.yaml is the mount table for your site. It maps URL paths to AEM content sources.
+**Single site (current setup):**
+```yaml
+mountpoints:
+  /:
+    url: "https://author-p146753-e1506305.adobeaemcloud.com/bin/franklin.delivery/sumitsapient/eds-russell/main"
+    type: "markup"
+    suffix: ".html"
+```
+**Multi-site (same code, different content per path):**
+```yaml
+mountpoints:
+  /:
+    url: "https://author-p146753-e1506305.adobeaemcloud.com/bin/franklin.delivery/sumitsapient/eds-russell/main"
+    type: "markup"
+    suffix: ".html"
+  /institutional:
+    url: "https://author-p146753-e1506305.adobeaemcloud.com/bin/franklin.delivery/sumitsapient/eds-institutional/main"
+    type: "markup"
+    suffix: ".html"
+  /private-wealth:
+    url: "https://author-p146753-e1506305.adobeaemcloud.com/bin/franklin.delivery/sumitsapient/eds-private-wealth/main"
+    type: "markup"
+    suffix: ".html"
+```
+Each content source:
+- Has its own /site-config.json (different theme, logo, settings)
+- Has its own navigation (/nav, /footer)
+- Has its own pages in AEM Sites
+- Shares ALL block code from the GitHub repo
+---
+### How Different Brands Share One Codebase
+```
+GitHub: eds-russell (one repo)
+     ↓ serves code to all:
+aem.page/            -> AEM content from /eds-russell
+aem.page/institutional  -> AEM content from /eds-institutional
+aem.page/private-wealth -> AEM content from /eds-private-wealth
+```
+Each brand has its own:
+- AEM content tree (pages, nav, footer, site-config)
+- /site-config.json with theme, logo, brand settings
+- CSS theme file in styles/themes/
+All brands SHARE:
+- blocks/ (accordion, hero, cards, form, search...)
+- scripts/ (aem.js, scripts.js, personalization.js...)
+- No code duplication
+---
+### Theme System (What We Built)
+Themes work through CSS custom properties. Every block uses token variables like --color-primary, --color-background. Themes just redefine those variables.
+Theme files created:
+- styles/themes/dark.css -- dark mode brand
+- styles/themes/brand-green.css -- alternate brand (subsidiary/white-label)
+To apply a theme, set in Page Properties OR /site-config.json:
+```
+theme: dark
+```
+The loadThemeCSS() function in scripts.js loadEager() reads this and loads the CSS file before first paint (no CLS).
+Theme resolution priority:
+  1. Page Properties meta[name="theme"]  (page-level override)
+  2. /site-config.json "theme" key       (site-level default)
+  3. Default tokens from styles.css      (no theme)
+**Section-level theme (mixed within a page):**
+Author adds to Section Metadata:
+```
+Style: theme-dark
+```
+The .section.theme-dark CSS in dark.css overrides tokens only within that section.
+Rest of page stays default theme.
+---
+### The /site-config.json Spreadsheet
+Create a Spreadsheet page in AEM at path /site-config. Fill in key-value rows:
+| key              | value                                        |
+|------------------|----------------------------------------------|
+| theme            | dark                                         |
+| logo             | /media/logo-white.svg                        |
+| logo-alt         | Russell Investments                          |
+| site-name        | Russell Investments                          |
+| brand            | russell                                      |
+| header-variant   | minimal                                      |
+| social-linkedin  | https://linkedin.com/company/russell-investments |
+| social-twitter   | https://twitter.com/russellinvests           |
+Usage in any block:
+```js
+import { getSiteConfig, getConfigValue } from '../../scripts/site-config.js';
+// Get all config at once
+const config = await getSiteConfig();
+if (config.theme === 'dark') { ... }
+// Or get a single value with fallback
+const logo = await getConfigValue('logo', '/favicon.ico');
+```
+The getSiteConfig() function caches the result in sessionStorage for 10 minutes. Only 1 network request per session.
+---
+### Multi-Site fstab.yaml -- Full Enterprise Pattern
+For Russell Investments with multiple audience segments:
+```yaml
+# fstab.yaml
+mountpoints:
+  # Main site: retail investors
+  /:
+    url: "https://author.adobeaemcloud.com/.../eds-russell-retail/main"
+    type: "markup"
+    suffix: ".html"
+  # Institutional site: different content, same blocks
+  /institutional:
+    url: "https://author.adobeaemcloud.com/.../eds-russell-institutional/main"
+    type: "markup"
+    suffix: ".html"
+  # Private Wealth: premium dark theme by default
+  /private-wealth:
+    url: "https://author.adobeaemcloud.com/.../eds-russell-private-wealth/main"
+    type: "markup"
+    suffix: ".html"
+  # Locale-specific content
+  /fr:
+    url: "https://author.adobeaemcloud.com/.../eds-russell-fr/main"
+    type: "markup"
+    suffix: ".html"
+  # Shared fragments used across all brands
+  /fragments:
+    url: "https://author.adobeaemcloud.com/.../eds-russell-shared/main"
+    type: "markup"
+    suffix: ".html"
+```
+Each path has:
+- /nav (navigation for that brand)
+- /footer (footer for that brand)
+- /site-config.json (theme, logo, settings for that brand)
+- All content pages
+---
+### Shared Block Library Pattern
+For enterprise scale, blocks can be published as an npm package shared across multiple repos:
+**Option A: npm package (separate repos sharing blocks)**
+```
+# In eds-russell-institutional/package.json:
+{
+  "dependencies": {
+    "@russell/eds-blocks": "^1.0.0"
+  }
+}
+```
+Blocks imported from the shared package, overrideable per-brand.
+**Option B: Git submodule (monorepo pattern)**
+```
+eds-russell/ (main repo)
+  blocks/        <- git submodule from eds-shared-blocks
+  styles/        <- brand-specific
+  scripts/       <- brand-specific
+```
+**Option C: Single repo, path-based multi-site (what we've built)**
+One repo, fstab.yaml routes different content to different paths.
+Simplest to maintain -- one PR affects all brands simultaneously.
+---
+### Creating a New Brand -- Checklist
+1. Create new AEM content tree in Sites (duplicate from existing)
+2. Create /site-config.json in the new content tree with brand settings
+3. Create or copy /nav and /footer pages for the new brand
+4. Add a new theme CSS file: styles/themes/{brand-name}.css
+5. Add the new path to fstab.yaml
+6. Preview and test at https://{branch}--{repo}--{owner}.aem.page/{brand-path}
+---
+### Q&A
+**Q: Can two brands have completely different block styles?**
+A: Yes -- two approaches:
+  1. CSS only: Theme file overrides tokens. All blocks look different, no JS changes.
+  2. Block variants: Author adds a class variant in UE (hero dark vs hero light). 
+     CSS handles both variants. Still no code duplication.
+**Q: Can a brand have a block the others don't?**
+A: Yes -- add the block to /blocks/ in the shared repo. It's available to all brands but only appears when an author adds it to a page of that brand.
+**Q: What about A/B testing across brands?**
+A: The experimentation plugin (Phase 13) works per-brand because each brand has its own content path. Run separate experiments per brand by setting the experiment metadata on pages in each brand's content tree.
+**Q: How do I prevent one brand's code change from breaking another?**
+A: Branch protection + staged rollout. Deploy to a feature branch, test against all brand preview URLs, then merge to main. The CI/CD pipeline (Phase 10) runs linting on every PR.
+**Q: Is the /site-config.json secure?**
+A: It's publicly readable (same as all EDS content). Never put secrets in it. Use it for UI config only (theme, logo, labels). Authentication keys belong in environment variables or AEM's secure config, not in content.
+---
+*Last updated: July 5, 2026*
