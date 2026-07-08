@@ -377,12 +377,22 @@ body.russell-article .section.russell-article-hero {
   margin: 0;
   content-visibility: visible;
   contain-intrinsic-size: none;
+
+  /* Full viewport width regardless of max-width on main */
   width: 100vw;
   max-width: 100vw;
   position: relative;
   left: 50%;
   transform: translateX(-50%);
   overflow: hidden;
+}
+
+/* Reset global main > .section > div so the image fills 100vw.
+   Targets the default-content-wrapper div created by decorateSections. */
+body.russell-article .section.russell-article-hero .default-content-wrapper {
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
 body.russell-article .section.russell-article-hero picture {

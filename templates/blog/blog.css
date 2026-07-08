@@ -20,15 +20,18 @@
    5. Section styles (0,3,x)
    6. Hero section (full-bleed, last)
    ==================================================== */
+
 /* ── 1. Base layout ── */
 body.blog main {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0;
 }
+
 body.blog main .section {
   padding: var(--spacing-l, 24px);
 }
+
 /* ── 2. Grid layout ── */
 @media (width >= 900px) {
   body.blog main {
@@ -37,23 +40,28 @@ body.blog main .section {
     grid-template-rows: auto auto auto;
     column-gap: var(--spacing-xl, 32px);
   }
+
   body.blog main .section.blog-hero {
     grid-column: 1 / -1;
     grid-row: 1;
   }
+
   body.blog main .section.blog-sidebar {
     grid-column: 1;
     grid-row: 2;
   }
+
   body.blog main .section.blog-body {
     grid-column: 2;
     grid-row: 2;
   }
+
   body.blog main .section.blog-related {
     grid-column: 1 / -1;
     grid-row: 3;
   }
 }
+
 /* ── 3. blog-card component (specificity 0,2,x) ── */
 body.blog .blog-card-inner {
   background: var(--color-surface, #f8f8f8);
@@ -62,16 +70,19 @@ body.blog .blog-card-inner {
   position: sticky;
   top: var(--spacing-l, 24px);
 }
+
 body.blog .blog-card-author {
   display: flex;
   align-items: center;
   gap: var(--spacing-m, 16px);
   margin-bottom: var(--spacing-l, 24px);
 }
+
 body.blog .blog-card-author picture {
   flex-shrink: 0;
   line-height: 0;
 }
+
 body.blog .blog-card-author img {
   width: 56px;
   height: 56px;
@@ -79,11 +90,13 @@ body.blog .blog-card-author img {
   object-fit: cover;
   display: block;
 }
+
 body.blog .blog-card-author-name {
   font-size: var(--body-font-size-xs, clamp(14px, 1.5vw, 16px));
   font-weight: var(--font-weight-bold, 700);
   color: var(--color-text, #131313);
 }
+
 body.blog .blog-card-title {
   font-family: var(--heading-font-family, sans-serif);
   font-size: var(--heading-font-size-s, clamp(18px, 2vw, 22px));
@@ -92,12 +105,14 @@ body.blog .blog-card-title {
   line-height: 1.25;
   margin: 0 0 var(--spacing-l, 24px);
 }
+
 body.blog .blog-card-meta {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-s, 8px);
   margin-bottom: var(--spacing-m, 16px);
 }
+
 body.blog .blog-card-category {
   background: var(--color-primary-light, #e8edff);
   color: var(--color-primary, #3b63fb);
@@ -108,12 +123,14 @@ body.blog .blog-card-category {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
 body.blog .blog-card-date {
   font-size: var(--body-font-size-xs, clamp(12px, 1.3vw, 14px));
   color: var(--color-text-muted, #6b7280);
   display: flex;
   align-items: center;
 }
+
 body.blog .blog-card-readtime {
   font-size: var(--body-font-size-xs, clamp(12px, 1.3vw, 14px));
   color: var(--color-text-muted, #6b7280);
@@ -121,6 +138,7 @@ body.blog .blog-card-readtime {
   align-items: center;
   gap: var(--spacing-xs, 4px);
 }
+
 body.blog .blog-card-readtime::before {
   content: '';
   display: inline-block;
@@ -128,6 +146,7 @@ body.blog .blog-card-readtime::before {
   height: 14px;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 6v6l4 2'/%3E%3C/svg%3E") no-repeat center / contain;
 }
+
 /* ── 4. related-blogs component (specificity 0,2,x) ── */
 body.blog .related-blogs-heading {
   font-family: var(--heading-font-family, sans-serif);
@@ -138,49 +157,59 @@ body.blog .related-blogs-heading {
   padding-bottom: var(--spacing-m, 16px);
   border-bottom: 2px solid var(--color-border, #e5e7eb);
 }
+
 body.blog .related-blogs-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--spacing-l, 24px);
 }
+
 @media (width >= 600px) {
   body.blog .related-blogs-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
 @media (width >= 900px) {
   body.blog .related-blogs-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
 body.blog .related-blogs-card {
   border: 1px solid var(--color-border, #e5e7eb);
   border-radius: 8px;
   overflow: hidden;
   transition: box-shadow var(--duration-normal, 300ms) var(--easing-default);
 }
+
 body.blog .related-blogs-card:hover {
   box-shadow: 0 4px 16px rgb(0 0 0 / 10%);
 }
+
 body.blog .related-blogs-card-image picture {
   line-height: 0;
   display: block;
 }
+
 body.blog .related-blogs-card-image img {
   width: 100%;
   height: 180px;
   object-fit: cover;
   display: block;
 }
+
 body.blog .related-blogs-card-content {
   padding: var(--spacing-m, 16px);
 }
+
 body.blog .related-blogs-card-meta {
   display: flex;
   gap: var(--spacing-s, 8px);
   margin-bottom: var(--spacing-s, 8px);
   flex-wrap: wrap;
 }
+
 body.blog .related-blogs-card-category {
   font-size: var(--body-font-size-xs, clamp(11px, 1.2vw, 13px));
   font-weight: var(--font-weight-bold, 700);
@@ -188,10 +217,12 @@ body.blog .related-blogs-card-category {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
 body.blog .related-blogs-card-date {
   font-size: var(--body-font-size-xs, clamp(11px, 1.2vw, 13px));
   color: var(--color-text-muted, #6b7280);
 }
+
 body.blog .related-blogs-card-title {
   font-family: var(--heading-font-family, sans-serif);
   font-size: var(--body-font-size-s, clamp(15px, 1.6vw, 17px));
@@ -199,13 +230,16 @@ body.blog .related-blogs-card-title {
   line-height: 1.3;
   margin: 0;
 }
+
 body.blog .related-blogs-card-title a:any-link {
   color: var(--color-text, #131313);
   text-decoration: none;
 }
+
 body.blog .related-blogs-card-title a:hover {
   color: var(--color-primary, #3b63fb);
 }
+
 /* ── 5. Section styles (specificity 0,3,x) ── */
 body.blog .section.blog-sidebar {
   padding-top: var(--spacing-xl, 32px);
@@ -213,12 +247,14 @@ body.blog .section.blog-sidebar {
   content-visibility: visible;
   contain-intrinsic-size: none;
 }
+
 body.blog .section.blog-body {
   padding-top: var(--spacing-xl, 32px);
   margin: 0;
   content-visibility: visible;
   contain-intrinsic-size: none;
 }
+
 body.blog .section.blog-body h1 {
   font-family: var(--heading-font-family, sans-serif);
   font-size: clamp(26px, 3vw, 42px);
@@ -227,6 +263,7 @@ body.blog .section.blog-body h1 {
   line-height: 1.15;
   margin: 0 0 var(--spacing-m, 16px);
 }
+
 body.blog .section.blog-body h2 {
   font-family: var(--heading-font-family, sans-serif);
   font-size: var(--heading-font-size-s, clamp(18px, 2.2vw, 22px));
@@ -236,22 +273,26 @@ body.blog .section.blog-body h2 {
   padding-top: var(--spacing-l, 24px);
   border-top: 1px solid var(--color-border, #e5e7eb);
 }
+
 body.blog .section.blog-body p {
   font-size: var(--body-font-size-s, clamp(16px, 1.8vw, 18px));
   line-height: var(--line-height-loose, 1.8);
   color: var(--color-text, #131313);
   margin-bottom: var(--spacing-l, 24px);
 }
+
 body.blog .section.blog-body ul,
 body.blog .section.blog-body ol {
   padding-left: var(--spacing-l, 24px);
   margin-bottom: var(--spacing-l, 24px);
 }
+
 body.blog .section.blog-body li {
   font-size: var(--body-font-size-s, clamp(16px, 1.8vw, 18px));
   line-height: var(--line-height-normal, 1.6);
   margin-bottom: var(--spacing-s, 8px);
 }
+
 body.blog .section.blog-body blockquote {
   border-left: 4px solid var(--color-primary, #3b63fb);
   margin: var(--spacing-xl, 32px) 0;
@@ -260,6 +301,7 @@ body.blog .section.blog-body blockquote {
   font-size: var(--body-font-size-s, clamp(16px, 1.8vw, 18px));
   font-style: italic;
 }
+
 body.blog .section.blog-related {
   padding: var(--spacing-xxl, 48px) var(--spacing-l, 24px);
   border-top: 1px solid var(--color-border, #e5e7eb);
@@ -267,6 +309,7 @@ body.blog .section.blog-related {
   content-visibility: visible;
   contain-intrinsic-size: none;
 }
+
 /* ── 6. Hero section (full-bleed, highest specificity, comes last) ── */
 body.blog .section.blog-hero {
   padding: 0;
@@ -280,10 +323,19 @@ body.blog .section.blog-hero {
   content-visibility: visible;
   contain-intrinsic-size: none;
 }
+
+/* Reset the global main > .section > div constraint so the image fills 100vw */
+body.blog .section.blog-hero > div {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
 body.blog .section.blog-hero picture {
   display: block;
   line-height: 0;
 }
+
 body.blog .section.blog-hero picture img {
   width: 100%;
   height: auto;
