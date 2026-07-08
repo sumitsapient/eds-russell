@@ -28,6 +28,10 @@ body.blog main {
   padding: 0;
 }
 
+body.blog #main-content {
+  margin-left: 0;
+}
+
 body.blog main .section {
   padding: var(--spacing-l, 24px);
 }
