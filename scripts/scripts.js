@@ -552,6 +552,18 @@ const EXPERIMENT_PLUGIN = 'https://cdn.jsdelivr.net/npm/@adobe/aem-experimentati
 async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
+
+  // Load template-specific CSS and JS.
+  // decorateTemplateAndTheme() adds the body class but does NOT load the files.
+  // Convention: templates/{name}/{name}.css + templates/{name}/{name}.js
+  const template = getMetadata('template');
+  if (template) {
+    const base = window.hlx.codeBasePath;
+    loadCSS(`${base}/templates/${template}/${template}.css`);
+    // JS is optional — ignore if template has no JS file
+    import(`../templates/${template}/${template}.js`).catch(() => {});
+  }
+
   decorateSEO();
   decorateI18n();
 

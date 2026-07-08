@@ -32,6 +32,15 @@
   --color-error: #ef4444;
   --color-info: #3b82f6;
 
+  /* === RUSSELL INVESTMENTS BRAND TOKENS (demo) ===
+     Approximated from the live site — replace with exact values
+     once design tokens are confirmed from the AEM codebase.
+     Prefix: --russell-* to keep them isolated from project tokens. */
+  --russell-color-navy: #1a3a6b;       /* primary brand navy */
+  --russell-color-navy-dark: #0f2447;  /* hover / dark variant */
+  --russell-color-gold: #c9a84c;       /* accent gold */
+  --russell-color-light-blue: #e8f0f9; /* surface tint */
+
   /* Legacy aliases (backward compat) */
   --background-color: var(--color-background);
   --light-color: var(--color-surface);

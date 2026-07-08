@@ -16,11 +16,13 @@
 4. [Demo Scope — What We Will Replicate](#demo-scope--what-we-will-replicate)
 5. [Architecture Comparison](#architecture-comparison)
 6. [AEM + EDS Coexistence — The Origin Selector Pattern](#aem--eds-coexistence--the-origin-selector-pattern)
-7. [Demo Environment Setup](#demo-environment-setup)
-8. [Phase-by-Phase Build Plan](#phase-by-phase-build-plan)
-9. [Requirements & Progress](#requirements--progress)
-9. [Stakeholder Talking Points](#stakeholder-talking-points)
-10. [Open Questions](#open-questions)
+7. [MSM (Multi-Site Manager) and EDS](#msm-multi-site-manager-and-eds)
+8. [Blog Architecture — The Plan](#blog-architecture--the-plan)
+9. [Demo Environment Setup](#demo-environment-setup)
+10. [Phase-by-Phase Build Plan](#phase-by-phase-build-plan)
+11. [Requirements & Progress](#requirements--progress)
+12. [Stakeholder Talking Points](#stakeholder-talking-points)
+13. [Open Questions](#open-questions)
 
 ---
 
@@ -353,9 +355,299 @@ For reference when the conversation gets serious with IT:
 | AEM Code Sync domain allowlist | Add `www.russellinvestments.com` to the EDS project's allowed push domains |
 | No AEM changes needed | AEM Dispatcher and Publish are unchanged. CDN just adds a new origin |
 
+
+## MSM (Multi-Site Manager) and EDS
+
+> **Short answer: EDS has no native MSM equivalent — but there are two clean patterns depending on how deep the migration goes. For the demo (English-only blogs), MSM is not a concern at all.**
+
 ---
 
-## Demo Environment Setup
+### What MSM Does in AEM (and Why It's Complex)
+
+In AEMaaCS, MSM manages:
+
+| MSM Concept | What it does |
+|---|---|
+| **Language Master** | The canonical, source-of-truth version of a page (e.g. `/content/ri/language-masters/en/...`) |
+| **Live Copy** | A regional/language copy that inherits from the master (e.g. `/content/ri/us/en/...`, `/content/ri/uk/en/...`) |
+| **Blueprint** | The configuration that defines what gets rolled out and how |
+| **Rollout** | The act of pushing changes from language master → live copies |
+| **Inheritance** | Locked properties that cannot be changed in the live copy unless inheritance is cancelled |
+
+This is powerful but also one of AEM's most complex features. It is **entirely server-side** — the JCR manages all inheritance relationships.
+
+---
+
+### EDS Has No MSM — Here's Why That's Okay
+
+EDS content lives in **SharePoint or Google Drive** (for document-based authoring) or is authored via **Universal Editor** (for JCR/AEM-backed authoring). Neither has MSM.
+
+But before this becomes a blocker, ask: **what does Russell actually use MSM for?**
+
+In most enterprise AEM setups, MSM is used for one of two things:
+1. **Language/locale variants** — same content, different language (e.g. EN → FR → DE)
+2. **Regional variants** — same structure, slightly different content per market (e.g. US → UK → AU)
+
+EDS handles both differently — and in most cases more simply.
+
+---
+
+### Option A: EDS Native Localization (Folder-Based)
+
+EDS has built-in localization support using language folders. No JCR inheritance — just clean folder structure:
+
+```
+SharePoint / Google Drive:
+├── en/
+│   └── insights/russell-research/2026/07/my-blog    ← English master
+├── fr/
+│   └── insights/russell-research/2026/07/my-blog    ← French version
+└── de/
+    └── insights/russell-research/2026/07/my-blog    ← German version
+```
+
+**In EDS, `hlx_config.json` declares language routing:**
+```json
+{
+  "locales": {
+    "": { "ietf": "en-US" },
+    "fr": { "ietf": "fr-FR" },
+    "de": { "ietf": "de-DE" }
+  }
+}
+```
+
+The URL `/fr/insights/russell-research/2026/07/my-blog` automatically serves the French document.
+
+**Pros:** Simple, transparent, no magic inheritance.
+**Cons:** No automatic "push changes from EN to FR" — translation is a manual copy step (or handled via a translation service integration like Brightspot, Smartling, etc.).
+
+**Honest assessment:** If Russell uses MSM purely for translation rollout, this is a process change, not a capability gap. Translation vendors integrate directly with SharePoint/Google Drive — often better than AEM's translation connectors.
+
+---
+
+### Option B: Keep AEM as the Content System — EDS as the Delivery Layer Only (Recommended for Russell)
+
+This is the most pragmatic option for Russell given their existing investment in AEM MSM, workflows, and Content Fragments.
+
+```
+AUTHORING (stays in AEM — no change)
+┌──────────────────────────────────────────────────────┐
+│  Authors edit in AEMaaCS Universal Editor / Touch UI │
+│  Language Master → MSM Rollout → Live Copies         │
+│  Translation workflows, approval workflows — all     │
+│  existing processes unchanged                        │
+└──────────────────────────────────────────────────────┘
+                          ↓
+              AEM Content Fragment APIs
+              (REST / GraphQL / Sling exports)
+                          ↓
+DELIVERY (replaced by EDS)
+┌──────────────────────────────────────────────────────┐
+│  EDS pages fetch content from AEM APIs               │
+│  Block JS calls CF REST endpoint → renders content   │
+│  CDN caches the rendered HTML at the edge            │
+│  MSM / language copies remain in AEM JCR             │
+└──────────────────────────────────────────────────────┘
+```
+
+**What this means in practice:**
+- **MSM is untouched.** Authors still work in AEM. Language masters, rollout configs, live copies — all intact.
+- **EDS replaces only the rendering/delivery.** Instead of AEM Dispatcher serving SSR HTML, EDS serves edge-cached HTML built from the same AEM content.
+- **The blog template in EDS fetches the blog body from AEM Content Fragment API**, just like the existing servlet does today — but client-side instead of server-side.
+
+**Pros:** Zero disruption to content operations. MSM continues to work. Translation workflows continue. This is the lowest-risk migration path.
+**Cons:** EDS pages still depend on AEM being up (for content API calls). But these can be cached aggressively at the CDN layer.
+
+---
+
+### For the Demo (English Blogs Only)
+
+For the demo, MSM is not relevant at all. You are targeting:
+- English blogs (`language-masters/en/...`) — the source, not a live copy
+- Static or semi-static content — no translation needed
+
+**Demo approach:** Use EDS with hardcoded English content (drafts or SharePoint docs). MSM is a "Phase 2 production discussion" topic — acknowledge it during the demo, point to Option B above as the production answer.
+
+---
+
+### MSM Talking Point for the Demo
+
+> "MSM — our rollout and localization engine — stays in AEM. We're not replacing AEM as a content management system. We're replacing the rendering and delivery layer. Authors keep working exactly as they do today. The difference is that instead of AEM Dispatcher serving the page, EDS serves it from the CDN edge — in under 20ms."
+
+---
+
+## Blog Architecture — The Plan
+
+> **This section covers: how the existing blog structure maps to EDS, how to handle Content Fragment data, and what the step-by-step build plan looks like for the demo.**
+
+---
+
+### Understanding the Existing AEM Blog Structure
+
+#### Page Structure (JCR)
+
+```
+/content/ri/language-masters/en/insights/russell-research/
+├── 2026/
+│   └── 07/
+│       ├── blog-post-title-one          ← JCR page
+│       ├── my-market-outlook-q3         ← JCR page
+│       └── fixed-income-perspectives    ← JCR page
+├── 2025/
+│   └── ...
+```
+
+Each blog page is a **JCR page** created from a **blog template**. The page has:
+1. **Manually authored fields** — headline, summary, author name, publish date, hero image, body rich text
+2. **Content Fragment references** — related funds, author bio, sidebar data — fetched at render time via a Sling servlet calling QueryBuilder
+
+#### The Servlet Pattern (Current)
+
+```
+Browser requests /en/insights/russell-research/2026/07/my-blog
+    ↓
+AEM Dispatcher (cached) or AEM Publish (cache miss)
+    ↓
+HTL template renders the page
+    ↓
+Sling Servlet is called → QueryBuilder fetches Content Fragments
+    ↓
+Full SSR HTML returned to browser
+```
+
+---
+
+### How This Maps to EDS
+
+#### URL Mapping
+
+The good news: the URL structure maps **directly** from AEM to EDS — you just strip the JCR prefix.
+
+| AEM JCR Path | AEM Published URL | EDS URL |
+|---|---|---|
+| `/content/ri/language-masters/en/insights/russell-research/2026/07/my-post` | `/en/insights/russell-research/2026/07/my-post` | `/insights/russell-research/2026/07/my-post` |
+
+The `/en/` prefix can be kept or dropped depending on whether Russell uses a locale-prefixed URL structure. EDS supports both.
+
+#### Content Model in EDS
+
+The blog article page in EDS will have this structure (as a Word doc in SharePoint or a draft HTML):
+
+```
+# [Blog Post Title]                          ← h1 — becomes page title + SEO title
+
+[Author Name] | [Publish Date] | [Category]  ← metadata row (default content)
+
+[Hero Image]                                 ← image block or default content
+
+[Article body in rich text]                  ← default content (EDS renders natively)
+
++------------------+
+| Related Articles |                         ← related-articles block (built in Phase R6)
++------------------+
+
++------------------+
+| Author Bio       |                         ← author-bio block (fetches CF data)
++------------------+
+```
+
+#### What Replaces the Servlet
+
+| AEMaaCS Approach | EDS Approach |
+|---|---|
+| Sling servlet → QueryBuilder → Content Fragment data → SSR render | Block JS → `fetch()` to AEM Content Fragment REST API → client-side render |
+| Runs server-side, result cached by Dispatcher | Runs client-side, result cached by browser + EDS CDN via `Cache-Control` headers |
+| Tightly coupled to AEM runtime | Decoupled — EDS page fetches AEM APIs. AEM is a headless data source |
+
+**The EDS block (e.g. `author-bio`) would look like this:**
+
+```javascript
+// blocks/author-bio/author-bio.js
+export default async function decorate(block) {
+  const authorId = block.querySelector('a')?.href; // CF path from author content
+  if (!authorId) return;
+
+  const response = await fetch(`/api/cf/content-fragments/${authorId}.json`);
+  const data = await response.json();
+
+  block.innerHTML = `
+    <div class="author-bio-card">
+      <img src="${data.photo}" alt="${data.name}">
+      <h3>${data.name}</h3>
+      <p>${data.bio}</p>
+    </div>
+  `;
+}
+```
+
+The AEM Content Fragment REST API (`/api/assets/...` or the new `/adobe/sites/cf/fragments/...` endpoint) stays in AEM — EDS just calls it over HTTP. **No servlet changes needed.**
+
+---
+
+### The Blog Query Index (Blog Listing Page)
+
+The blog listing page (`/insights/russell-research`) needs to show a grid of blog cards. In AEMaaCS this is a Sling model + QueryBuilder query returning all blog pages under the path.
+
+In EDS, this is replaced by the **EDS Query Index** — a JSON endpoint that EDS generates automatically from all your published pages:
+
+```
+https://main--repo--owner.aem.live/query-index.json
+```
+
+This returns metadata for every page (title, description, image, date, path, tags, etc.) that you declare in `helix-query.yaml`:
+
+```yaml
+# helix-query.yaml
+indices:
+  blog:
+    include:
+      - /insights/russell-research/**
+    properties:
+      title: head > meta[property="og:title"]
+      description: head > meta[name="description"]
+      image: head > meta[property="og:image"]
+      author: head > meta[name="author"]
+      publishedDate: head > meta[name="publisheddate"]
+      category: head > meta[name="category"]
+    sort: publishedDate
+    order: desc
+```
+
+Then the `insights-listing` block queries this index:
+
+```javascript
+const response = await fetch('/query-index.json?sheet=blog&limit=12');
+const { data } = await response.json();
+// data = array of blog post metadata → render as cards
+```
+
+**This replaces QueryBuilder entirely for listing pages.** The index is a static JSON file on the CDN — fast, cacheable, no backend needed.
+
+---
+
+### Step-by-Step Demo Build Plan (Blog-Focused)
+
+| Step | What to Build | How |
+|---|---|---|
+| **B1** | Blog article HTML draft | Create `drafts/russell-article.html` with real Russell blog content structure |
+| **B2** | Article template styles | CSS that matches Russell blog typography, byline, hero image |
+| **B3** | `helix-query.yaml` for blog index | Configure the query index to index `/insights/**` pages |
+| **B4** | Blog listing page draft | Create `drafts/russell-blog-listing.html` with 3–4 mock article cards |
+| **B5** | `insights-listing` block | JS that fetches query-index.json and renders blog cards |
+| **B6** | Author bio block (CF demo) | JS that simulates fetching an AEM Content Fragment (mock API call for demo) |
+| **B7** | Metadata / SEO | `<meta>` tags for author, date, category — feeds query index and social sharing |
+| **B8** | Performance proof | Run Lighthouse on the EDS blog article, compare to `russellinvestments.com` equivalent |
+
+---
+
+### What to Say When Stakeholders Ask About Content Migration
+
+> "We don't need to migrate the content. The blog posts stay exactly where they are — in AEM, under `/content/ri/language-masters/en/...`. Authors keep using the same tools. The only change is that instead of AEM rendering the page and sending it to the browser through the Dispatcher, EDS fetches the content from AEM's own APIs and serves it from the CDN edge. Think of EDS as a faster rendering engine for content that already lives in AEM."
+
+---
+
+
 
 ### Repositories & URLs
 
@@ -442,14 +734,18 @@ npx -y @adobe/aem-cli up --no-open --forward-browser-logs --html-folder drafts
 | 2 | Which pages get the most traffic? (Prioritize demo pages by impact) | Russell team | 🔴 Open |
 | 3 | Does Russell use AEM Forms, or a third-party form provider? | Russell team | 🔴 Open |
 | 4 | Is there a design system / brand style guide we can reference for colors and fonts? | Russell team | 🔴 Open |
-| 5 | Are blog articles in AEM Sites (JCR pages) or Content Fragments? | Russell team | 🔴 Open |
+| 5 | Are blog articles in AEM Sites (JCR pages) or Content Fragments? | Russell team | 🟢 **Answered** — JCR pages from a blog template. Some fields reference Content Fragments fetched via Sling servlet + QueryBuilder |
 | 6 | Does the site use a mega-menu or a standard nav? | Sumit | 🔴 Open — check live site |
 | 7 | What is the target demo date / stakeholder presentation date? | Russell team | 🔴 Open |
 | 8 | Can AEM pages and EDS pages coexist on the same domain? | Sumit | 🟢 **Answered** — Yes, via CDN Origin Selector. See [AEM + EDS Coexistence](#aem--eds-coexistence--the-origin-selector-pattern) |
 | 9 | What CDN does Russell use today (Fastly / Akamai / CloudFront)? | Russell IT | 🔴 Open — needed to configure Origin Selector routing rules |
 | 10 | Can IT spin up `eds-demo.russellinvestments.com` for the demo? | Russell IT | 🔴 Open — ask early, DNS changes can take time |
+| 11 | How does EDS handle MSM / language copies? | Sumit | 🟢 **Answered** — Two options: (A) EDS native folder-based localization for new content, (B) Keep AEM as content system, EDS as delivery only (recommended for Russell). See [MSM section](#msm-multi-site-manager-and-eds) |
+| 12 | What AEM Content Fragment API endpoint is available? (REST vs GraphQL, auth requirements) | Russell Dev | 🔴 Open — needed for author-bio / CF blocks |
+| 13 | What is the exact CF data model for author bio, related funds, and other CF-backed components on the blog page? | Russell Dev | 🔴 Open — needed to build CF-fetching blocks |
+| 14 | Does the blog listing use pagination, filtering by category/tag, or infinite scroll? | Sumit | 🔴 Open — check live site |
 
 ---
 
-*Last updated: July 5, 2026 — Added: AEM + EDS Coexistence (Origin Selector pattern), demo domain options, Open Questions updated.*
+*Last updated: July 7, 2026 — Added: MSM & EDS patterns (Option A: folder-based localization, Option B: AEM as headless CMS — recommended); Blog Architecture plan (URL mapping, CF servlet → fetch() replacement, query index for listing, step-by-step build plan B1–B8); Open Questions updated with Q11–Q14.*
 
