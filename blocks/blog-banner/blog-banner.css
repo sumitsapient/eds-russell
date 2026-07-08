@@ -1,0 +1,28 @@
+/* Reset wrapper so the block can go full-bleed */
+.blog-banner-wrapper {
+  max-width: none;
+  padding: 0;
+  margin: 0;
+}
+
+.blog-banner {
+  background: linear-gradient(115deg, #020e40 80%, #0d3571 0);
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-xxl, 48px) calc(5% + var(--spacing-l, 24px));
+}
+
+.blog-banner-heading {
+  color: #fff;
+  font-family: var(--heading-font-family, sans-serif);
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: var(--font-weight-bold, 700);
+  line-height: 1.15;
+  margin: 0;
+  max-width: 700px;
+}

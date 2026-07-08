@@ -332,6 +332,18 @@
     ]
   },
   {
+    "id": "blog-banner",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "heading",
+        "label": "Banner Heading",
+        "value": ""
+      }
+    ]
+  },
+  {
     "id": "blog-card",
     "fields": [
       {
@@ -363,6 +375,44 @@
         "value": ""
       }
     ]
+  },
+  {
+    "id": "blog-feature",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "category",
+        "label": "Category Label",
+        "value": "",
+        "description": "e.g. INVESTMENT INSIGHTS"
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "title",
+        "label": "Article Title",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "description",
+        "label": "Description + Button Link",
+        "value": ""
+      },
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "image",
+        "label": "Feature Image",
+        "multi": false
+      }
+    ]
+  },
+  {
+    "id": "blog-listing",
+    "fields": []
   },
   {
     "id": "breadcrumb",

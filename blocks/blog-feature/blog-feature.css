@@ -1,0 +1,100 @@
+/* Reset wrapper so block can go full-bleed */
+.blog-feature-wrapper {
+  max-width: none;
+  padding: 0;
+  margin: 0;
+}
+
+.blog-feature {
+  background: var(--color-surface-alt, #f0f0f0);
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--spacing-xxl, 48px) 0;
+}
+
+.blog-feature-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-xl, 32px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xxl, 48px);
+  align-items: center;
+}
+
+@media (width < 900px) {
+  .blog-feature-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .blog-feature-right {
+    order: -1;
+  }
+}
+
+.blog-feature-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-m, 16px);
+}
+
+.blog-feature-category {
+  font-size: var(--body-font-size-xs, clamp(12px, 1.3vw, 14px));
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-primary, #3b63fb);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.blog-feature-title {
+  font-family: var(--heading-font-family, sans-serif);
+  font-size: clamp(22px, 3vw, 36px);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text, #131313);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.blog-feature-desc {
+  font-size: var(--body-font-size-s, clamp(15px, 1.6vw, 17px));
+  color: var(--color-text-muted, #6b7280);
+  line-height: var(--line-height-normal, 1.6);
+}
+
+.blog-feature-desc p {
+  margin: 0 0 var(--spacing-m, 16px);
+}
+
+.blog-feature-btn a:any-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-primary, #3b63fb);
+  border-radius: 20px;
+  padding: 8px 20px;
+  color: var(--color-primary, #3b63fb);
+  font-size: var(--body-font-size-xs, clamp(13px, 1.4vw, 15px));
+  font-weight: var(--font-weight-bold, 700);
+  text-decoration: none;
+  transition: background var(--duration-fast, 150ms), color var(--duration-fast, 150ms);
+}
+
+.blog-feature-btn a:hover {
+  background: var(--color-primary, #3b63fb);
+  color: #fff;
+}
+
+.blog-feature-right picture {
+  display: block;
+  line-height: 0;
+}
+
+.blog-feature-right img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+}

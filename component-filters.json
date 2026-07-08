@@ -27,7 +27,10 @@
       "language-switcher",
       "insights-listing",
       "blog-card",
-      "related-blogs"
+      "related-blogs",
+      "blog-banner",
+      "blog-feature",
+      "blog-listing"
     ]
   },
   {
