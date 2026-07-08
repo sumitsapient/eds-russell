@@ -2,26 +2,26 @@
    RUSSELL ARTICLE TEMPLATE
    Loaded when <meta name="template" content="russell-article">
    Scoped to body.russell-article
-   LAYOUT (matches russellinvestments.com article pages):
+   LAYOUT:
    ┌────────────────────────────────────────┐
-   │  Full-bleed hero image (100vw)          │
+   │  Full-bleed hero image (100vw) row 1   │
    └────────────────────────────────────────┘
-   ┌─────────────────────┬──────────────────┐
-   │  Breadcrumb         │                  │
-   │  Category label     │  Key Takeaways   │
-   │  H1 Title           │  bullet list     │
-   │  Byline             │                  │
-   │  Article body       │  Related Links   │
-   │  h2 sections        │  Author Bio      │
-   └─────────────────────┴──────────────────┘
+   ┌────────────┬───────────────────────────┐
+   │  Sidebar   │  Article Body             │
+   │   30%      │    70%          row 2     │
+   └────────────┴───────────────────────────┘
+   ┌────────────────────────────────────────┐
+   │  Related Articles (full width) row 3   │
+   └────────────────────────────────────────┘
    SELECTOR ORDER (no-descending-specificity):
-   1. Progress bar (global, no body scope)
+   1. Progress bar
    2. Base layout
-   3. Grid media query
-   4. Component styles (specificity 0,2,x) — MUST precede section styles
-   5. Section: body (0,3,x)
-   6. Section: sidebar (0,3,x)
-   7. Section: hero (highest — full-bleed overrides, 0,3,x last)
+   3. Grid (media query)
+   4. Component styles (0,2,x) — lowest specificity first within same element type
+   5. Section body styles (0,3,x)
+   6. Section sidebar styles (0,3,x)
+   7. Section related styles (0,3,x)
+   8. Section hero styles (full-bleed, comes last)
    ==================================================== */
 
 /* ── 1. Reading progress bar ── */
@@ -44,38 +44,104 @@ body.russell-article main {
 }
 
 body.russell-article main .section {
-  padding: var(--spacing-l, 24px) var(--spacing-l, 24px);
+  padding: var(--spacing-l, 24px);
 }
 
-/* ── 3. Two-column grid on desktop ── */
+/* ── 3. Grid layout ── */
 @media (width >= 900px) {
   body.russell-article main {
     display: grid;
-    grid-template-columns: 1fr 360px;
-    grid-template-rows: auto auto;
-    column-gap: var(--spacing-xxl, 48px);
+    grid-template-columns: 3fr 7fr;
+    grid-template-rows: auto auto auto;
+    column-gap: var(--spacing-xl, 32px);
   }
 
-  /* Hero spans both columns (row 1) */
+  /* Row 1: hero spans full width */
   body.russell-article main .section.russell-article-hero {
     grid-column: 1 / -1;
     grid-row: 1;
   }
 
-  /* Body = left column (row 2) */
-  body.russell-article main .section.russell-article-body {
+  /* Row 2, col 1 (30%): sidebar */
+  body.russell-article main .section.russell-article-sidebar {
     grid-column: 1;
     grid-row: 2;
   }
 
-  /* Sidebar = right column (row 2) */
-  body.russell-article main .section.russell-article-sidebar {
+  /* Row 2, col 2 (70%): article body */
+  body.russell-article main .section.russell-article-body {
     grid-column: 2;
     grid-row: 2;
   }
+
+  /* Row 3: related articles spans full width */
+  body.russell-article main .section.russell-article-related {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
 }
 
-/* ── 4a. russell-author-bio component (specificity 0,2,x) ── */
+/* ── 4a. russell-reading-time component (0,2,x) ── */
+body.russell-article .russell-reading-time {
+  font-size: var(--body-font-size-xs, clamp(14px, 1.5vw, 16px));
+  color: var(--color-text-muted, #6b7280);
+  margin-bottom: var(--spacing-m, 16px);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+}
+
+body.russell-article .russell-reading-time::before {
+  content: 'Reading:';
+  font-weight: var(--font-weight-bold, 700);
+  margin-right: var(--spacing-xs, 4px);
+}
+
+/* ── 4b. russell-article-toc component (0,2,x) ── */
+body.russell-article .russell-article-toc {
+  background: var(--color-surface, #f8f8f8);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--spacing-l, 24px);
+  margin: var(--spacing-xl, 32px) 0;
+}
+
+body.russell-article .russell-article-toc-title {
+  font-family: var(--heading-font-family, sans-serif);
+  font-weight: var(--font-weight-bold, 700);
+  font-size: var(--body-font-size-s, clamp(16px, 1.8vw, 19px));
+  color: var(--russell-color-navy, #1a3a6b);
+  margin: 0 0 var(--spacing-m, 16px);
+}
+
+body.russell-article .russell-article-toc-list {
+  margin: 0;
+  padding-left: var(--spacing-l, 24px);
+}
+
+/* specificity 0,2,2 (class + class + tag) — must precede higher-specificity li rules */
+body.russell-article .russell-article-toc-list li {
+  margin-bottom: var(--spacing-xs, 4px);
+  font-size: var(--body-font-size-xs, clamp(14px, 1.5vw, 17px));
+  line-height: var(--line-height-normal, 1.6);
+}
+
+body.russell-article .russell-article-toc-list a:any-link {
+  color: var(--russell-color-navy, #1a3a6b);
+  text-decoration: none;
+}
+
+body.russell-article .russell-article-toc-list a:hover {
+  text-decoration: underline;
+}
+
+/* ── 4c. russell-author-bio component (0,2,x) — before key-takeaways due to specificity ── */
+body.russell-article .russell-author-bio {
+  padding-top: var(--spacing-l, 24px);
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+/* specificity 0,2,2 — must precede key-takeaways > div:first-child > div (0,3,3) */
 body.russell-article .russell-author-bio > div {
   display: flex;
   align-items: flex-start;
@@ -98,14 +164,15 @@ body.russell-article .russell-author-bio p {
   margin: 0 0 var(--spacing-xs, 4px);
 }
 
-/* ── 4b. russell-key-takeaways component (specificity 0,2,x) ── */
+/* ── 4d. russell-key-takeaways component (0,2,x) ── */
 body.russell-article .russell-key-takeaways {
   background: var(--russell-color-light-blue, #e8f0f9);
   border-left: 4px solid var(--russell-color-navy, #1a3a6b);
   padding: var(--spacing-l, 24px);
+  margin-bottom: var(--spacing-xl, 32px);
 }
 
-/* The "Key takeaways" label row (first row of block = heading) */
+/* specificity 0,3,3 — comes after author-bio > div (0,2,2) */
 body.russell-article .russell-key-takeaways > div:first-child > div {
   font-family: var(--heading-font-family, sans-serif);
   font-size: var(--body-font-size-s, clamp(16px, 1.8vw, 18px));
@@ -116,13 +183,13 @@ body.russell-article .russell-key-takeaways > div:first-child > div {
   margin-bottom: var(--spacing-m, 16px);
 }
 
-/* specificity 0,2,1 — precedes sidebar ul li (0,3,1+1) */
 body.russell-article .russell-key-takeaways ul {
   list-style: disc;
   padding-left: var(--spacing-l, 24px);
   margin: 0;
 }
 
+/* specificity 0,2,3 — comes after toc-list li (0,2,2) */
 body.russell-article .russell-key-takeaways ul li {
   font-size: var(--body-font-size-xs, clamp(14px, 1.5vw, 16px));
   line-height: var(--line-height-normal, 1.6);
@@ -130,59 +197,27 @@ body.russell-article .russell-key-takeaways ul li {
   margin-bottom: var(--spacing-s, 8px);
 }
 
-/* ── 4c. russell-reading-time component (specificity 0,2,x) ── */
-body.russell-article .russell-reading-time {
-  font-size: var(--body-font-size-xs, clamp(14px, 1.5vw, 16px));
-  color: var(--color-text-muted, #6b7280);
-  margin-bottom: var(--spacing-m, 16px);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs, 4px);
-}
-
-body.russell-article .russell-reading-time::before {
-  content: 'Reading:';
-  font-weight: var(--font-weight-bold, 700);
-  margin-right: var(--spacing-xs, 4px);
-}
-
-/* ── 4d. russell-article-toc component (specificity 0,2,x) ── */
-body.russell-article .russell-article-toc {
-  background: var(--color-surface, #f8f8f8);
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--radius-md, 8px);
-  padding: var(--spacing-l, 24px);
-  margin: var(--spacing-xl, 32px) 0;
-}
-
-body.russell-article .russell-article-toc-title {
+/* ── 4e. russell-related-articles component (0,2,x) ── */
+body.russell-article .russell-related-articles h3 {
   font-family: var(--heading-font-family, sans-serif);
+  font-size: var(--body-font-size-s, clamp(16px, 1.8vw, 20px));
+  color: var(--russell-color-navy, #1a3a6b);
   font-weight: var(--font-weight-bold, 700);
-  font-size: var(--body-font-size-s, clamp(16px, 1.8vw, 19px));
+  margin-bottom: var(--spacing-l, 24px);
+  padding-bottom: var(--spacing-s, 8px);
+  border-bottom: 2px solid var(--russell-color-navy, #1a3a6b);
+}
+
+body.russell-article .russell-related-articles > div:first-child > div {
+  font-family: var(--heading-font-family, sans-serif);
+  font-size: var(--body-font-size-s, clamp(16px, 1.8vw, 20px));
+  font-weight: var(--font-weight-bold, 700);
   color: var(--russell-color-navy, #1a3a6b);
-  margin: 0 0 var(--spacing-m, 16px);
-}
-
-body.russell-article .russell-article-toc-list {
-  margin: 0;
-  padding-left: var(--spacing-l, 24px);
-}
-
-/* specificity 0,2,1 — precedes .section.russell-article-body ul li */
-body.russell-article .russell-article-toc-list li {
-  margin-bottom: var(--spacing-xs, 4px);
-  font-size: var(--body-font-size-xs, clamp(14px, 1.5vw, 17px));
-  line-height: var(--line-height-normal, 1.6);
-}
-
-/* specificity 0,2,2 — precedes .section.russell-article-sidebar ul a */
-body.russell-article .russell-article-toc-list a:any-link {
-  color: var(--russell-color-navy, #1a3a6b);
-  text-decoration: none;
-}
-
-body.russell-article .russell-article-toc-list a:hover {
-  text-decoration: underline;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--spacing-l, 24px);
+  padding-bottom: var(--spacing-s, 8px);
+  border-bottom: 2px solid var(--russell-color-navy, #1a3a6b);
 }
 
 /* ── 5. Article body section (specificity 0,3,x) ── */
@@ -190,7 +225,6 @@ body.russell-article .section.russell-article-body {
   padding-top: var(--spacing-xl, 32px);
 }
 
-/* Eyebrow label (category) above h1 */
 body.russell-article .section.russell-article-body .article-eyebrow {
   font-size: var(--body-font-size-xs, clamp(13px, 1.4vw, 15px));
   font-weight: var(--font-weight-bold, 700);
@@ -200,7 +234,6 @@ body.russell-article .section.russell-article-body .article-eyebrow {
   margin-bottom: var(--spacing-xs, 4px);
 }
 
-/* Byline */
 body.russell-article .section.russell-article-body .article-byline em {
   font-style: normal;
   font-size: var(--body-font-size-xs, clamp(13px, 1.4vw, 15px));
@@ -216,16 +249,16 @@ body.russell-article .section.russell-article-body p {
 
 body.russell-article .section.russell-article-body h1 {
   font-family: var(--heading-font-family, sans-serif);
-  font-size: clamp(32px, 4vw, 52px);
+  font-size: clamp(28px, 3.5vw, 48px);
   font-weight: var(--font-weight-bold, 700);
   color: var(--russell-color-navy, #1a3a6b);
-  line-height: 1.1;
+  line-height: 1.15;
   margin: var(--spacing-s, 8px) 0 var(--spacing-m, 16px);
 }
 
 body.russell-article .section.russell-article-body h2 {
   font-family: var(--heading-font-family, sans-serif);
-  font-size: var(--heading-font-size-s, clamp(18px, 2.2vw, 24px));
+  font-size: var(--heading-font-size-s, clamp(18px, 2.2vw, 22px));
   font-weight: var(--font-weight-bold, 700);
   color: var(--russell-color-navy, #1a3a6b);
   margin-top: var(--spacing-xxl, 48px);
@@ -272,60 +305,56 @@ body.russell-article .section.russell-article-sidebar {
 @media (width >= 900px) {
   body.russell-article .section.russell-article-sidebar {
     padding-top: var(--spacing-xl, 32px);
-    border-left: 1px solid var(--color-border, #e5e7eb);
+    border-right: 1px solid var(--color-border, #e5e7eb);
   }
 }
 
-body.russell-article .section.russell-article-sidebar > *:not(:last-child) {
-  margin-bottom: var(--spacing-xl, 32px);
-  padding-bottom: var(--spacing-xl, 32px);
-  border-bottom: 1px solid var(--color-border, #e5e7eb);
+/* ── 7. Related articles section (specificity 0,3,x) ── */
+body.russell-article .section.russell-article-related {
+  padding: var(--spacing-xxl, 48px) var(--spacing-l, 24px);
+  border-top: 1px solid var(--color-border, #e5e7eb);
 }
 
-/* lower-specificity selector first in the comma list */
-body.russell-article .russell-related-articles h3,
-body.russell-article .section.russell-article-sidebar h3 {
-  font-family: var(--heading-font-family, sans-serif);
-  font-size: var(--body-font-size-xs, clamp(13px, 1.4vw, 15px));
-  color: var(--russell-color-navy, #1a3a6b);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+@media (width >= 900px) {
+  body.russell-article .section.russell-article-related .russell-related-articles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-l, 24px);
+    align-items: start;
+  }
+
+  body.russell-article .section.russell-article-related .russell-related-articles > div:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+body.russell-article .section.russell-article-related .russell-related-articles > div:not(:first-child) {
+  padding: var(--spacing-m, 16px) 0;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+body.russell-article .section.russell-article-related .russell-related-articles > div > div:first-child a:any-link {
+  font-size: var(--body-font-size-s, clamp(15px, 1.6vw, 17px));
   font-weight: var(--font-weight-bold, 700);
-  margin-bottom: var(--spacing-m, 16px);
-}
-
-body.russell-article .section.russell-article-sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-body.russell-article .section.russell-article-sidebar ul li {
-  padding: var(--spacing-s, 8px) 0;
-  border-bottom: 1px solid var(--color-border, #e5e7eb);
-  font-size: var(--body-font-size-xs, clamp(13px, 1.4vw, 15px));
-  line-height: var(--line-height-normal, 1.6);
-}
-
-body.russell-article .section.russell-article-sidebar ul li:last-child {
-  border-bottom: none;
-}
-
-body.russell-article .section.russell-article-sidebar ul a:any-link {
-  color: var(--color-text, #131313);
-  text-decoration: none;
-}
-
-body.russell-article .section.russell-article-sidebar ul a:hover {
   color: var(--russell-color-navy, #1a3a6b);
+  text-decoration: none;
+  line-height: var(--line-height-normal, 1.5);
+  display: block;
+  margin-bottom: var(--spacing-xs, 4px);
+}
+
+body.russell-article .section.russell-article-related .russell-related-articles > div > div:first-child a:hover {
   text-decoration: underline;
 }
 
-/* ── 7. Hero section (full-bleed — highest specificity, comes last) ── */
+body.russell-article .section.russell-article-related .russell-related-articles > div > div:last-child {
+  font-size: var(--body-font-size-xs, clamp(12px, 1.3vw, 14px));
+  color: var(--color-text-muted, #6b7280);
+}
+
+/* ── 8. Hero section — full-bleed, highest specificity, comes last ── */
 body.russell-article .section.russell-article-hero {
   padding: 0;
-
-  /* Full viewport width regardless of max-width on main */
   width: 100vw;
   max-width: 100vw;
   position: relative;
@@ -339,7 +368,7 @@ body.russell-article .section.russell-article-hero picture {
   line-height: 0;
 }
 
-/* specificity 0,3,1 — comes after russell-author-bio img (0,2,1) */
+/* specificity 0,3,1 — after russell-author-bio img (0,2,1) */
 body.russell-article .section.russell-article-hero picture img {
   width: 100%;
   height: auto;
