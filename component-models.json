@@ -358,8 +358,8 @@
       {
         "component": "text",
         "valueType": "string",
-        "name": "category",
-        "label": "Category",
+        "name": "authorDesignation",
+        "label": "Author Designation",
         "value": ""
       }
     ]

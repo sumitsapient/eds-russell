@@ -5,10 +5,14 @@
  *   Row 0: author image
  *   Row 1: author name
  *   Row 2: blog title
- *   Row 3: category
+ *   Row 3: author designation / role
  *
  * Publish date is read from <meta name="publisheddate"> page metadata.
- * Reading time is auto-calculated from blog body text.
+ *
+ * Rendered order:
+ *   1. Title
+ *   2. Published date
+ *   3. Author row: circular image | name (bold) + designation (below)
  *
  * @param {Element} block
  */
@@ -18,63 +22,56 @@ function formatDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
-/** Auto-calculate reading time from the blog-body section. */
-function getReadingTime() {
-  const body = document.querySelector('.section.blog-body');
-  const words = body?.innerText?.split(/\s+/).length || 0;
-  const minutes = Math.max(1, Math.ceil(words / 200));
-  return `${minutes} min read`;
-}
 export default function decorate(block) {
   const rows = [...block.children];
   const card = document.createElement('div');
   card.className = 'blog-card-inner';
-  // ── Author: image (row 0) + name (row 1) ──
-  const imgRow = rows[0];
-  const nameRow = rows[1];
-  const authorEl = document.createElement('div');
-  authorEl.className = 'blog-card-author';
-  const picture = imgRow?.querySelector('picture');
-  if (picture) authorEl.append(picture);
-  if (nameRow) {
-    const nameEl = document.createElement('span');
-    nameEl.className = 'blog-card-author-name';
-    nameEl.textContent = nameRow.textContent.trim();
-    authorEl.append(nameEl);
-  }
-  card.append(authorEl);
-  // ── Title (row 2) ──
+  // ── 1. Title (row 2) ──
   const titleRow = rows[2];
   if (titleRow?.textContent.trim()) {
-    const titleEl = document.createElement('p');
+    const titleEl = document.createElement('h2');
     titleEl.className = 'blog-card-title';
     titleEl.textContent = titleRow.textContent.trim();
     card.append(titleEl);
   }
-  // ── Meta: category (row 3) + date from page meta ──
-  const catRow = rows[3];
+  // ── 2. Published date (from page meta) ──
   const publishedDate = document.querySelector('meta[name="publisheddate"]')?.content;
-  const metaEl = document.createElement('div');
-  metaEl.className = 'blog-card-meta';
-  if (catRow?.textContent.trim()) {
-    const catEl = document.createElement('span');
-    catEl.className = 'blog-card-category';
-    catEl.textContent = catRow.textContent.trim();
-    metaEl.append(catEl);
-  }
   if (publishedDate) {
-    const dateEl = document.createElement('span');
+    const dateEl = document.createElement('p');
     dateEl.className = 'blog-card-date';
     dateEl.textContent = formatDate(publishedDate);
-    metaEl.append(dateEl);
+    card.append(dateEl);
   }
-  card.append(metaEl);
-  // ── Reading time (auto-calculated) ──
-  window.addEventListener('load', () => {
-    const rtEl = document.createElement('div');
-    rtEl.className = 'blog-card-readtime';
-    rtEl.textContent = getReadingTime();
-    card.append(rtEl);
-  });
+  // ── 3. Author: image (row 0) | name (row 1) + designation (row 3) ──
+  const imgRow = rows[0];
+  const nameRow = rows[1];
+  const desigRow = rows[3];
+  const authorEl = document.createElement('div');
+  authorEl.className = 'blog-card-author';
+  // Circular author photo
+  const picture = imgRow?.querySelector('picture');
+  if (picture) {
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'blog-card-author-img-wrap';
+    imgWrap.append(picture);
+    authorEl.append(imgWrap);
+  }
+  // Name + designation stacked
+  const authorInfo = document.createElement('div');
+  authorInfo.className = 'blog-card-author-info';
+  if (nameRow?.textContent.trim()) {
+    const nameEl = document.createElement('strong');
+    nameEl.className = 'blog-card-author-name';
+    nameEl.textContent = nameRow.textContent.trim();
+    authorInfo.append(nameEl);
+  }
+  if (desigRow?.textContent.trim()) {
+    const desigEl = document.createElement('span');
+    desigEl.className = 'blog-card-author-designation';
+    desigEl.textContent = desigRow.textContent.trim();
+    authorInfo.append(desigEl);
+  }
+  authorEl.append(authorInfo);
+  card.append(authorEl);
   block.replaceChildren(card);
 }
