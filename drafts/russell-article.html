@@ -29,11 +29,29 @@
   <main>
 
     <!-- ============================================================
-         SECTION 1: ARTICLE HEADER — full width across both columns
-         Class pre-assigned: decorateSections() adds 'section' automatically.
+         SECTION 1: HERO IMAGE — full-bleed, stands alone above 2-col
+         Matches Russell layout: image is its own row, no title alongside
          ============================================================ -->
-    <div class="russell-article-header">
-      <!-- Breadcrumb (existing block — no changes needed) -->
+    <div class="russell-article-hero">
+      <picture>
+        <img
+          src="https://placehold.co/1920x600/1a3a6b/ffffff?text=Market+Week+in+Review+%7C+July+7%2C+2026"
+          alt="Abstract financial market chart representing U.S. jobs data and trade negotiation developments"
+          width="1920"
+          height="600"
+          loading="eager"
+        >
+      </picture>
+    </div>
+    <hr>
+
+    <!-- ============================================================
+         SECTION 2: ARTICLE BODY — left column on desktop
+         Title + byline live here (NOT in hero) — matches Russell layout
+         ============================================================ -->
+    <div class="russell-article-body">
+
+      <!-- Breadcrumb block -->
       <div class="breadcrumb">
         <div>
           <div>
@@ -45,34 +63,16 @@
         </div>
       </div>
 
-      <!-- Category tag rendered as metadata above the title -->
-      <p><strong>Russell Research · Market Week in Review</strong></p>
+      <!-- Category / series label above the title -->
+      <p class="article-eyebrow"><strong>Russell Research · Market Week in Review</strong></p>
 
+      <!-- Article headline — large, bold, dark navy (matches Russell h1 style) -->
       <h1>Jobs Slow, Trade Talks Enter New Phase — Market Week in Review</h1>
 
-      <p><em>By Andrew Pease, Chief Investment Strategist &nbsp;|&nbsp; July 7, 2026</em></p>
+      <!-- Byline -->
+      <p class="article-byline"><em>By Andrew Pease, Chief Investment Strategist &nbsp;|&nbsp; July 7, 2026</em></p>
 
-      <!-- Hero image — eager-loaded (LCP candidate) -->
-      <picture>
-        <img
-          src="https://placehold.co/1200x500/1a3a6b/ffffff?text=Market+Week+in+Review+%7C+July+7%2C+2026"
-          alt="Abstract financial market chart representing U.S. jobs data and trade negotiation developments — Russell Investments"
-          width="1200"
-          height="500"
-          loading="eager"
-        >
-      </picture>
-
-      <!-- Section metadata: gives this section the 'russell-article-header' class -->
-      <!-- Removed: class pre-assigned directly on the <div> above -->
-    </div>
-    <hr>
-
-    <!-- ============================================================
-         SECTION 2: ARTICLE BODY — left column on desktop
-         ============================================================ -->
-    <div class="russell-article-body">
-      <!-- Introduction -->
+      <!-- Article body -->
       <p>
         U.S. labor market momentum continued to ease in June, as non-farm payrolls
         came in below consensus expectations for the second consecutive month. At the
@@ -100,9 +100,7 @@
         with the dampening effect of elevated tariff uncertainty on business investment.
         Services hiring remained the primary driver of headline growth, though the pace
         in leisure and hospitality, health care, and professional services all moderated
-        from their first-quarter averages. The household survey showed a modest uptick
-        in part-time employment for economic reasons, a leading indicator the Fed will
-        be watching closely.
+        from their first-quarter averages.
       </p>
 
       <h2>Trade Talks Enter a New Phase</h2>
@@ -122,9 +120,7 @@
         escalation that has weighed on capital expenditure decisions across global
         manufacturers. Markets have largely priced in a "contained uncertainty" scenario —
         not a full rollback of existing tariffs, but an implicit truce that prevents
-        conditions from worsening. Any tangible progress toward permanent tariff relief
-        would likely be an upside catalyst, particularly for export-oriented equities
-        in Europe and emerging markets.
+        conditions from worsening.
       </p>
 
       <h2>Market Implications: What We Are Watching</h2>
@@ -133,116 +129,84 @@
         From a multi-asset perspective, the combination of cooling labor data and thawing
         trade relations creates a nuanced backdrop. U.S. equity markets remain supported
         by resilient corporate earnings and a Fed that is increasingly positioned to ease
-        later this year — our base case is one 25 basis-point cut in Q4 2026. However,
-        valuations in large-cap U.S. growth remain elevated relative to history,
-        leaving the market with limited margin of safety should the economic data
-        deteriorate faster than expected.
+        later this year — our base case is one 25 basis-point cut in Q4 2026.
       </p>
 
       <p>
         In fixed income, the 2-year/10-year spread has steepened modestly following
         the jobs report, reflecting market expectations that the Fed's next move is a
-        cut rather than a hold. Investment-grade credit spreads remain tight. We continue
-        to see value in short-to-intermediate duration investment-grade bonds as a
-        ballast against equity volatility, while maintaining our underweight to long-duration
-        Treasuries given the structural deficit backdrop.
+        cut rather than a hold. We continue to see value in short-to-intermediate
+        duration investment-grade bonds as a ballast against equity volatility.
       </p>
 
       <blockquote>
         "The labor market is telling us the economy is slowing to a more sustainable pace —
         not falling off a cliff. Trade talks moving from theater to substance removes one
-        source of uncertainty that has been holding back business investment. Combined,
-        these are manageable signals for a diversified portfolio."
+        source of uncertainty that has been holding back business investment."
         <cite>— Andrew Pease, Chief Investment Strategist</cite>
       </blockquote>
 
-      <h2>Key Takeaways for Investors</h2>
-
-      <ul>
-        <li><strong>Labor market:</strong> Gradual cooling, not deterioration. Watch revisions and part-time employment trends as leading indicators.</li>
-        <li><strong>Trade:</strong> Dialogue has become more substantive. A formal tariff rollback remains a potential upside surprise for equities.</li>
-        <li><strong>U.S. equities:</strong> Large-cap growth valuations are full. International diversification offers relative value at current levels.</li>
-        <li><strong>Fixed income:</strong> Short-to-intermediate investment-grade remains our preferred defensive allocation.</li>
-        <li><strong>Federal Reserve:</strong> Base case: one 25 bps cut in Q4 2026. Labor market softening and core PCE trajectory will determine the pace.</li>
-      </ul>
-
-      <!-- Section metadata: gives this section the 'russell-article-body' class -->
-      <!-- Removed: class pre-assigned directly on the <div> above -->
     </div>
     <hr>
 
     <!-- ============================================================
          SECTION 3: SIDEBAR — right column on desktop
-         NOTE: russell-author-bio and russell-related-articles are
-         new blocks — stubs for now, will be decorated in steps B5/B6.
+         Key Takeaways is FIRST (matches Russell layout — right col
+         opens with the takeaways box at the top, beside the title)
          ============================================================ -->
     <div class="russell-article-sidebar">
 
-      <!-- Related Insights — russell-related-articles block (Step B5) -->
+      <!-- Key Takeaways — displayed at top of sidebar, beside the article title -->
+      <div class="russell-key-takeaways">
+        <div>
+          <div>Key takeaways</div>
+        </div>
+        <div>
+          <div>
+            <ul>
+              <li>Labor market cooling gradually — not deteriorating. Watch revisions and part-time trends.</li>
+              <li>Trade dialogue becoming substantive. A tariff rollback is a potential upside surprise.</li>
+              <li>U.S. large-cap growth valuations are full. International diversification offers relative value.</li>
+              <li>Short-to-intermediate investment-grade bonds remain our preferred defensive allocation.</li>
+              <li>Fed base case: one 25 bps cut in Q4 2026, driven by labor and inflation trends.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Related Insights -->
       <div class="russell-related-articles">
         <div>
           <div>Related Insights</div>
         </div>
         <div>
-          <div>
-            <a href="/insights/russell-research/2026/06/fed-holds-rates-summer-pause-mwir">
-              Fed Holds Rates: The Summer Pause — Market Week in Review
-            </a>
-          </div>
+          <div><a href="/insights/russell-research/2026/06/fed-holds-rates-summer-pause-mwir">Fed Holds Rates: The Summer Pause — Market Week in Review</a></div>
           <div>June 30, 2026</div>
         </div>
         <div>
-          <div>
-            <a href="/insights/russell-research/2026/06/inflation-surprise-tariff-impact-mwir">
-              Inflation Surprise and Tariff Impact — Market Week in Review
-            </a>
-          </div>
+          <div><a href="/insights/russell-research/2026/06/inflation-surprise-tariff-impact-mwir">Inflation Surprise and Tariff Impact — Market Week in Review</a></div>
           <div>June 23, 2026</div>
         </div>
         <div>
-          <div>
-            <a href="/insights/russell-research/2026/07/mid-year-outlook-2026">
-              Mid-Year Outlook 2026: Navigating a Slowing but Resilient Cycle
-            </a>
-          </div>
+          <div><a href="/insights/russell-research/2026/07/mid-year-outlook-2026">Mid-Year Outlook 2026: Navigating a Slowing but Resilient Cycle</a></div>
           <div>July 1, 2026</div>
         </div>
       </div>
 
-      <!-- Author Bio — russell-author-bio block (Step B6) -->
+      <!-- Author Bio -->
       <div class="russell-author-bio">
         <div>
           <div>
             <picture>
-              <img
-                src="https://placehold.co/80x80/1a3a6b/ffffff?text=AP"
-                alt="Andrew Pease"
-                width="80"
-                height="80"
-                loading="lazy"
-              >
+              <img src="https://placehold.co/80x80/1a3a6b/ffffff?text=AP" alt="Andrew Pease" width="80" height="80" loading="lazy">
             </picture>
           </div>
           <div>
             <p><strong>Andrew Pease</strong></p>
-            <p>Chief Investment Strategist, Russell Investments. Andrew leads the firm's global investment strategy team and is the primary author of the Market Week in Review series.</p>
+            <p>Chief Investment Strategist, Russell Investments.</p>
           </div>
         </div>
       </div>
-
-      <!-- Subscribe CTA — uses existing cta-banner block unchanged -->
-      <div class="cta-banner">
-        <div>
-          <div>
-            <h3>Never miss an insight</h3>
-            <p>Subscribe to receive the Market Week in Review and other Russell research directly to your inbox.</p>
-            <p><strong><a href="/subscribe">Subscribe to Insights</a></strong></p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section metadata: gives this section the 'russell-article-sidebar' class -->
-      <!-- Removed: class pre-assigned directly on the <div> above -->
 
     </div>
 
@@ -250,4 +214,3 @@
   <footer></footer>
 </body>
 </html>
-
