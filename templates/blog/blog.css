@@ -324,11 +324,14 @@ body.blog .section.blog-hero {
   contain-intrinsic-size: none;
 }
 
-/* Reset the global main > .section > div constraint so the image fills 100vw */
+/* Reset the global main > .section > div constraint so the image fills 100vw.
+   Covers both default-content-wrapper (raw picture) and named block
+   wrappers such as .image-wrapper (authored image block in UE). */
 body.blog .section.blog-hero > div {
   max-width: none;
   margin: 0;
   padding: 0;
+  width: 100%;
 }
 
 body.blog .section.blog-hero picture {

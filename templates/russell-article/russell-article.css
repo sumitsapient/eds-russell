@@ -388,11 +388,14 @@ body.russell-article .section.russell-article-hero {
 }
 
 /* Reset global main > .section > div so the image fills 100vw.
-   Targets the default-content-wrapper div created by decorateSections. */
-body.russell-article .section.russell-article-hero .default-content-wrapper {
+   Covers both default-content-wrapper (raw picture in draft)
+   and .image-wrapper (authored image block in Universal Editor). */
+body.russell-article .section.russell-article-hero .default-content-wrapper,
+body.russell-article .section.russell-article-hero .image-wrapper {
   max-width: none;
   margin: 0;
   padding: 0;
+  width: 100%;
 }
 
 body.russell-article .section.russell-article-hero picture {
