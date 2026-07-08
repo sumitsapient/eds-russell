@@ -87,7 +87,9 @@
         "hello-world",
         "hello-world-with-child",
         "language-switcher",
-        "insights-listing"
+        "insights-listing",
+        "blog-card",
+        "related-blogs"
       ]
     }
   ]
