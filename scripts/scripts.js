@@ -553,15 +553,13 @@ async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
 
-  // Load template-specific CSS and JS.
-  // decorateTemplateAndTheme() adds the body class but does NOT load the files.
-  // Convention: templates/{name}/{name}.css + templates/{name}/{name}.js
+  // Load template-specific CSS early (before paint) so there is no flash.
+  // JS is loaded AFTER decorateMain so the template's default export can
+  // safely query and modify already-decorated sections.
   const template = getMetadata('template');
   if (template) {
     const base = window.hlx.codeBasePath;
     loadCSS(`${base}/templates/${template}/${template}.css`);
-    // JS is optional — ignore if template has no JS file
-    import(`../templates/${template}/${template}.js`).catch(() => {});
   }
 
   decorateSEO();
@@ -619,6 +617,18 @@ async function loadEager(doc) {
   const main = doc.querySelector('main');
   if (main) {
     decorateMain(main);
+
+    // Load template JS after decorateMain so its default export can safely
+    // query decorated sections (.section elements already exist).
+    if (template) {
+      try {
+        const mod = await import(`../templates/${template}/${template}.js`);
+        if (typeof mod.default === 'function') mod.default(main);
+      } catch (e) {
+        // Template JS is optional — silently ignore missing file
+      }
+    }
+
     document.body.classList.add('appear');
     await loadSection(main.querySelector('.section'), waitForFirstImage);
   }

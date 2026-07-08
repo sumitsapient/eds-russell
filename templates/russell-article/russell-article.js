@@ -3,17 +3,40 @@
  * Loaded automatically when a page has:
  *   <meta name="template" content="russell-article">
  *
- * Responsibilities:
- * 1. Reading progress bar (scrolls left to right as user reads)
- * 2. Estimated reading time badge inserted below h1
- * 3. Auto-generated Table of Contents (if article has 3+ h2 headings)
+ * The default export is called by scripts.js AFTER decorateMain(),
+ * so sections are already decorated when this runs.
  *
- * All new functionality is prefixed with russell- to avoid
- * conflicting with the base article template.
+ * Responsibilities:
+ * 1. Assign section CSS classes by position (hero/sidebar/body/related)
+ * 2. Reading progress bar
+ * 3. Estimated reading time badge
+ * 4. Auto-generated Table of Contents (3+ h2 headings)
  */
 /**
+ * Assigns layout classes to sections based on their position in main.
+ * Authors only need to put content in the right order — no section-metadata needed.
+ *
+ *   Section 1 → russell-article-hero     (full-bleed image)
+ *   Section 2 → russell-article-sidebar  (30% left: Key Takeaways + Author Bio)
+ *   Section 3 → russell-article-body     (70% right: title + article text)
+ *   Section 4 → russell-article-related  (full-width: Related Articles)
+ *
+ * @param {Element} main The <main> element
+ */
+function decorateRussellArticleSections(main) {
+  const sectionClasses = [
+    'russell-article-hero',
+    'russell-article-sidebar',
+    'russell-article-body',
+    'russell-article-related',
+  ];
+  const sections = main.querySelectorAll(':scope > .section');
+  sections.forEach((section, i) => {
+    if (sectionClasses[i]) section.classList.add(sectionClasses[i]);
+  });
+}
+/**
  * Calculates estimated reading time from the article body section.
- * Average reading speed: 200 words per minute.
  * @returns {string} e.g. "5 min read"
  */
 function getRussellReadingTime() {
@@ -24,7 +47,6 @@ function getRussellReadingTime() {
 }
 /**
  * Adds a thin reading progress bar fixed at the top of the page.
- * Fills left-to-right as the user scrolls through the article body.
  */
 function addRussellReadingProgress() {
   const bar = document.createElement('div');
@@ -49,9 +71,8 @@ function addRussellReadingTime() {
   h1.after(badge);
 }
 /**
- * Auto-generates an inline Table of Contents from h2 headings
- * in the russell-article-body section.
- * Skips articles with fewer than 3 h2s (not worth a ToC).
+ * Auto-generates an inline Table of Contents from h2 headings.
+ * Skips articles with fewer than 3 h2s.
  */
 function addRussellTableOfContents() {
   const bodySection = document.querySelector('.section.russell-article-body');
@@ -82,8 +103,15 @@ function addRussellTableOfContents() {
   const firstH2 = bodySection.querySelector('h2');
   if (firstH2) firstH2.before(nav);
 }
-addRussellReadingProgress();
-window.addEventListener('load', () => {
-  addRussellReadingTime();
-  addRussellTableOfContents();
-});
+/**
+ * Template entry point — called by scripts.js after decorateMain().
+ * @param {Element} main The decorated <main> element
+ */
+export default function decorate(main) {
+  decorateRussellArticleSections(main);
+  addRussellReadingProgress();
+  window.addEventListener('load', () => {
+    addRussellReadingTime();
+    addRussellTableOfContents();
+  });
+}
