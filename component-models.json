@@ -43,6 +43,10 @@
           {
             "name": "Russell Article (EDS Demo)",
             "value": "russell-article"
+          },
+          {
+            "name": "Blog Post",
+            "value": "blog"
           }
         ]
       },
@@ -324,6 +328,39 @@
         "name": "description",
         "label": "Answer / Content",
         "valueType": "string"
+      }
+    ]
+  },
+  {
+    "id": "blog-card",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "authorImage",
+        "label": "Author Image",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "authorName",
+        "label": "Author Name",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "title",
+        "label": "Blog Title",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "category",
+        "label": "Category",
+        "value": ""
       }
     ]
   },
@@ -697,6 +734,39 @@
             "value": "fullscreen"
           }
         ]
+      }
+    ]
+  },
+  {
+    "id": "related-blog",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "image",
+        "label": "Thumbnail Image",
+        "multi": false
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "title",
+        "label": "Title (add link here)",
+        "value": ""
+      },
+      {
+        "component": "date-time",
+        "valueType": "string",
+        "name": "publishDate",
+        "label": "Publish Date",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "category",
+        "label": "Category",
+        "value": ""
       }
     ]
   },

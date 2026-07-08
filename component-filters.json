@@ -66,5 +66,11 @@
     "components": [
       "language-switcher-item"
     ]
+  },
+  {
+    "id": "related-blogs",
+    "components": [
+      "related-blog"
+    ]
   }
 ]

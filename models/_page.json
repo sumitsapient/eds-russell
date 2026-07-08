@@ -32,7 +32,8 @@
             { "name": "Default", "value": "" },
             { "name": "Article / Blog Post", "value": "article" },
             { "name": "Landing Page (no header/footer)", "value": "landing" },
-            { "name": "Russell Article (EDS Demo)", "value": "russell-article" }
+            { "name": "Russell Article (EDS Demo)", "value": "russell-article" },
+            { "name": "Blog Post", "value": "blog" }
           ]
         },
         {
