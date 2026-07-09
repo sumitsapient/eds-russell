@@ -21,6 +21,30 @@
    6. Hero section (full-bleed, last)
    ==================================================== */
 
+/* ── Reading Progress Bar ──
+   Fixed below the sticky header, spans full viewport width.
+   The fill animates from left to right as the user scrolls
+   through the article body section.
+   ──────────────────────────────────────────────────────── */
+body.blog .blog-reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: transparent;
+  z-index: 200; /* above sticky header (z-index: 100) */
+  pointer-events: none;
+}
+
+body.blog .blog-reading-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #e87722; /* Russell orange accent */
+  transition: width 0.1s linear;
+  will-change: width;
+}
+
 /* ── 1. Base layout ── */
 body.blog main {
   max-width: 1200px;
