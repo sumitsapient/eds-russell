@@ -89,6 +89,17 @@
           "name": "hreflang",
           "label": "Language Alternates (hreflang)",
           "description": "Comma-separated lang:url pairs e.g. en:https://site.com/home, fr:https://site.com/fr/home, x-default:https://site.com/home"
+        },
+        {
+          "component": "select",
+          "valueType": "string",
+          "name": "breadcrumb",
+          "label": "Breadcrumb",
+          "description": "Show or hide the auto-generated breadcrumb on this page. Default is on for pages 2+ levels deep.",
+          "options": [
+            { "name": "Default (auto)", "value": "" },
+            { "name": "Hide breadcrumb", "value": "false" }
+          ]
         }
       ]
     }
