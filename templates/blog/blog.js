@@ -24,10 +24,10 @@ function decorateBlogSections(main) {
 }
 
 /**
- * Adds a thin reading progress bar fixed below the header.
- * Progress is calculated relative to the article body section so the bar
- * fills from 0 % (top of article) to 100 % (bottom of article),
- * ignoring the hero, sidebar, and related-blogs sections.
+ * Adds a thin reading progress bar fixed at the top of the viewport.
+ * Progress tracks how far the user has scrolled through the article body:
+ *   0%   = viewport top is at the top of .blog-body section
+ *   100% = viewport bottom has reached the bottom of .blog-body section
  */
 function addReadingProgressBar() {
   const bar = document.createElement('div');
@@ -44,26 +44,41 @@ function addReadingProgressBar() {
   document.body.prepend(bar);
 
   const updateProgress = () => {
-    // Use the article body section if available, otherwise fall back to <main>
+    // Use document-relative offsetTop (not getBoundingClientRect) so the
+    // calculation is independent of current scroll position.
     const articleBody = document.querySelector('.section.blog-body')
       || document.querySelector('main');
     if (!articleBody) return;
 
-    const { top, height } = articleBody.getBoundingClientRect();
-    const windowHeight = window.innerHeight;
+    const articleTop = articleBody.offsetTop;
+    const articleHeight = articleBody.offsetHeight;
+    const { scrollY, innerHeight: viewportHeight } = window;
 
-    // How far the reader has scrolled through the article
-    // 0 % = top of article at bottom of viewport
-    // 100 % = bottom of article at bottom of viewport
-    const scrolled = (windowHeight - top) / (height + windowHeight);
-    const pct = Math.min(100, Math.max(0, scrolled * 100));
+    // start = scroll position where reading begins (viewport top at article top)
+    // end   = scroll position where reading ends   (viewport bottom at article bottom)
+    const start = articleTop;
+    const end = articleTop + articleHeight - viewportHeight;
+
+    let pct;
+    if (end <= start) {
+      // Article is shorter than the viewport — show 0 until article is visible
+      pct = scrollY >= start ? 100 : 0;
+    } else {
+      pct = Math.min(100, Math.max(0, ((scrollY - start) / (end - start)) * 100));
+    }
 
     fill.style.width = `${pct}%`;
     bar.setAttribute('aria-valuenow', Math.round(pct));
   };
 
   window.addEventListener('scroll', updateProgress, { passive: true });
-  updateProgress(); // set initial value
+
+  // Wait for full layout before setting the initial value so offsetTop is stable
+  if (document.readyState === 'complete') {
+    updateProgress();
+  } else {
+    window.addEventListener('load', updateProgress, { once: true });
+  }
 }
 
 export default function decorate(main) {
