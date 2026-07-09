@@ -340,13 +340,22 @@ function buildBreadcrumb(main) {
   if (pathSegments.length < 2) return;
   if (skipPaths.includes(pathSegments[0])) return;
 
+  // Skip templates that manage their own full-page layout (hero-first designs)
+  const skipTemplates = ['blog', 'russell-article', 'landing'];
+  const template = getMetadata('template');
+  if (skipTemplates.includes(template)) return;
+
+  // Allow any page to opt out via: <meta name="breadcrumb" content="false">
+  const breadcrumbMeta = getMetadata('breadcrumb');
+  if (breadcrumbMeta === 'false' || breadcrumbMeta === 'off') return;
+
   // Don't add if a breadcrumb block already exists (authored manually)
   if (main.querySelector('.breadcrumb')) return;
 
-  // Build an empty breadcrumb block Ã¢â‚¬â€ decorate() auto-generates from URL
+  // Build an empty breadcrumb block — decorate() auto-generates from URL
   const breadcrumbBlock = buildBlock('breadcrumb', '');
 
-  // Insert at the very start of main Ã¢â‚¬â€ decorateBlocks() will load it naturally
+  // Insert at the very start of main — decorateBlocks() will load it naturally
   // Note: at this point decorateSections hasn't run yet, so use first child div
   const firstDiv = main.querySelector(':scope > div');
   if (firstDiv) {
