@@ -201,6 +201,8 @@ function buildNavSections(section) {
   navSections.className = 'nav-sections';
   if (!section) return navSections;
 
+  /* The <ul> may be direct child of .default-content-wrapper,
+     or nested inside a text block wrapper (<div class="text block">) */
   const sourceUL = section.querySelector('ul');
   if (!sourceUL) return navSections;
 
@@ -335,8 +337,23 @@ export default async function decorate(block) {
 
   const sections = fragment ? [...fragment.children] : [];
 
+  /*
+   * Locate sections by CONTENT rather than fixed index so the header
+   * keeps working even if the author adds/removes a section on /nav.
+   *
+   * Detection rules:
+   *   utility  – first section that has no <img> and no <ul>
+   *   brand    – first section containing an <img>
+   *   nav      – first section containing a <ul>
+   *   tools    – falls through to whatever is left (last section)
+   */
+  const brandSection = sections.find((s) => s.querySelector('img'));
+  const navLinkSection = sections.find((s) => s.querySelector('ul'));
+  const utilitySection = sections.find((s) => s !== brandSection && s !== navLinkSection);
+  const toolsSection = sections[sections.length - 1];
+
   /* ── Utility bar (sits above the sticky nav bar) ── */
-  const utilityBar = buildUtilityBar(sections[0]);
+  const utilityBar = buildUtilityBar(utilitySection);
 
   /* ── Main <nav> element ── */
   const nav = document.createElement('nav');
@@ -344,8 +361,8 @@ export default async function decorate(block) {
   nav.setAttribute('aria-label', 'Main navigation');
   nav.setAttribute('aria-expanded', 'false');
 
-  const navBrand = buildBrand(sections[1]);
-  const navSections = buildNavSections(sections[2]);
+  const navBrand = buildBrand(brandSection);
+  const navSections = buildNavSections(navLinkSection);
   const navTools = buildNavTools();
 
   /* ── Hamburger (mobile only) ── */
