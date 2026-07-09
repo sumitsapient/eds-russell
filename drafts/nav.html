@@ -1,36 +1,195 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <title>Navigation</title>
 </head>
 <body>
   <header></header>
   <main>
+    <!--
+      NAV PAGE AUTHORING GUIDE
+      ========================
+      Section 1 (Utility Bar): Globe + country/audience selector links
+      Section 2 (Brand):       Logo image wrapped in a link to homepage
+      Section 3 (Nav):         3-level nested list
+                               L1 = main nav (Investments, Education …)
+                               L2 = sub-category sidebar items in mega-menu
+                               L3 = leaf links shown on L2 hover/focus
+                               Optionally, last L2 <li> with a <picture> becomes the promo panel.
+      Section 4 (Tools):       Search link (rendered as icon button)
+    -->
+
+    <!-- SECTION 1 — Utility Bar -->
     <div>
-      <p><a href="/">Enterprise Site</a></p>
+      <p>🌐 <a href="/country-selector">United States</a> &nbsp;|&nbsp; <a href="/audience-selector">Individual Investor</a></p>
     </div>
     <hr>
+
+    <!-- SECTION 2 — Brand / Logo -->
+    <div>
+      <p><a href="/"><img src="https://www.russellinvestments.com/-/media/images/global/logo.svg" alt="Russell Investments" width="160" height="48" loading="eager"></a></p>
+    </div>
+    <hr>
+
+    <!-- SECTION 3 — Navigation (3-level nested lists) -->
     <div>
       <ul>
-        <li>Products
+
+        <!-- L1: Investments -->
+        <li><a href="/investments">Investments</a>
           <ul>
-            <li><a href="/products/platform">Platform</a></li>
-            <li><a href="/products/analytics">Analytics</a></li>
-            <li><a href="/products/commerce">Commerce</a></li>
+            <li><a href="/investments/all-solutions">All Solutions</a>
+              <ul>
+                <li><a href="/investments/all-solutions/active-passive">Active-Passive</a></li>
+                <li><a href="/investments/all-solutions/tax-managed">Tax-Managed</a></li>
+                <li><a href="/investments/all-solutions/tax-managed-california">Tax-Managed California</a></li>
+                <li><a href="/investments/all-solutions/tax-managed-new-york">Tax-Managed New York</a></li>
+                <li><a href="/investments/all-solutions/core">Core</a></li>
+              </ul>
+            </li>
+            <li><a href="/investments/models">Models</a>
+              <ul>
+                <li><a href="/investments/models/active-passive">Active-Passive</a></li>
+                <li><a href="/investments/models/tax-managed">Tax-Managed</a></li>
+                <li><a href="/investments/models/tax-managed-california">Tax-Managed California</a></li>
+                <li><a href="/investments/models/tax-managed-new-york">Tax-Managed New York</a></li>
+              </ul>
+            </li>
+            <li><a href="/investments/products">Products</a>
+              <ul>
+                <li><a href="/investments/products/active-equity">Active Equity</a></li>
+                <li><a href="/investments/products/fixed-income">Fixed Income</a></li>
+                <li><a href="/investments/products/multi-asset">Multi-Asset</a></li>
+                <li><a href="/investments/products/alternatives">Alternatives</a></li>
+              </ul>
+            </li>
+            <li><a href="/investments/performance">Performance, Pricing &amp; Yields</a>
+              <ul>
+                <li><a href="/investments/performance/fund-prices">Fund Prices</a></li>
+                <li><a href="/investments/performance/performance-charts">Performance Charts</a></li>
+                <li><a href="/investments/performance/yields">Yields</a></li>
+              </ul>
+            </li>
+            <!-- Promo panel item: li containing a picture element → rendered as 3rd column -->
+            <li>
+              <picture>
+                <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=640&q=70" alt="Russell Investments team collaborating" width="640" height="427">
+              </picture>
+              <p>Our innovations are the product of our people</p>
+              <p><a href="/about-us">Learn about us</a></p>
+            </li>
           </ul>
         </li>
-        <li>Solutions
+
+        <!-- L1: Education -->
+        <li><a href="/education">Education</a>
           <ul>
-            <li><a href="/solutions/enterprise">Enterprise</a></li>
-            <li><a href="/solutions/smb">Small Business</a></li>
+            <li><a href="/education/investment-basics">Investment Basics</a>
+              <ul>
+                <li><a href="/education/investment-basics/what-is-investing">What is Investing?</a></li>
+                <li><a href="/education/investment-basics/risk-return">Risk &amp; Return</a></li>
+                <li><a href="/education/investment-basics/diversification">Diversification</a></li>
+                <li><a href="/education/investment-basics/asset-classes">Asset Classes</a></li>
+              </ul>
+            </li>
+            <li><a href="/education/retirement-planning">Retirement Planning</a>
+              <ul>
+                <li><a href="/education/retirement-planning/ira">IRA</a></li>
+                <li><a href="/education/retirement-planning/401k">401(k)</a></li>
+                <li><a href="/education/retirement-planning/roth">Roth Accounts</a></li>
+                <li><a href="/education/retirement-planning/annuities">Annuities</a></li>
+              </ul>
+            </li>
+            <li><a href="/education/tax-smart">Tax-Smart Investing</a>
+              <ul>
+                <li><a href="/education/tax-smart/tax-loss-harvesting">Tax-Loss Harvesting</a></li>
+                <li><a href="/education/tax-smart/asset-location">Asset Location</a></li>
+                <li><a href="/education/tax-smart/capital-gains">Capital Gains</a></li>
+              </ul>
+            </li>
+            <li><a href="/education/glossary">Glossary</a>
+              <ul>
+                <li><a href="/education/glossary/a-f">A–F</a></li>
+                <li><a href="/education/glossary/g-m">G–M</a></li>
+                <li><a href="/education/glossary/n-z">N–Z</a></li>
+              </ul>
+            </li>
           </ul>
         </li>
-        <li><a href="/resources">Resources</a></li>
-        <li><a href="/pricing">Pricing</a></li>
+
+        <!-- L1: Insights -->
+        <li><a href="/insights">Insights</a>
+          <ul>
+            <li><a href="/insights/market-outlook">Market Outlook</a>
+              <ul>
+                <li><a href="/insights/market-outlook/quarterly">Quarterly Outlook</a></li>
+                <li><a href="/insights/market-outlook/annual">Annual Outlook</a></li>
+                <li><a href="/insights/market-outlook/economic">Economic Commentary</a></li>
+              </ul>
+            </li>
+            <li><a href="/insights/research">Research &amp; Commentary</a>
+              <ul>
+                <li><a href="/insights/research/white-papers">White Papers</a></li>
+                <li><a href="/insights/research/blog">Blog</a></li>
+                <li><a href="/insights/research/case-studies">Case Studies</a></li>
+              </ul>
+            </li>
+            <li><a href="/insights/podcasts">Podcasts</a>
+              <ul>
+                <li><a href="/insights/podcasts/investing-insights">Investing Insights</a></li>
+                <li><a href="/insights/podcasts/retirement-ready">Retirement Ready</a></li>
+              </ul>
+            </li>
+            <li><a href="/insights/webinars">Webinars</a>
+              <ul>
+                <li><a href="/insights/webinars/upcoming">Upcoming</a></li>
+                <li><a href="/insights/webinars/on-demand">On Demand</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+
+        <!-- L1: About Us -->
+        <li><a href="/about-us">About Us</a>
+          <ul>
+            <li><a href="/about-us/our-story">Our Story</a>
+              <ul>
+                <li><a href="/about-us/our-story/history">History</a></li>
+                <li><a href="/about-us/our-story/leadership">Leadership Team</a></li>
+                <li><a href="/about-us/our-story/values">Our Values</a></li>
+              </ul>
+            </li>
+            <li><a href="/about-us/careers">Careers</a>
+              <ul>
+                <li><a href="/about-us/careers/open-positions">Open Positions</a></li>
+                <li><a href="/about-us/careers/culture">Our Culture</a></li>
+                <li><a href="/about-us/careers/benefits">Benefits</a></li>
+              </ul>
+            </li>
+            <li><a href="/about-us/newsroom">Newsroom</a>
+              <ul>
+                <li><a href="/about-us/newsroom/press-releases">Press Releases</a></li>
+                <li><a href="/about-us/newsroom/awards">Awards</a></li>
+                <li><a href="/about-us/newsroom/media-contacts">Media Contacts</a></li>
+              </ul>
+            </li>
+            <li><a href="/about-us/contact">Contact Us</a>
+              <ul>
+                <li><a href="/about-us/contact/offices">Our Offices</a></li>
+                <li><a href="/about-us/contact/advisors">For Advisors</a></li>
+                <li><a href="/about-us/contact/institutions">For Institutions</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+
       </ul>
     </div>
     <hr>
+
+    <!-- SECTION 4 — Tools (search rendered as icon button) -->
     <div>
-      <p><a href="/contact">Contact Us</a></p>
+      <p><a href="/search">Search</a></p>
     </div>
   </main>
   <footer></footer>
