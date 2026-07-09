@@ -1,5 +1,5 @@
 {
-  "total": 9,
+  "total": 8,
   "offset": 0,
   "limit": 256,
   "data": [
@@ -41,11 +41,6 @@
     {
       "source": "/old-page",
       "destination": "/new-page",
-      "type": "301"
-    },
-    {
-      "source": "/content/insights/demo-blog-list",
-      "destination": "/insights/demo-blog-list",
       "type": "301"
     }
   ],
