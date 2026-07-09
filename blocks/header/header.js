@@ -22,17 +22,23 @@ function buildUtilityBar(section) {
 }
 
 /* ─────────────────────────────────────────────
-   Brand / Logo  (Section 1 of /nav)
+   Brand / Logo
+   The logo is a static brand asset committed to /icons/ in git,
+   served directly from the CDN — no DAM reference needed.
+   To change the logo, update the src path below or replace
+   the file at /icons/90MarkLogo-OrangeBlue.svg in the repo.
    ───────────────────────────────────────────── */
-function buildBrand(section) {
+function buildBrand() {
   const brand = document.createElement('div');
   brand.className = 'nav-brand';
-  if (section) {
-    const wrapper = section.querySelector('.default-content-wrapper') || section;
-    brand.innerHTML = wrapper.innerHTML;
-    brand.querySelectorAll('.button').forEach((b) => b.classList.remove('button'));
-    brand.querySelectorAll('.button-container').forEach((c) => c.classList.remove('button-container'));
-  }
+  brand.innerHTML = `<a href="/" aria-label="Russell Investments – Home">
+    <img src="/icons/90MarkLogo-OrangeBlue.svg"
+         alt="Russell Investments"
+         width="160"
+         height="48"
+         loading="eager"
+         fetchpriority="high">
+  </a>`;
   return brand;
 }
 
@@ -342,15 +348,12 @@ export default async function decorate(block) {
    * keeps working even if the author adds/removes a section on /nav.
    *
    * Detection rules:
-   *   utility  – first section that has no <img> and no <ul>
-   *   brand    – first section containing an <img>
+   *   utility  – first section that has no <ul>
    *   nav      – first section containing a <ul>
-   *   tools    – falls through to whatever is left (last section)
+   *   (brand and tools are handled in code, not by section index)
    */
-  const brandSection = sections.find((s) => s.querySelector('img'));
   const navLinkSection = sections.find((s) => s.querySelector('ul'));
-  const utilitySection = sections.find((s) => s !== brandSection && s !== navLinkSection);
-  const toolsSection = sections[sections.length - 1];
+  const utilitySection = sections.find((s) => s !== navLinkSection && s.querySelector('a, p'));
 
   /* ── Utility bar (sits above the sticky nav bar) ── */
   const utilityBar = buildUtilityBar(utilitySection);
@@ -361,7 +364,7 @@ export default async function decorate(block) {
   nav.setAttribute('aria-label', 'Main navigation');
   nav.setAttribute('aria-expanded', 'false');
 
-  const navBrand = buildBrand(brandSection);
+  const navBrand = buildBrand();
   const navSections = buildNavSections(navLinkSection);
   const navTools = buildNavTools();
 
