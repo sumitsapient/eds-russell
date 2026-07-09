@@ -508,3 +508,39 @@ main .block[data-block-status='loaded'] {
   visibility: visible;
 }
 
+/* =============================================================================
+   SKIP TO MAIN CONTENT  (accessibility)
+   Hidden off-screen by default — only appears on keyboard focus so it never
+   flickers or takes up space for mouse/touch users.
+   Injected by addSkipLink() in scripts.js during loadLazy.
+   ============================================================================= */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 8px 20px;
+  background: #020e40;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom-right-radius: 4px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+  width: 1px;
+  height: 1px;
+}
+
+.skip-to-content:focus {
+  top: 0;
+  clip-path: none;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  white-space: normal;
+  outline: 3px solid #e87722;
+  outline-offset: 2px;
+}
+
