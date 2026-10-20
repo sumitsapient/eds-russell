@@ -78,6 +78,34 @@ const isPlaceholderLink = (a) => !a.getAttribute('href') || a.getAttribute('href
 
 const getItemLink = (li) => li.querySelector(':scope > a, :scope > p > a, :scope > strong > a');
 
+/** The first image in an element, as its <picture> when it has one. */
+const getMedia = (el) => {
+  const img = el.querySelector('img');
+  return img ? img.closest('picture') || img : null;
+};
+
+/**
+ * AEM publishes a linked image as an image paragraph followed by a text link
+ * (e.g. the logo). Moves each such image back into its link, keeping the link
+ * text as the accessible name, so these sections read like the original markup.
+ */
+function joinLinkedImages(section) {
+  let mediaP = null;
+  [...section.children].forEach((child) => {
+    const link = child.tagName === 'P' && child.children.length === 1 ? child.querySelector(':scope > a') : null;
+    if (link && mediaP && !link.querySelector('img')) {
+      const label = link.textContent.trim();
+      if (label && !link.getAttribute('aria-label')) link.setAttribute('aria-label', label);
+      link.replaceChildren(getMedia(mediaP));
+      mediaP.remove();
+      mediaP = null;
+      return;
+    }
+    const imageOnly = child.tagName === 'P' && child.querySelector('img') && !child.querySelector('a') && !child.textContent.trim();
+    mediaP = imageOnly ? child : null;
+  });
+}
+
 /* ------------------------------------------------------------------
  * Shared open/close state
  * ------------------------------------------------------------------ */
@@ -134,16 +162,18 @@ function buildGroupedLinks(list) {
       link.className = 'nav-utility-link';
       link.href = a.href;
       if (a.target) link.target = a.target;
-      const img = a.querySelector('img');
-      if (img) {
+      // the icon and label may share one link or (as published by AEM) sit in separate links
+      const media = getMedia(entryLi);
+      if (media) {
         const icon = document.createElement('span');
         icon.className = 'nav-utility-link-icon';
-        icon.append(img);
+        icon.append(media);
         link.append(icon);
       }
       const label = document.createElement('span');
       label.className = 'nav-utility-link-label';
-      label.textContent = a.textContent.trim();
+      label.textContent = [...entryLi.querySelectorAll('a')]
+        .map((x) => x.textContent.trim()).find(Boolean) || '';
       link.append(label);
       item.append(link);
       links.append(item);
@@ -587,6 +617,7 @@ function toggleMenu(nav, button, force, reset = true) {
  */
 export default async function decorate(block) {
   const sections = await fetchNavSections();
+  sections.forEach(joinLinkedImages);
   block.textContent = '';
 
   const nav = document.createElement('nav');
