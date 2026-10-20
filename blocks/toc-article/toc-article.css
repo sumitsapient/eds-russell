@@ -1,0 +1,95 @@
+.toc-article {
+  --toc-article-bg: var(--white, #fff);
+  --toc-article-padding: 24px;
+  --toc-article-radius: 6px;
+  --toc-article-shadow: 0 4px 8px rgb(30 30 30 / 13%), 0 1px 2px rgb(30 30 30 / 10%);
+  --toc-article-gap: 24px;
+  --toc-article-rail: #e5e5e5;
+  --toc-article-rail-active: #dd6814;
+  --toc-article-rail-width: 3px;
+  --toc-article-title-color: var(--navy, #000060);
+  --toc-article-link-color: var(--blue, #165eda);
+  --toc-article-link-active: var(--navy, #000060);
+  --toc-article-link-size: 18px;
+  --toc-article-sticky-top: calc(var(--nav-height, 72px) + 24px);
+
+  box-sizing: border-box;
+  padding: var(--toc-article-padding);
+  border-radius: var(--toc-article-radius);
+  background: var(--toc-article-bg);
+  box-shadow: var(--toc-article-shadow);
+}
+
+.toc-article.toc-article-empty {
+  display: none;
+}
+
+.toc-article .toc-article-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--toc-article-gap);
+}
+
+.toc-article .toc-article-title {
+  margin: 0;
+  color: var(--toc-article-title-color);
+  font-family: var(--heading-font-family);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.toc-article .toc-article-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toc-article .toc-article-item {
+  margin: 0;
+  border-left: var(--toc-article-rail-width) solid var(--toc-article-rail);
+}
+
+.toc-article .toc-article-link {
+  display: block;
+  padding: 12px 16px;
+  color: var(--toc-article-link-color);
+  font-family: var(--heading-font-family);
+  font-size: var(--toc-article-link-size);
+  font-weight: 500;
+  line-height: 24px;
+  text-decoration: none;
+}
+
+.toc-article .toc-article-link:hover {
+  color: var(--toc-article-link-active);
+  text-decoration: underline;
+}
+
+.toc-article .toc-article-link:focus-visible {
+  outline: 2px solid var(--toc-article-link-color);
+  outline-offset: -2px;
+}
+
+.toc-article .toc-article-item-active {
+  border-left-color: var(--toc-article-rail-active);
+}
+
+.toc-article .toc-article-item-active .toc-article-link {
+  color: var(--toc-article-link-active);
+}
+
+@media (width >= 600px) {
+  .toc-article {
+    --toc-article-padding: 36px;
+    --toc-article-link-size: 20px;
+  }
+}
+
+/* lifted above the article-meta band, which it overlaps in the sidebar column */
+.toc-article-wrapper:has(> .toc-article) {
+  position: relative;
+  z-index: 1;
+}

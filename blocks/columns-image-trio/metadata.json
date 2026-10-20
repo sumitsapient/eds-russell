@@ -1,0 +1,29 @@
+{
+  "variantName": "columns-image-trio",
+  "baseBlock": "columns",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Photo, centered heading + CTA panel, photo across the full width",
+    "description": "Side-by-side layout of two images and a text panel."
+  },
+  "contentPattern": {
+    "description": "Photo | centered heading + CTA card | photo",
+    "structure": "one row; cells: image, text panel (h3 + CTA link), image",
+    "rows": [
+      [
+        "section-4: text cell (h3 x3 + p x3 + CTA link)",
+        "image cell"
+      ],
+      [
+        "section-6: image cell",
+        "text cell (h3 + CTA link)",
+        "image cell"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": "Full-width promotional band flanked by two photos.",
+  "reuseGuidance": "Use for a short call-to-action panel framed by imagery. Any cell that contains only an image is treated as an image column.",
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/about-us.html"
+}

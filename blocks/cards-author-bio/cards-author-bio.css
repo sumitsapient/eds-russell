@@ -1,0 +1,159 @@
+.cards-author-bio {
+  --cards-author-bio-bg: var(--gray-light, #f3f3f3);
+  --cards-author-bio-color: var(--navy, #000060);
+  --cards-author-bio-link: var(--blue, #165eda);
+  --cards-author-bio-padding: 30px;
+  --cards-author-bio-photo: 162px;
+  --cards-author-bio-photo-bg: #d9d9d9;
+  --cards-author-bio-bio-line: 19px;
+
+  /* visible lines when collapsed (includes the blank line between paragraphs) */
+  --cards-author-bio-lines: 7;
+
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  box-sizing: border-box;
+  padding: var(--cards-author-bio-padding);
+  background: var(--cards-author-bio-bg);
+  color: var(--cards-author-bio-color);
+}
+
+.cards-author-bio .cards-author-bio-heading {
+  margin: 0;
+  color: var(--cards-author-bio-color);
+  font-family: var(--heading-font-family);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 36px;
+}
+
+.cards-author-bio .cards-author-bio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cards-author-bio .cards-author-bio-card {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 0;
+}
+
+.cards-author-bio .cards-author-bio-image {
+  width: var(--cards-author-bio-photo);
+  height: var(--cards-author-bio-photo);
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--cards-author-bio-photo-bg);
+}
+
+.cards-author-bio .cards-author-bio-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cards-author-bio .cards-author-bio-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cards-author-bio .cards-author-bio-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cards-author-bio .cards-author-bio-name {
+  margin: 0;
+  color: var(--cards-author-bio-color);
+  font-family: var(--heading-font-family);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 25px;
+}
+
+.cards-author-bio .cards-author-bio-role {
+  margin: 0;
+  font-family: var(--heading-font-family);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 19px;
+}
+
+.cards-author-bio .cards-author-bio-about {
+  position: relative;
+  font-family: var(--body-font-family);
+  font-size: 14px;
+  line-height: var(--cards-author-bio-bio-line);
+}
+
+.cards-author-bio .cards-author-bio-text {
+  max-height: calc(var(--cards-author-bio-bio-line) * var(--cards-author-bio-lines));
+  overflow: hidden;
+}
+
+.cards-author-bio .cards-author-bio-text > * {
+  margin: 0;
+}
+
+.cards-author-bio .cards-author-bio-text > * + * {
+  margin-top: var(--cards-author-bio-bio-line);
+}
+
+.cards-author-bio .cards-author-bio-expanded .cards-author-bio-text {
+  max-height: none;
+}
+
+.cards-author-bio .cards-author-bio-toggle {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cards-author-bio-link);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+.cards-author-bio .cards-author-bio-toggle[hidden] {
+  display: none;
+}
+
+.cards-author-bio .cards-author-bio-toggle:hover {
+  text-decoration: underline;
+}
+
+.cards-author-bio .cards-author-bio-toggle:focus-visible {
+  outline: 2px solid var(--cards-author-bio-link);
+  outline-offset: 2px;
+}
+
+.cards-author-bio .cards-author-bio-expanded .cards-author-bio-toggle {
+  display: block;
+  margin-top: var(--cards-author-bio-bio-line);
+}
+
+/* collapsed: "...Read more" sits inline at the end of the last visible line */
+.cards-author-bio .cards-author-bio-clamped:not(.cards-author-bio-expanded) .cards-author-bio-toggle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding-left: 4px;
+  background: var(--cards-author-bio-bg);
+}
+
+.cards-author-bio .cards-author-bio-clamped:not(.cards-author-bio-expanded) .cards-author-bio-toggle::before {
+  content: '…';
+  color: var(--cards-author-bio-color);
+  font-weight: 400;
+}

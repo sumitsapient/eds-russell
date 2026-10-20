@@ -1,0 +1,26 @@
+{
+  "variantName": "cards-research",
+  "baseBlock": "cards",
+  "canonicalModel": "container",
+  "visualCharacteristics": {
+    "purpose": "Related research article cards with image, date, linked title and author byline",
+    "description": "Responsive 1/2/3-column grid of bordered white cards (486px wide, 20px gap at 1728px). Each card: full-bleed 2.2:1 image, date, ~22px linked title, circular author headshot with bold name and role. Whole card is clickable via the title link. Section heading stays as default content above the block."
+  },
+  "contentPattern": {
+    "description": "Related research: 3 cards (Macro Vitals Show Life Despite Dead Zone for Data; Is the U.S. Job Market Losing Steam?; New Bill Poised to Unlock Pension Surpluses for Retirement Savers), each with date, author headshot, name and role.",
+    "structure": "container block, one row per card; cells: image (reference + alt) | text (richtext: date paragraph, linked H3 title; no images) | authorImage (reference + alt, optional) | author (richtext: name paragraph, role paragraph; optional)",
+    "rows": [
+      [
+        "Card image",
+        "Date; linked H3 title",
+        "Author photo",
+        "Author name; role"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": "Related research / related articles row at the end of a blog article.",
+  "reuseGuidance": "Keep the section heading (e.g. 'Related research') as default content above the block. Author one row per card. Never put images in the text or author fields; use the card image and author photo fields. Visual language mirrors the Research tab of tabs-article-cards.",
+  "sourceUrl": "figma:5878:1281"
+}

@@ -1,0 +1,43 @@
+{
+  "variantName": "cards-links",
+  "baseBlock": "cards",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Text-only cards, each with a title, description and CTA link",
+    "description": "Repeating structure of title/description/CTA items without images. Option tile: filled #f3f3f3 tile (white on light-blue sections) with a notched bottom-right corner, no orange rule, optional badge image and eyebrow, outlined pill CTA; add cta-arrow for the tertiary text + arrow CTA (ETF fund tiles)."
+  },
+  "contentPattern": {
+    "description": "4 items: Approach, Awards, Insights, Responsibility - each title, description, CTA link",
+    "structure": "one row per card; single cell with title (heading), description paragraph and CTA link; the tile option adds an optional leading badge image and a short eyebrow paragraph (e.g. ticker) before the title, and only the last single-line link-only paragraph is the CTA",
+    "rows": [
+      [
+        "Per card: text cell - (stats) bold value paragraph + caption paragraph; (links) title, description, CTA link"
+      ]
+    ]
+  },
+  "options": [
+    {
+      "class": "tile",
+      "label": "Tile"
+    },
+    {
+      "class": "cta-arrow",
+      "label": "Arrow CTA"
+    }
+  ],
+  "memberVariantIds": [],
+  "usage": {
+    "description": "Link hubs pointing to related sections (Approach, Awards, Insights, Responsibility).",
+    "pagesUsing": [
+      "/content/ri/us/en/about-us",
+      "/content/ri/us/en/individual-investor",
+      "/content/ri/us/en/insights",
+      "/content/ri/us/en/about-us/contact-us",
+      "/content/ri/us/en/individual-investor/investments/models-and-products/exchange-traded-funds"
+    ],
+    "reuseCount": 4,
+    "lastUsed": "2026-10-20"
+  },
+  "reuseGuidance": "Use for navigational card grids without images. The last link-only paragraph is treated as the CTA. Use the tile option for contact, office or fund tiles; other link-only lines (e.g. 'Contact us via email') stay plain links, and multi-line links (addresses with line breaks) are never the CTA.",
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/about-us.html"
+}

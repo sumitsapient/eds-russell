@@ -1,0 +1,23 @@
+{
+  "variantName": "embed-ceros",
+  "baseBlock": "embed",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Full-width, lazy-loaded Ceros interactive experience (iframe)",
+    "description": "Third-party interactive embed; an author cannot type it, so it is an embed block holding the Ceros URL. Ceros Studio (*.ceros.site) experiences load through the Ceros embed SDK (auto height); classic view.ceros.com experiences load as a fixed-ratio iframe with the Ceros scroll proxy."
+  },
+  "contentPattern": {
+    "description": "Ceros interactive ETF promo banner iframe (title 'etf banner for homepage IND')",
+    "structure": "one row, one cell: optional poster image, then a link to the Ceros experience URL",
+    "rows": [
+      [
+        "Optional poster image; link to https://<account>.ceros.site/<experience> or https://view.ceros.com/<account>/<experience>"
+      ]
+    ]
+  },
+  "options": [],
+  "usage": "Promo banners or interactive stories built in Ceros and embedded on a page.",
+  "reuseGuidance": "Use for any Ceros-hosted experience (*.ceros.site, view.ceros.com or other *.ceros.com URLs). For YouTube/Vimeo or other providers use a generic embed block instead. The link text (if not a URL) becomes the iframe title for accessibility.",
+  "memberVariantIds": [],
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/individual-investor.html"
+}

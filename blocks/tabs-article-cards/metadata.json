@@ -1,0 +1,47 @@
+{
+  "variantName": "tabs-article-cards",
+  "baseBlock": "tabs",
+  "canonicalModel": "container",
+  "visualCharacteristics": {
+    "purpose": "Accessible tabs whose panels each show an eyebrow, a grid of article cards and an \"All ...\" link",
+    "description": "Interactive toggle between article collections (e.g. Insights / Research). Cards are authored one per row and grouped into tabs by their tab label; the shared section heading stays as default content above the block."
+  },
+  "contentPattern": {
+    "description": "Insights | Research toggle. Tab 'Insights': eyebrow 'Recent insights', 3 cards (image, H3 title, H4 subtitle, description, CTA), footer link 'All Insights'. Tab 'Research': eyebrow 'Recent research', 3 cards (image, date, linked H3 title, author photo, author name + role), footer link 'All Research'.",
+    "structure": "container block, one row per card; cells: tab (text) | eyebrow (text, optional, first non-empty per tab wins) | image (reference + alt) | text (richtext: optional date, H3 title (may be a link), optional H4 subtitle, description, CTA link; no images) | authorImage (reference + alt, optional) | author (richtext: name, role; optional) | footer (richtext link, optional, first non-empty per tab wins)",
+    "rows": [
+      [
+        "Insights",
+        "RECENT INSIGHTS",
+        "Card image",
+        "H3 title; H4 subtitle; description; CTA link",
+        "",
+        "",
+        "All Insights link"
+      ],
+      [
+        "Insights",
+        "",
+        "Card image",
+        "H3 title; H4 subtitle; description; CTA link",
+        "",
+        "",
+        ""
+      ],
+      [
+        "Research",
+        "RECENT RESEARCH",
+        "Card image",
+        "Date; linked H3 title",
+        "Author photo",
+        "Author name; role",
+        "All Research link"
+      ]
+    ]
+  },
+  "options": [],
+  "usage": "Switch between related article collections (e.g. Insights vs Research) in one section.",
+  "reuseGuidance": "Keep the shared section heading (H2) as default content above the block. Author one row per card; rows with the same tab label form one tab (tabs appear in order of first appearance). Set eyebrow and footer link on one card per tab. Never put images in the text or author fields; use the image and author photo fields.",
+  "memberVariantIds": [],
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/individual-investor.html"
+}

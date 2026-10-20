@@ -20,130 +20,6 @@
         "name": "keywords",
         "multi": true,
         "label": "Keywords"
-      },
-      {
-        "component": "select",
-        "valueType": "string",
-        "name": "template",
-        "label": "Page Template",
-        "description": "Controls the page layout and loads template-specific styles",
-        "options": [
-          {
-            "name": "Default",
-            "value": ""
-          },
-          {
-            "name": "Article / Blog Post",
-            "value": "article"
-          },
-          {
-            "name": "Landing Page (no header/footer)",
-            "value": "landing"
-          },
-          {
-            "name": "Russell Article (EDS Demo)",
-            "value": "russell-article"
-          },
-          {
-            "name": "Blog Post",
-            "value": "blog"
-          }
-        ]
-      },
-      {
-        "component": "reference",
-        "valueType": "string",
-        "name": "og:image",
-        "label": "Social Share Image",
-        "description": "Image shown when this page is shared on social media (OG Image)"
-      },
-      {
-        "component": "select",
-        "valueType": "string",
-        "name": "robots",
-        "label": "Search Engine Indexing",
-        "description": "Controls whether search engines index this page",
-        "options": [
-          {
-            "name": "Index & Follow (default)",
-            "value": ""
-          },
-          {
-            "name": "No Index",
-            "value": "noindex"
-          },
-          {
-            "name": "No Follow",
-            "value": "nofollow"
-          },
-          {
-            "name": "No Index, No Follow",
-            "value": "noindex, nofollow"
-          }
-        ]
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "canonical",
-        "label": "Canonical URL",
-        "description": "Override the canonical URL for this page (leave blank to use page URL)"
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "experiment",
-        "label": "A/B Experiment ID",
-        "description": "Assign this page to an A/B test (e.g. hero-cta-test). Visitors are randomly split 50/50 between control and variant-a."
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "experiment-variant",
-        "label": "Force Experiment Variant (QA)",
-        "description": "Pin a specific variant for QA/preview. Leave blank for random assignment.",
-        "options": [
-          {
-            "name": "Random (default)",
-            "value": ""
-          },
-          {
-            "name": "Control",
-            "value": "control"
-          },
-          {
-            "name": "Variant A",
-            "value": "variant-a"
-          },
-          {
-            "name": "Variant B",
-            "value": "variant-b"
-          }
-        ]
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "hreflang",
-        "label": "Language Alternates (hreflang)",
-        "description": "Comma-separated lang:url pairs e.g. en:https://site.com/home, fr:https://site.com/fr/home, x-default:https://site.com/home"
-      },
-      {
-        "component": "select",
-        "valueType": "string",
-        "name": "breadcrumb",
-        "label": "Breadcrumb",
-        "description": "Show or hide the auto-generated breadcrumb on this page. Default is on for pages 2+ levels deep.",
-        "options": [
-          {
-            "name": "Default (auto)",
-            "value": ""
-          },
-          {
-            "name": "Hide breadcrumb",
-            "value": "false"
-          }
-        ]
       }
     ]
   },
@@ -247,87 +123,100 @@
     "id": "section",
     "fields": [
       {
+        "component": "text",
+        "name": "name",
+        "label": "Section Name",
+        "description": "The label shown for this section in the Content Tree"
+      },
+      {
         "component": "multiselect",
         "name": "style",
         "label": "Style",
-        "description": "Visual style applied to this section",
         "options": [
+          {
+            "name": "Light gray background",
+            "value": "light"
+          },
+          {
+            "name": "Light blue background",
+            "value": "light-blue"
+          },
+          {
+            "name": "Dark navy background",
+            "value": "dark"
+          },
           {
             "name": "Highlight",
             "value": "highlight"
           },
           {
-            "name": "Dark",
-            "value": "dark"
+            "name": "Split (text beside block)",
+            "value": "split"
           },
           {
-            "name": "Accent",
-            "value": "accent"
+            "name": "Jump links bar",
+            "value": "jump-links"
           },
           {
-            "name": "Centered",
-            "value": "centered"
+            "name": "Intro statement",
+            "value": "intro"
           },
           {
             "name": "Narrow",
             "value": "narrow"
           },
           {
-            "name": "Full Width",
+            "name": "Centered",
+            "value": "center"
+          },
+          {
+            "name": "Article body",
+            "value": "article-body"
+          },
+          {
+            "name": "Article sidebar",
+            "value": "article-aside"
+          },
+          {
+            "name": "Disclosures",
+            "value": "disclosures"
+          },
+          {
+            "name": "Full width (edge to edge, no spacing)",
             "value": "full-width"
           },
           {
-            "name": "Spacious",
-            "value": "spacious"
+            "name": "Lead paragraph (large text after the heading)",
+            "value": "lead"
           },
           {
-            "name": "Compact",
-            "value": "compact"
+            "name": "Stacked buttons",
+            "value": "stack"
+          },
+          {
+            "name": "Screen-reader-only heading",
+            "value": "sr-heading"
           }
         ]
-      },
-      {
-        "component": "reference",
-        "name": "background",
-        "label": "Background Image",
-        "description": "Optional background image for this section",
-        "valueType": "string"
-      },
+      }
+    ]
+  },
+  {
+    "id": "accordion-faq-item",
+    "fields": [
       {
         "component": "text",
-        "name": "id",
-        "label": "Section ID (anchor)",
-        "description": "Set a custom ID for anchor links, e.g. 'about-us' → link with #about-us",
-        "valueType": "string"
+        "valueType": "string",
+        "name": "summary",
+        "label": "Question",
+        "value": ""
       },
       {
-        "component": "select",
-        "name": "animate",
-        "label": "Scroll Animation",
-        "description": "Animate the section when it enters the viewport",
+        "component": "richtext",
         "valueType": "string",
-        "options": [
-          {
-            "name": "None",
-            "value": ""
-          },
-          {
-            "name": "Fade In",
-            "value": "fade-in"
-          },
-          {
-            "name": "Slide Up",
-            "value": "slide-up"
-          },
-          {
-            "name": "Slide In from Left",
-            "value": "slide-left"
-          },
-          {
-            "name": "Slide In from Right",
-            "value": "slide-right"
-          }
-        ]
+        "name": "text",
+        "label": "Answer",
+        "value": ""
       }
     ]
   },
@@ -345,6 +234,74 @@
         "name": "description",
         "label": "Answer / Content",
         "valueType": "string"
+      }
+    ]
+  },
+  {
+    "id": "alert-banner",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "icon",
+        "label": "Icon (optional)",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "iconAlt",
+        "label": "Icon Alt Text (leave empty if decorative)",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "name": "text",
+        "value": "",
+        "label": "Notice Text",
+        "valueType": "string"
+      }
+    ]
+  },
+  {
+    "id": "article-meta",
+    "fields": [
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "authors",
+        "label": "Authors (one per line, optionally linked)",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "published",
+        "label": "Published date line (e.g. Published: August 27, 2025)",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "updated",
+        "label": "Updated date line (e.g. Updated: October 27, 2025)",
+        "value": ""
+      },
+      {
+        "component": "select",
+        "name": "classes",
+        "value": "",
+        "label": "Options",
+        "options": [
+          {
+            "name": "Default",
+            "value": ""
+          },
+          {
+            "name": "Band",
+            "value": "band"
+          }
+        ]
       }
     ]
   },
@@ -444,6 +401,216 @@
     ]
   },
   {
+    "id": "callout-takeaways",
+    "fields": [
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "text",
+        "label": "Text (heading, paragraphs, list)",
+        "value": ""
+      },
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "image",
+        "label": "Image (optional, e.g. chart)",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "imageAlt",
+        "label": "Image Alt Text",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "note",
+        "label": "Note (optional, e.g. disclaimer below the image)",
+        "value": ""
+      },
+      {
+        "component": "select",
+        "name": "classes",
+        "value": "",
+        "label": "Options",
+        "options": [
+          {
+            "name": "Default",
+            "value": ""
+          },
+          {
+            "name": "Chart",
+            "value": "chart"
+          },
+          {
+            "name": "Rule",
+            "value": "rule"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cards-author-bio",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "heading",
+        "label": "Heading",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "id": "cards-author-bio-item",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "image",
+        "label": "Photo",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "imageAlt",
+        "label": "Photo alt text",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "name": "text",
+        "value": "",
+        "label": "Name (heading), role and bio",
+        "valueType": "string"
+      }
+    ]
+  },
+  {
+    "id": "cards-image-link-item",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "image",
+        "label": "Image",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "imageAlt",
+        "label": "Alt Text",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "text",
+        "label": "Text",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "id": "cards-links",
+    "fields": [
+      {
+        "component": "multiselect",
+        "name": "classes",
+        "label": "Options",
+        "options": [
+          {
+            "name": "Tile (filled card, pill CTA)",
+            "value": "tile"
+          },
+          {
+            "name": "Arrow CTA (with Tile)",
+            "value": "cta-arrow"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cards-links-item",
+    "fields": [
+      {
+        "component": "richtext",
+        "name": "text",
+        "value": "",
+        "label": "Text",
+        "valueType": "string"
+      }
+    ]
+  },
+  {
+    "id": "cards-research-item",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "image",
+        "label": "Card Image",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "imageAlt",
+        "label": "Card Image Alt Text",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "text",
+        "label": "Card Text",
+        "description": "Date paragraph, then the title as an H3 (link it to the article). No images.",
+        "value": ""
+      },
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "authorImage",
+        "label": "Author Photo (optional)",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "authorImageAlt",
+        "label": "Author Photo Alt Text",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "author",
+        "label": "Author (optional)",
+        "description": "Author name and role, one paragraph each. No images.",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "id": "cards-stats-item",
+    "fields": [
+      {
+        "component": "richtext",
+        "name": "text",
+        "value": "",
+        "label": "Text",
+        "valueType": "string"
+      }
+    ]
+  },
+  {
     "id": "card",
     "fields": [
       {
@@ -459,6 +626,124 @@
         "value": "",
         "label": "Text",
         "valueType": "string"
+      }
+    ]
+  },
+  {
+    "id": "carousel-timeline-item",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "image",
+        "label": "Image",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "imageAlt",
+        "label": "Alt Text",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "name": "text",
+        "value": "",
+        "label": "Text",
+        "valueType": "string"
+      }
+    ]
+  },
+  {
+    "id": "columns-image-trio",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "number",
+        "name": "columns",
+        "value": "",
+        "label": "Columns"
+      },
+      {
+        "component": "text",
+        "valueType": "number",
+        "name": "rows",
+        "value": "",
+        "label": "Rows"
+      }
+    ]
+  },
+  {
+    "id": "columns-media",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "number",
+        "name": "columns",
+        "value": "",
+        "label": "Columns"
+      },
+      {
+        "component": "text",
+        "valueType": "number",
+        "name": "rows",
+        "value": "",
+        "label": "Rows"
+      }
+    ]
+  },
+  {
+    "id": "columns-overlay",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "number",
+        "name": "columns",
+        "value": "",
+        "label": "Columns"
+      },
+      {
+        "component": "text",
+        "valueType": "number",
+        "name": "rows",
+        "value": "",
+        "label": "Rows"
+      }
+    ]
+  },
+  {
+    "id": "columns-promo-panel",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "number",
+        "name": "columns",
+        "value": "",
+        "label": "Columns"
+      },
+      {
+        "component": "text",
+        "valueType": "number",
+        "name": "rows",
+        "value": "",
+        "label": "Rows"
+      },
+      {
+        "component": "select",
+        "name": "classes",
+        "value": "",
+        "label": "Options",
+        "options": [
+          {
+            "name": "Default",
+            "value": ""
+          },
+          {
+            "name": "Dark",
+            "value": "dark"
+          }
+        ]
       }
     ]
   },
@@ -529,6 +814,32 @@
             "value": "compact"
           }
         ]
+      }
+    ]
+  },
+  {
+    "id": "embed-ceros",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "embed_placeholder",
+        "label": "Poster Image (optional)",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "embed_placeholderAlt",
+        "label": "Alt Text",
+        "value": ""
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "embed_uri",
+        "label": "Ceros URL",
+        "value": ""
       }
     ]
   },
@@ -635,6 +946,55 @@
         "label": "Description",
         "valueType": "string",
         "value": "Welcome to my site"
+      }
+    ]
+  },
+  {
+    "id": "hero-image-overlay",
+    "fields": [
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "image",
+        "label": "Image",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "imageAlt",
+        "label": "Alt Text",
+        "value": ""
+      },
+      {
+        "component": "aem-content",
+        "valueType": "string",
+        "name": "video",
+        "label": "Background Video (.mp4, optional)",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "name": "text",
+        "value": "",
+        "label": "Text",
+        "valueType": "string"
+      },
+      {
+        "component": "select",
+        "name": "classes",
+        "value": "",
+        "label": "Options",
+        "options": [
+          {
+            "name": "Default",
+            "value": ""
+          },
+          {
+            "name": "Article",
+            "value": "article"
+          }
+        ]
       }
     ]
   },
@@ -805,6 +1165,39 @@
     ]
   },
   {
+    "id": "newsletter-signup",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "heading",
+        "label": "Heading",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "placeholder",
+        "label": "Email placeholder",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "options",
+        "label": "Subscription options (bulleted list, first item selected by default)",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "buttonLabel",
+        "label": "Button label",
+        "value": ""
+      }
+    ]
+  },
+  {
     "id": "related-blog",
     "fields": [
       {
@@ -873,6 +1266,79 @@
     ]
   },
   {
+    "id": "tabs-article-cards-item",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "tab",
+        "label": "Tab Label",
+        "description": "Cards with the same tab label are grouped into one tab (e.g. Insights, Research).",
+        "value": ""
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "eyebrow",
+        "label": "Tab Eyebrow (optional)",
+        "description": "Shown above the tab's cards. Set it on one card per tab; the first non-empty value wins.",
+        "value": ""
+      },
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "image",
+        "label": "Card Image",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "imageAlt",
+        "label": "Card Image Alt Text",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "text",
+        "label": "Card Text",
+        "description": "Optional date, H3 title (may be a link), optional H4 subtitle, description and CTA link. No images.",
+        "value": ""
+      },
+      {
+        "component": "reference",
+        "valueType": "string",
+        "name": "authorImage",
+        "label": "Author Photo (optional)",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "authorImageAlt",
+        "label": "Author Photo Alt Text",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "author",
+        "label": "Author (optional)",
+        "description": "Author name and role, one paragraph each. No images.",
+        "value": ""
+      },
+      {
+        "component": "richtext",
+        "valueType": "string",
+        "name": "footer",
+        "label": "Tab Footer Link (optional)",
+        "description": "Link shown below the tab's cards (e.g. All Insights). Set it on one card per tab; the first non-empty value wins.",
+        "value": ""
+      }
+    ]
+  },
+  {
     "id": "tabs",
     "fields": [
       {
@@ -918,6 +1384,18 @@
     ]
   },
   {
+    "id": "tags-chips-item",
+    "fields": [
+      {
+        "component": "richtext",
+        "name": "text",
+        "value": "",
+        "label": "Tag (text, optionally linked)",
+        "valueType": "string"
+      }
+    ]
+  },
+  {
     "id": "team-grid",
     "fields": [
       {
@@ -948,6 +1426,18 @@
         "label": "Show Bio Text",
         "valueType": "boolean",
         "default": true
+      }
+    ]
+  },
+  {
+    "id": "toc-article",
+    "fields": [
+      {
+        "component": "text",
+        "valueType": "string",
+        "name": "heading",
+        "label": "Heading (optional, defaults to \"Table of contents\")",
+        "value": ""
       }
     ]
   },

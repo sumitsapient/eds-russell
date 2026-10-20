@@ -1,0 +1,49 @@
+{
+  "variantName": "hero-image-overlay",
+  "baseBlock": "hero",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Full-bleed background image or muted looping background video with overlaid H1, intro paragraph and optional CTA",
+    "description": "Full-bleed background-image hero with overlaid text is a block (background belongs to the block).",
+    "article": "Blog article hero: optional uppercase pretitle, H1 (70px/84px at desktop, max 879px), optional subtitle and pill CTA, left-aligned over a -90deg black-to-transparent gradient; 908px tall at desktop. Without an image it falls back to the no-image navy gradient."
+  },
+  "contentPattern": {
+    "description": "H1 'Innovating portfolios. Focused on outcomes.' + paragraph over full-bleed background image",
+    "structure": "row 1: background image (poster) and/or link to an .mp4 video (same row or its own row); last row: H1 title, paragraph, optional CTA link",
+    "rows": [
+      [
+        "Background image (optional when a video is set; used as poster)"
+      ],
+      [
+        "Optional link to background video (.mp4)"
+      ],
+      [
+        "H1 title, paragraph (optional CTA)"
+      ]
+    ],
+    "article": "text row: optional pretitle paragraph, H1 title, optional subtitle paragraph, optional CTA (bold link)"
+  },
+  "options": [
+    {
+      "class": "article",
+      "label": "Article"
+    }
+  ],
+  "memberVariantIds": [],
+  "usage": {
+    "description": "Top-of-page hero with a photographic background and overlaid headline.",
+    "pagesUsing": [
+      "/content/ri/us/en/about-us",
+      "/content/ri/us/en/individual-investor"
+    ],
+    "reuseCount": 1,
+    "lastUsed": "2026-10-18"
+  },
+  "reuseGuidance": "Use for any page-opening hero where text sits over a full-width photo. Use a plain heading (default content) when there is no background image. Use the article option for blog/insight article headers (pretitle, long title, subtitle, CTA).",
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/about-us.html",
+  "backgroundVideo": {
+    "detect": "<video> element or link ending in .mp4 in a media-only row",
+    "behavior": "muted, autoplay, loop, playsinline; image used as poster",
+    "reducedMotion": "prefers-reduced-motion: reduce shows the image only (no autoplay); without an image the video renders paused"
+  }
+}

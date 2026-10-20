@@ -1,0 +1,27 @@
+{
+  "variantName": "carousel-timeline",
+  "baseBlock": "carousel",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Horizontally scrolling timeline of milestone slides with prev/next navigation",
+    "description": "Interactive sliding component with repeating slides."
+  },
+  "contentPattern": {
+    "description": "9 timeline slides (2025, 2005, 2004, 1995, 1985, 1985, 1980, 1969, 1936), each icon + year + milestone, with prev/next navigation",
+    "structure": "one row per slide; cells: icon image, text (year paragraph + h3 milestone)",
+    "rows": [
+      [
+        "Per slide: icon image",
+        "year paragraph + h3 milestone statement"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": "Company history and milestone timelines.",
+  "reuseGuidance": "Use for ordered sequences of short cards that should scroll horizontally. The first link-free paragraph is styled as the year/eyebrow.",
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/about-us.html",
+  "sectionMetadata": {
+    "style": "light-blue, split"
+  }
+}

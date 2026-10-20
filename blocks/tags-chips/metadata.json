@@ -1,0 +1,30 @@
+{
+  "variantName": "tags-chips",
+  "baseBlock": "tags",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Topic tags shown as pill chips",
+    "description": "Wrapping row of pills (#e6f0fa background, blue 12px/16px body-font text, 10px 15px padding, 20px radius, 10px gap)."
+  },
+  "contentPattern": {
+    "description": "7 tags: Healthcare systems, Defined benefit, Non-profit strategy, Overlay strategies, Institutional, Outsourced CIO | OCIO, Defined contribution",
+    "structure": "one row per tag; single cell with the tag text, optionally hyperlinked",
+    "rows": [
+      [
+        "Tag text (optionally linked to a tag/listing page)"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": {
+    "description": "Article sidebar topic tags.",
+    "pagesUsing": [
+      "/us/en/insights/blog-article"
+    ],
+    "reuseCount": 1,
+    "lastUsed": "2026-10-19"
+  },
+  "reuseGuidance": "Use for short lists of topic labels. Linked tags render as interactive chips with a hover state; unlinked tags are static.",
+  "sourceUrl": "figma:66RO6MCqlbGMo3YXvtFRpE/5878:1203"
+}

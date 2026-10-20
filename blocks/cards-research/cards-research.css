@@ -1,0 +1,160 @@
+/* Related research cards (Figma 5878:1281): image, date, linked title, author headshot + name/role.
+   Visual language mirrors the Research cards in tabs-article-cards. */
+
+.cards-research {
+  --cards-research-gap: 20px;
+  --cards-research-border: #e5e5e5;
+  --cards-research-padding: 24px;
+  --cards-research-avatar-size: 80px;
+  --cards-research-title-size: var(--heading-font-size-m);
+}
+
+.cards-research .cards-research-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cards-research-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* --- CARD --- */
+
+.cards-research .cards-research-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--cards-research-border);
+  background-color: var(--white);
+  box-shadow: 0 0 0 0 rgb(0 0 0 / 8%);
+  transition: box-shadow 0.3s;
+}
+
+.cards-research .cards-research-card:hover,
+.cards-research .cards-research-card:focus-within {
+  box-shadow: 0 0 12px 5px rgb(0 0 0 / 30%);
+}
+
+.cards-research .cards-research-card-image picture {
+  display: block;
+}
+
+.cards-research .cards-research-card-image img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2.2 / 1;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.cards-research .cards-research-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: var(--cards-research-padding);
+  color: var(--navy);
+}
+
+/* Universal Editor only: the text field's wrapper lays out like the card body itself */
+.cards-research .cards-research-card-text {
+  display: inherit;
+  flex-direction: inherit;
+}
+
+.cards-research .cards-research-card-date {
+  margin: 0;
+  font-family: var(--body-font-family);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.cards-research .cards-research-card-title {
+  margin: 24px 0 0;
+  font-family: var(--heading-font-family);
+  font-size: var(--cards-research-title-size);
+  font-weight: 500;
+  line-height: 28px;
+  color: var(--navy);
+}
+
+.cards-research .cards-research-card-title a:any-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cards-research .cards-research-card-title a:hover {
+  text-decoration: underline;
+}
+
+/* whole card is clickable via the title link */
+.cards-research .cards-research-card-title a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.cards-research .cards-research-card-description {
+  margin: var(--gap-sm) 0 0;
+  font-size: var(--body-font-size-m);
+  line-height: var(--body-line-height);
+}
+
+/* --- AUTHOR BYLINE --- */
+
+.cards-research .cards-research-card-author {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  margin-top: auto;
+  padding-top: var(--gap-lg);
+}
+
+.cards-research .cards-research-card-avatar {
+  flex: none;
+}
+
+.cards-research .cards-research-card-avatar img {
+  display: block;
+  width: var(--cards-research-avatar-size);
+  height: var(--cards-research-avatar-size);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.cards-research .cards-research-card-author-text p {
+  margin: 0;
+  font-family: var(--body-font-family);
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.cards-research .cards-research-card-author-text .cards-research-card-author-name {
+  font-weight: 700;
+}
+
+/* --- RESPONSIVE --- */
+
+@media (width >= 600px) {
+  .cards-research .cards-research-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (width >= 900px) {
+  .cards-research .cards-research-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (width >= 1200px) {
+  .cards-research {
+    --cards-research-padding: 26px;
+    --cards-research-avatar-size: 108px;
+    --cards-research-title-size: 22px;
+  }
+
+  .cards-research .cards-research-card-author {
+    gap: 30px;
+  }
+}

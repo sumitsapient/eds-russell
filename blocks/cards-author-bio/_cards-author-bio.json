@@ -1,0 +1,83 @@
+{
+  "definitions": [
+    {
+      "title": "Cards Author Bio",
+      "id": "cards-author-bio",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block",
+            "template": {
+              "name": "Cards Author Bio",
+              "model": "cards-author-bio",
+              "filter": "cards-author-bio"
+            }
+          }
+        }
+      }
+    },
+    {
+      "title": "Cards Author Bio Item",
+      "id": "cards-author-bio-item",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block/item",
+            "template": {
+              "name": "Cards Author Bio Item",
+              "model": "cards-author-bio-item"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "cards-author-bio",
+      "fields": [
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "heading",
+          "label": "Heading",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "cards-author-bio-item",
+      "fields": [
+        {
+          "component": "reference",
+          "valueType": "string",
+          "name": "image",
+          "label": "Photo",
+          "multi": false
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "imageAlt",
+          "label": "Photo alt text",
+          "value": ""
+        },
+        {
+          "component": "richtext",
+          "name": "text",
+          "value": "",
+          "label": "Name (heading), role and bio",
+          "valueType": "string"
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "id": "cards-author-bio",
+      "components": [
+        "cards-author-bio-item"
+      ]
+    }
+  ]
+}

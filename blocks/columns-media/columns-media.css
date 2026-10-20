@@ -1,0 +1,109 @@
+/* columns-media: text column (feature titles + copy + CTA) beside a photo.
+ * Values from russellinvestments.com about-us "What sets us apart"
+ * (AEM components with 10.72px padding => ~21px rhythm between items/columns). */
+
+.columns-media .columns-media-row {
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+}
+
+.columns-media .columns-media-row + .columns-media-row {
+  margin-top: var(--gap-2xl);
+}
+
+/* --- text column --- */
+.columns-media .columns-media-text > * {
+  margin: 0;
+}
+
+.columns-media .columns-media-text > * + * {
+  margin-top: 21px;
+}
+
+.columns-media .columns-media-text h3 {
+  color: var(--text-color-subtle);
+  font-family: var(--heading-font-family);
+  font-size: 25px;
+  font-weight: var(--heading-font-weight);
+  line-height: 1.4;
+}
+
+.columns-media .columns-media-text p {
+  color: var(--text-color);
+  font-family: var(--body-font-family);
+  font-size: var(--body-font-size-m);
+  line-height: var(--body-line-height);
+}
+
+/* CTA: authored as a bare link; styled like Russell .cmp-button--secondary */
+.columns-media .columns-media-text p.columns-media-cta {
+  display: flex;
+}
+
+main .columns-media .columns-media-text a.columns-media-cta-link:any-link {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  max-width: 100%;
+  min-height: var(--button-min-height);
+  padding: var(--button-padding);
+  border: 2px solid var(--blue);
+  border-radius: var(--button-border-radius);
+  background-color: transparent;
+  color: var(--blue);
+  font-family: var(--button-font-family);
+  font-size: 16px;
+  font-weight: var(--button-font-weight);
+  line-height: 20px;
+  text-decoration: none;
+  transition: var(--button-transition);
+}
+
+main .columns-media .columns-media-text a.columns-media-cta-link:any-link::after {
+  content: '';
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-left: 4px;
+  background-color: currentcolor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 3.333 8.825 4.508l4.65 4.659H3.333v1.666h10.142l-4.65 4.659L10 16.667 16.667 10z'/%3E%3C/svg%3E") center / 20px no-repeat;
+}
+
+main .columns-media .columns-media-text a.columns-media-cta-link:any-link:hover,
+main .columns-media .columns-media-text a.columns-media-cta-link:any-link:focus-visible {
+  background-color: var(--blue);
+  color: var(--white);
+  text-decoration: none;
+}
+
+/* --- image column --- */
+.columns-media .columns-media-image picture,
+.columns-media .columns-media-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (width >= 600px) {
+  .columns-media .columns-media-text h3 {
+    font-size: 32px;
+  }
+}
+
+@media (width >= 900px) {
+  .columns-media .columns-media-row {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .columns-media .columns-media-row > div {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  main .columns-media .columns-media-text a.columns-media-cta-link:any-link {
+    font-size: var(--button-font-size);
+  }
+}
