@@ -9,6 +9,7 @@
  *   npm run build:json
  *   node tools/importer/build-content-package.mjs \
  *     [--site-root /content/eds-russell] [--dam-root /content/dam/eds-russell] [--version 1.0.0]
+ *     [--skip home.plain.html]
  *
  * Output (dist/):
  *   eds-russell-content-<version>.zip  install via AEM Package Manager
@@ -30,8 +31,8 @@ const DAM_ROOT = (args['dam-root'] || '/content/dam/eds-russell').replace(/\/$/,
 const VERSION = args.version || '1.0.0';
 const CONTENT_DIR = 'content';
 const OUT_DIR = 'dist';
-// Files that are not authored pages
-const SKIP = new Set([]);
+// Files to leave out of the package, e.g. --skip home.plain.html,draft.plain.html
+const SKIP = new Set((args.skip || '').split(',').filter(Boolean));
 const SILENT = {
   info() {}, debug() {}, trace() {}, warn() {}, error() {},
 };
