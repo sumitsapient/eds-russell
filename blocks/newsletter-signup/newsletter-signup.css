@@ -1,0 +1,156 @@
+.newsletter-signup {
+  --newsletter-signup-bg: var(--navy-dark, #020e40);
+  --newsletter-signup-color: var(--white, #fff);
+  --newsletter-signup-padding: 30px;
+  --newsletter-signup-input-border: #b3b3b3;
+  --newsletter-signup-input-color: var(--navy, #000060);
+  --newsletter-signup-input-height: 54px;
+  --newsletter-signup-button-bg: var(--blue, #165eda);
+  --newsletter-signup-button-bg-hover: var(--blue-dark, #0f47a8);
+  --newsletter-signup-radio-size: 24px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  box-sizing: border-box;
+  padding: var(--newsletter-signup-padding);
+  background: var(--newsletter-signup-bg);
+  color: var(--newsletter-signup-color);
+}
+
+.newsletter-signup .newsletter-signup-heading {
+  margin: 0;
+  color: var(--newsletter-signup-color);
+  font-family: var(--heading-font-family);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 25px;
+}
+
+.newsletter-signup .newsletter-signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 0;
+}
+
+.newsletter-signup .newsletter-signup-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.newsletter-signup .newsletter-signup-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--newsletter-signup-input-height);
+  margin: 0;
+  padding: 16px 12px;
+  border: 1px solid var(--newsletter-signup-input-border);
+  border-radius: 4px;
+  background: var(--white, #fff);
+  color: var(--newsletter-signup-input-color);
+  font-family: var(--body-font-family);
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.newsletter-signup .newsletter-signup-input::placeholder {
+  color: var(--newsletter-signup-input-color);
+  font-style: italic;
+  opacity: 1;
+}
+
+.newsletter-signup .newsletter-signup-input:focus-visible {
+  outline: 2px solid var(--newsletter-signup-button-bg);
+  outline-offset: 2px;
+}
+
+.newsletter-signup .newsletter-signup-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.newsletter-signup .newsletter-signup-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--newsletter-signup-color);
+  font-family: var(--body-font-family);
+  font-size: 16px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+/* CSS-drawn radio: white ring, white dot when selected */
+.newsletter-signup .newsletter-signup-radio {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: var(--newsletter-signup-radio-size);
+  height: var(--newsletter-signup-radio-size);
+  margin: 0;
+  border: 2px solid var(--newsletter-signup-color);
+  border-radius: 50%;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+
+.newsletter-signup .newsletter-signup-radio:checked {
+  background: radial-gradient(circle, var(--newsletter-signup-color) 0 5px, transparent 5.5px);
+}
+
+.newsletter-signup .newsletter-signup-radio:focus-visible {
+  outline: 2px solid var(--newsletter-signup-color);
+  outline-offset: 2px;
+}
+
+.newsletter-signup .newsletter-signup-button {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 42px;
+  margin: 0;
+  padding: 4px 18px;
+  border: 0;
+  border-radius: 25px;
+  background: var(--newsletter-signup-button-bg);
+  color: var(--newsletter-signup-color);
+  font-family: var(--heading-font-family);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 23px;
+  letter-spacing: 0.5px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.newsletter-signup .newsletter-signup-button:hover {
+  background: var(--newsletter-signup-button-bg-hover);
+}
+
+.newsletter-signup .newsletter-signup-button:focus-visible {
+  outline: 2px solid var(--newsletter-signup-color);
+  outline-offset: 2px;
+}
+
+.newsletter-signup .newsletter-signup-status {
+  margin: 0;
+  font-family: var(--body-font-family);
+  font-size: 14px;
+  line-height: 19px;
+}
+
+.newsletter-signup .newsletter-signup-status:empty {
+  display: none;
+}

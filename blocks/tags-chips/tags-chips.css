@@ -1,0 +1,45 @@
+.tags-chips {
+  --tags-chips-bg: #e6f0fa;
+  --tags-chips-bg-hover: var(--blue, #165eda);
+  --tags-chips-color: var(--blue, #165eda);
+  --tags-chips-color-hover: var(--white, #fff);
+  --tags-chips-gap: 10px;
+  --tags-chips-padding: 10px 15px;
+  --tags-chips-radius: 20px;
+}
+
+.tags-chips .tags-chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tags-chips-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tags-chips .tags-chips-item {
+  margin: 0;
+}
+
+.tags-chips .tags-chips-chip {
+  display: inline-block;
+  padding: var(--tags-chips-padding);
+  border-radius: var(--tags-chips-radius);
+  background: var(--tags-chips-bg);
+  color: var(--tags-chips-color);
+  font-family: var(--body-font-family);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  text-decoration: none;
+}
+
+.tags-chips a.tags-chips-chip:hover {
+  background: var(--tags-chips-bg-hover);
+  color: var(--tags-chips-color-hover);
+}
+
+.tags-chips a.tags-chips-chip:focus-visible {
+  outline: 2px solid var(--tags-chips-color);
+  outline-offset: 2px;
+}

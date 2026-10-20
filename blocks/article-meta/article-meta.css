@@ -1,0 +1,145 @@
+/*
+ * article-meta
+ * Byline row from Figma 5878:1242 / 5878:1346 (blog article, 1728px frame).
+ * Option `band`: full-bleed #f3f3f3 band behind the row (Figma 5878:1187).
+ */
+
+.article-meta {
+  --article-meta-band: var(--gray-light);
+  --article-meta-line-gap: 10px;
+  --article-meta-share-size: 42px;
+  --article-meta-share-gap: 10px;
+  --article-meta-font-size: 18px;
+  --article-meta-line-height: 24px;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gap-lg);
+  color: var(--navy);
+  font-family: var(--heading-font-family);
+  font-size: var(--article-meta-font-size);
+  line-height: var(--article-meta-line-height);
+}
+
+.article-meta .article-meta-info,
+.article-meta .article-meta-authors,
+.article-meta .article-meta-dates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--article-meta-line-gap);
+}
+
+.article-meta .article-meta-info p {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.article-meta .article-meta-author {
+  color: var(--blue);
+  font-weight: 500;
+}
+
+.article-meta .article-meta-author a:any-link {
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+}
+
+.article-meta .article-meta-author a:hover {
+  color: var(--navy);
+  text-decoration: underline;
+}
+
+.article-meta .article-meta-published {
+  font-weight: 500;
+}
+
+.article-meta .article-meta-updated {
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* --- Share buttons --- */
+.article-meta .article-meta-share {
+  display: flex;
+  gap: var(--article-meta-share-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.article-meta .article-meta-share li {
+  margin: 0;
+  padding: 0;
+}
+
+.article-meta .article-meta-share-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--article-meta-share-size);
+  height: var(--article-meta-share-size);
+  margin: 0;
+  padding: 0;
+  border: 2px solid var(--blue);
+  border-radius: 50%;
+  background-color: var(--blue);
+  color: var(--white);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.article-meta .article-meta-share-print {
+  background-color: var(--white);
+  color: var(--blue);
+}
+
+.article-meta .article-meta-share-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.article-meta .article-meta-share-button:hover {
+  border-color: var(--navy);
+  background-color: var(--navy);
+  color: var(--white);
+}
+
+.article-meta .article-meta-share-button:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+
+/* --- Band option: full-bleed light-grey band behind the row ---
+ * border-image outset paints outside the box without adding scroll overflow
+ * or creating a stacking context.
+ */
+.article-meta.band {
+  padding: 32px 0 24px;
+  background-color: var(--article-meta-band);
+  border-image: linear-gradient(var(--article-meta-band), var(--article-meta-band)) fill 0 / 0 / 0 100vmax;
+}
+
+@media (width >= 900px) {
+  .article-meta {
+    --article-meta-font-size: 20px;
+    --article-meta-line-height: 25px;
+
+    flex-wrap: nowrap;
+  }
+
+  .article-meta.band {
+    padding: 50px 0 33px;
+  }
+}
+
+@media print {
+  .article-meta .article-meta-share {
+    display: none;
+  }
+}

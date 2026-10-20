@@ -1,0 +1,162 @@
+/*
+ * callout-takeaways
+ * Figma blog article (1728px frame):
+ *  - default: "Key takeaways" light-blue panel (5878:1247)
+ *  - chart:   light-grey chart panel with title, subtitle, label, chart image, disclaimer (5878:1268)
+ *  - rule:    "The bottom line" — 3px orange top rule, no panel (5878:1277)
+ */
+
+.callout-takeaways {
+  --callout-bg: var(--blue-light);
+  --callout-padding: 24px;
+  --callout-gap: 16px;
+  --callout-title-size: 24px;
+  --callout-title-line-height: 32px;
+  --callout-text-size: 18px;
+  --callout-text-line-height: 26px;
+  --callout-note-size: 11px;
+  --callout-note-line-height: 15px;
+  --callout-rule-color: var(--orange);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--callout-gap);
+  box-sizing: border-box;
+  padding: var(--callout-padding);
+  background-color: var(--callout-bg);
+  color: var(--navy);
+}
+
+.callout-takeaways .callout-takeaways-body {
+  font-family: var(--body-font-family);
+  font-size: var(--callout-text-size);
+  line-height: var(--callout-text-line-height);
+}
+
+.callout-takeaways .callout-takeaways-body > * {
+  margin: 0;
+}
+
+.callout-takeaways .callout-takeaways-body > * + * {
+  margin-top: var(--callout-gap);
+}
+
+.callout-takeaways .callout-takeaways-title {
+  color: var(--navy);
+  font-family: var(--heading-font-family);
+  font-size: var(--callout-title-size);
+  font-weight: 500;
+  line-height: var(--callout-title-line-height);
+}
+
+.callout-takeaways .callout-takeaways-body p {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.callout-takeaways .callout-takeaways-body ul,
+.callout-takeaways .callout-takeaways-body ol {
+  padding-left: 1.5em;
+}
+
+.callout-takeaways .callout-takeaways-body li {
+  margin: 0;
+}
+
+.callout-takeaways .callout-takeaways-body li + li {
+  margin-top: 4px;
+}
+
+.callout-takeaways .callout-takeaways-media picture,
+.callout-takeaways .callout-takeaways-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.callout-takeaways .callout-takeaways-note {
+  font-family: var(--body-font-family);
+  font-size: var(--callout-note-size);
+  line-height: var(--callout-note-line-height);
+}
+
+.callout-takeaways .callout-takeaways-note > * {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.callout-takeaways .callout-takeaways-note > * + * {
+  margin-top: 8px;
+}
+
+/* --- chart option: light-grey chart panel --- */
+.callout-takeaways.chart {
+  --callout-bg: var(--gray-light);
+  --callout-padding: 20px;
+  --callout-gap: 20px;
+  --callout-title-size: 24px;
+  --callout-title-line-height: 30px;
+}
+
+.callout-takeaways.chart .callout-takeaways-body {
+  font-family: var(--heading-font-family);
+}
+
+.callout-takeaways.chart .callout-takeaways-body > * + * {
+  margin-top: 6px;
+}
+
+.callout-takeaways.chart .callout-takeaways-body > .callout-takeaways-label {
+  margin-top: 26px;
+  font-weight: 600;
+}
+
+.callout-takeaways.chart .callout-takeaways-label strong {
+  font-weight: inherit;
+}
+
+/* Figma "Chart container" (5878:1272): label → chart graphic gap is -2px */
+.callout-takeaways.chart .callout-takeaways-media {
+  margin-top: calc(-2px - var(--callout-gap));
+}
+
+/* --- rule option: orange top rule, no panel --- */
+.callout-takeaways.rule {
+  --callout-bg: transparent;
+  --callout-padding: 32px 0;
+  --callout-title-size: 32px;
+  --callout-title-line-height: 38px;
+  --callout-text-size: 18px;
+  --callout-text-line-height: 25px;
+
+  border-top: 3px solid var(--callout-rule-color);
+}
+
+@media (width >= 900px) {
+  .callout-takeaways {
+    --callout-padding: 40px;
+    --callout-gap: 20px;
+    --callout-title-size: 28px;
+    --callout-title-line-height: 36px;
+    --callout-text-size: 20px;
+    --callout-text-line-height: 28px;
+  }
+
+  .callout-takeaways.chart {
+    --callout-padding: 30px;
+    --callout-title-size: 30px;
+    --callout-title-line-height: 36px;
+    --callout-text-size: 20px;
+    --callout-text-line-height: 25px;
+  }
+
+  .callout-takeaways.rule {
+    --callout-padding: 40px 0;
+    --callout-gap: 16px;
+    --callout-title-size: 42px;
+    --callout-title-line-height: 50px;
+    --callout-text-size: 18px;
+    --callout-text-line-height: 25px;
+  }
+}

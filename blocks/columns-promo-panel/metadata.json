@@ -1,0 +1,29 @@
+{
+  "variantName": "columns-promo-panel",
+  "baseBlock": "columns",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Boxed promo text (eyebrow, heading, paragraph, CTA) beside an edge-to-edge image; dark option renders a full-bleed navy band",
+    "description": "Side-by-side text and image layout. Side-by-side text and image layout; eyebrow kept as a paragraph, not a heading."
+  },
+  "contentPattern": {
+    "description": "Text panel (H3 'Global Market Outlook' + paragraph + CTA 'Read the latest report') beside photo 'Sailboat' | Eyebrow 'Market volatility resources' + H3 'Are you prepared for the next downside market swing?' + paragraph + CTA 'Managing market volatility', beside photo 'A man holding his surfing board walking towards the sea'",
+    "structure": "one row, two cells: text cell (optional eyebrow paragraph, H3, paragraph, CTA link) and image cell, in either order",
+    "rows": [
+      [
+        "Text: optional eyebrow, H3, paragraph, CTA link",
+        "Image"
+      ]
+    ]
+  },
+  "options": [
+    {
+      "class": "dark",
+      "label": "Dark"
+    }
+  ],
+  "usage": "Report or resource promos pairing a short pitch and CTA with a photo.",
+  "reuseGuidance": "Use when one text panel sits beside one image. Put the image cell first to place it on the left. Use the dark option for the full-bleed navy band treatment.",
+  "memberVariantIds": [],
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/insights.html"
+}

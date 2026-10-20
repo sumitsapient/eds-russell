@@ -1,0 +1,30 @@
+{
+  "variantName": "alert-banner",
+  "baseBlock": "alert-banner",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Dismissible full-width orange notice strip with icon, linked message and close button",
+    "description": "Interactive component (dismissible); the close behaviour cannot be authored as default content. The close button is built by JS (aria-label 'Close alert'); dismissal is remembered for the browser session (sessionStorage, keyed by the message text)."
+  },
+  "contentPattern": {
+    "description": "Icon image + linked notice 'Attention: The content on this page and the ability to purchase these ETFs is intended for individual investor audiences in the United States only. If you are a financial advisor, click here for the advisor ETF page.' + dismiss button",
+    "structure": "one row: optional icon image, then the message paragraph (may be wholly or partly a link); the close button is not authored",
+    "rows": [
+      [
+        "Optional icon image, then message paragraph (may be wholly or partly a link)"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": {
+    "description": "Audience / jurisdiction notices at the top of a page.",
+    "pagesUsing": [
+      "/content/ri/us/en/individual-investor/investments/models-and-products/exchange-traded-funds"
+    ],
+    "reuseCount": 0,
+    "lastUsed": "2026-10-20"
+  },
+  "reuseGuidance": "Use for a single short page-level notice the visitor may dismiss. Place it alone in the first section so it sits flush under the header. Changing the message text shows the banner again to visitors who dismissed the old one.",
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/individual-investor/investments/models-and-products/exchange-traded-funds.html"
+}

@@ -1,0 +1,39 @@
+{
+  "variantName": "newsletter-signup",
+  "baseBlock": "newsletter-signup",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Newsletter subscribe panel (visual only, no submission backend)",
+    "description": "Dark #020e40 panel, 30px padding: white 20px/600 heading, 54px email input (4px radius, #b3b3b3 border), three CSS-drawn white radio options, full-width blue pill button (25px radius, 18px)."
+  },
+  "contentPattern": {
+    "description": "Heading, email placeholder, 3 subscription options, button label",
+    "structure": "row 1: heading; row 2: email placeholder; row 3: bulleted list of option labels (first is default); row 4: button label",
+    "rows": [
+      [
+        "Heading"
+      ],
+      [
+        "Email placeholder"
+      ],
+      [
+        "Bulleted list of subscription options"
+      ],
+      [
+        "Button label"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": {
+    "description": "Article sidebar newsletter call to action.",
+    "pagesUsing": [
+      "/us/en/insights/blog-article"
+    ],
+    "reuseCount": 1,
+    "lastUsed": "2026-10-19"
+  },
+  "reuseGuidance": "Visual-only sign-up: submitting validates the email, prevents the request and shows an inline status message. Not the Forms add-on `form` block; replace or wire up when a subscription backend exists. Empty fields fall back to the Figma copy.",
+  "sourceUrl": "figma:66RO6MCqlbGMo3YXvtFRpE/5878:1218"
+}

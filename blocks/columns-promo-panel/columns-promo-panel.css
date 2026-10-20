@@ -1,0 +1,240 @@
+/* stylelint-disable no-descending-specificity -- base + dark variant in one file */
+
+/*
+ * columns-promo-panel — Russell .cmp-vertical-card-image-right
+ * Default: boxed #f3f3f3 panel, text left (4fr) + edge-to-edge image right (3fr).
+ * Dark (.cmp-vertical-card-image-right--navy-full-bleed): full-bleed 500px navy band.
+ * Values extracted from source computed styles.
+ */
+
+/* --- Default (boxed) --- */
+
+/* source panel spans the grid column; its own 10.72px padding provides the gutter */
+.columns-promo-panel-wrapper:has(.columns-promo-panel:not(.dark)) {
+  padding: 0;
+}
+
+.columns-promo-panel {
+  padding: 10.72px;
+}
+
+.columns-promo-panel .columns-promo-panel-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  background-color: var(--gray-light);
+}
+
+.columns-promo-panel .columns-promo-panel-row + .columns-promo-panel-row {
+  margin-top: var(--gap-2xl);
+}
+
+.columns-promo-panel .columns-promo-panel-text {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 62.4px;
+}
+
+.columns-promo-panel .columns-promo-panel-text > :first-child {
+  margin-top: 0;
+}
+
+.columns-promo-panel .columns-promo-panel-text > :last-child {
+  margin-bottom: 0;
+}
+
+/* Eyebrow (source .cmp-vertical-card-image-right__title-pretitle) */
+.columns-promo-panel .columns-promo-panel-text .columns-promo-panel-eyebrow {
+  margin: 0 0 16px;
+  color: #dd6814;
+  font-family: var(--heading-font-family);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Heading — source scales fluidly 39.2px (390w) to 42.67px (1920w) */
+.columns-promo-panel .columns-promo-panel-heading {
+  margin: 0 0 10.72px;
+  color: var(--text-color);
+  font-family: var(--heading-font-family);
+  font-size: calc(38.32px + 0.2268vw);
+  font-weight: var(--heading-font-weight);
+  line-height: 1.4;
+}
+
+.columns-promo-panel .columns-promo-panel-text p {
+  margin: 0 0 32px;
+  font-size: var(--body-font-size-m);
+  line-height: var(--body-line-height);
+}
+
+/* CTA — source .cmp-button--secondary: outline pill + arrow, blue sweep on hover */
+.columns-promo-panel .columns-promo-panel-text .columns-promo-panel-cta {
+  margin: 0;
+}
+
+.columns-promo-panel .columns-promo-panel-cta a:any-link {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  max-width: 100%;
+  min-height: var(--button-min-height);
+  padding: 8.8px 24px;
+  border: 2px solid var(--blue);
+  border-radius: var(--button-border-radius);
+  background: linear-gradient(var(--blue), var(--blue)) left center / 0 100% no-repeat;
+  color: var(--blue);
+  font-family: var(--heading-font-family);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-size 0.5s, color 0.5s;
+}
+
+.columns-promo-panel .columns-promo-panel-cta a:any-link::after {
+  content: '';
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-left: 4px;
+  background-color: currentcolor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 3.333 8.825 4.508l4.65 4.659H3.333v1.666h10.142l-4.65 4.659L10 16.667 16.667 10z'/%3E%3C/svg%3E") center / 20px no-repeat;
+}
+
+.columns-promo-panel .columns-promo-panel-cta a:hover,
+.columns-promo-panel .columns-promo-panel-cta a:focus-visible {
+  background-size: 100% 100%;
+  color: var(--white);
+  text-decoration: none;
+}
+
+/* Image — hidden on small screens (as on source); fills its cell edge-to-edge */
+.columns-promo-panel .columns-promo-panel-image {
+  display: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.columns-promo-panel .columns-promo-panel-image picture {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+.columns-promo-panel .columns-promo-panel-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- Dark: full-bleed navy band --- */
+.columns-promo-panel-wrapper:has(.columns-promo-panel.dark) {
+  max-width: unset;
+  padding: 0;
+}
+
+.columns-promo-panel.dark {
+  padding: 0;
+}
+
+.columns-promo-panel.dark .columns-promo-panel-row {
+  min-height: 500px;
+  background-color: transparent;
+}
+
+.columns-promo-panel.dark .columns-promo-panel-text {
+  padding: 0 48px 0 calc(100vw / 12 + 10.72px);
+  background-color: var(--navy-dark);
+  color: var(--white);
+}
+
+.columns-promo-panel.dark .columns-promo-panel-text > * {
+  max-width: 550px;
+}
+
+.columns-promo-panel.dark .columns-promo-panel-text .columns-promo-panel-eyebrow {
+  color: var(--orange);
+}
+
+.columns-promo-panel.dark .columns-promo-panel-heading {
+  color: var(--white);
+  font-size: calc(23.2px + 0.25vw);
+}
+
+.columns-promo-panel.dark .columns-promo-panel-text p:not(.columns-promo-panel-eyebrow) {
+  color: var(--gray-light);
+}
+
+.columns-promo-panel.dark .columns-promo-panel-cta a:any-link {
+  color: var(--white);
+}
+
+/* footnote under the CTA (source .cmp-text--footer pulled into the navy panel: 11px white) */
+.columns-promo-panel .columns-promo-panel-text .columns-promo-panel-note {
+  /* the negative bottom margin keeps the note out of the vertical centring (source pulls it up
+     under the CTA), so heading and CTA stay where they are without it */
+  margin: 19px 0 -34.4px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.columns-promo-panel.dark .columns-promo-panel-text p.columns-promo-panel-note,
+.columns-promo-panel.dark .columns-promo-panel-note a:any-link {
+  color: var(--white);
+}
+
+.columns-promo-panel.dark .columns-promo-panel-image {
+  background-color: var(--navy-stripe);
+}
+
+.columns-promo-panel.dark .columns-promo-panel-image picture {
+  left: 8%;
+}
+
+/* --- Tablet: boxed panel goes side-by-side --- */
+@media (width >= 600px) {
+  .columns-promo-panel:not(.dark) .columns-promo-panel-row {
+    grid-template-columns: 4fr 3fr;
+  }
+
+  .columns-promo-panel:not(.dark) .columns-promo-panel-image {
+    display: block;
+  }
+
+  .columns-promo-panel:not(.dark) .columns-promo-panel-image-first {
+    grid-template-columns: 3fr 4fr;
+  }
+}
+
+@media (width >= 900px) {
+  .columns-promo-panel .columns-promo-panel-cta a:any-link {
+    font-size: var(--button-font-size);
+  }
+}
+
+/* --- Desktop: dark band splits 50/50 with image --- */
+@media (width >= 1200px) {
+  .columns-promo-panel.dark .columns-promo-panel-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .columns-promo-panel.dark .columns-promo-panel-image {
+    display: block;
+  }
+
+  .columns-promo-panel.dark .columns-promo-panel-text > * {
+    max-width: none;
+  }
+
+  .columns-promo-panel.dark .columns-promo-panel-heading {
+    font-size: calc(38.32px + 0.2268vw);
+  }
+}

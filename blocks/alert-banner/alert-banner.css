@@ -1,0 +1,130 @@
+/*
+ * alert-banner — Russell .cmp-alert-banner
+ * Values from russellinvestments.com ETF page computed styles (390 / 1440 viewports):
+ * orange strip, 10.72px outer + 10.72px inner padding, 37px icon, navy neulis-sans 500
+ * notice link (13.47px -> 16.41px, line-height 1), white close glyph.
+ */
+
+/* the banner sits flush between the header and the next section */
+main > .section.alert-banner-container:has(> .alert-banner-wrapper:only-child) {
+  padding: 0;
+}
+
+main > .section > .alert-banner-wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+.alert-banner {
+  box-sizing: border-box;
+  padding: 10.72px;
+  background-color: var(--orange);
+  color: var(--navy);
+}
+
+.alert-banner[hidden] {
+  display: none;
+}
+
+.alert-banner .alert-banner-inner {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-xl);
+  padding: 10.72px 0;
+}
+
+.alert-banner .alert-banner-content {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10.72px;
+  min-width: 0;
+}
+
+.alert-banner .alert-banner-icon {
+  flex: none;
+  width: 37px;
+  height: 37px;
+  line-height: 0;
+}
+
+.alert-banner .alert-banner-icon picture,
+.alert-banner .alert-banner-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.alert-banner .alert-banner-message {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--heading-font-family);
+  font-size: 13.47px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.alert-banner .alert-banner-message > * {
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+}
+
+.alert-banner .alert-banner-message > * + * {
+  margin-top: var(--gap-sm);
+}
+
+.alert-banner .alert-banner-message a:any-link {
+  color: var(--navy);
+  text-decoration: none;
+}
+
+.alert-banner .alert-banner-message a:hover {
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: var(--text-link-underline-offset);
+}
+
+/* source glyph: white 18px "x"; hit area enlarged to 32px for touch */
+.alert-banner .alert-banner-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.alert-banner .alert-banner-close:hover {
+  background-color: rgb(0 0 96 / 12%);
+}
+
+.alert-banner .alert-banner-message a:focus-visible,
+.alert-banner .alert-banner-close:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+}
+
+.alert-banner .alert-banner-close svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+@media (width >= 900px) {
+  .alert-banner .alert-banner-message {
+    font-size: 16.41px;
+  }
+}
