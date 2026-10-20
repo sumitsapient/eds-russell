@@ -1,248 +1,123 @@
-/* === SECTION BACKGROUND IMAGE === */
-main .section.has-background {
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+/* stylelint-disable no-descending-specificity */
+
+/* add global styles that can be loaded post LCP here */
+
+/* ===== Tabs section style ===== */
+
+/* --- Local design tokens --- */
+.tabs-container {
+  --tabs-accent: var(--accent-color, rgb(232 101 26));
+  --tabs-text: var(--dark-color, rgb(15 26 20));
+  --tabs-muted: var(--text-color-muted, rgb(122 138 128));
+  --tabs-inactive: var(--border-color, rgb(200 194 184));
+
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--section-padding);
+  padding-inline: var(--gap-lg);
+}
+
+/* Section heading above tabs */
+.tabs-container > .default-content-wrapper {
+  margin-bottom: var(--gap-xl);
+}
+
+.tabs-container > .default-content-wrapper h2 {
+  margin: 0 0 var(--gap-xs);
+  font-family: var(--heading-font-family);
+  font-size: var(--heading-font-size-xl, 40px);
+  font-weight: 700;
+  color: var(--tabs-text);
+}
+
+/* --- Tab navigation --- */
+.tabs-container .tabs-list {
   position: relative;
+  display: flex;
+  gap: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  border-top: 2px solid var(--tabs-text);
+  padding-top: var(--gap-xs);
+  padding-bottom: 4px;
+  margin-bottom: var(--gap-lg);
+}
+
+.tabs-container .tabs-list button {
+  flex: 0 0 max-content;
   margin: 0;
-  padding: var(--spacing-xxxl, 64px) 0;
+  border: none;
+  border-radius: 0;
+  padding: var(--gap-sm) var(--gap-xl) var(--gap-sm) 0;
+  background: none;
+  font-family: var(--heading-font-family);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tabs-inactive);
+  cursor: pointer;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: color 0.25s ease;
 }
 
-/* Dark overlay on background-image sections for text readability */
-main .section.has-background::before {
-  content: '';
+.tabs-container .tabs-list button p {
+  margin: 0;
+  color: inherit;
+}
+
+/* Active tab: dark text + accent underline (CSS default until JS takes over) */
+.tabs-container .tabs-list button[aria-selected='true'] {
+  color: var(--tabs-text);
+  box-shadow: inset 0 -4px 0 var(--tabs-accent);
+}
+
+/* Once a tab is clicked, JS indicator handles the underline */
+.tabs-container .tabs-list.tabs-animated button[aria-selected='true'] {
+  box-shadow: none;
+}
+
+.tabs-container .tabs-list button:hover {
+  color: var(--tabs-muted);
+}
+
+.tabs-container .tabs-list button[aria-selected='true']:hover {
+  color: var(--tabs-text);
+}
+
+/* --- Sliding indicator (activated on first click via .tabs-animated) --- */
+.tabs-container .tabs-indicator {
   position: absolute;
-  inset: 0;
-  background: rgb(0 0 0 / 45%);
-  z-index: 0;
-}
-
-main .section.has-background > div {
-  position: relative;
-  z-index: 1;
-  color: var(--color-text-inverse, #fff);
-}
-
-main .section.has-background h1,
-main .section.has-background h2,
-main .section.has-background h3 {
-  color: var(--color-text-inverse, #fff);
-}
-
-/* === SCROLL ANIMATIONS === */
-
-/* Base state Ã¢â‚¬â€ sections marked for animation start hidden */
-main .section.animate {
-  opacity: 0;
-  transition:
-    opacity var(--duration-slow, 500ms) var(--easing-out, ease-out),
-    transform var(--duration-slow, 500ms) var(--easing-out, ease-out);
-}
-
-/* Fade In Ã¢â‚¬â€ just opacity */
-main .section.fade-in {
-  opacity: 0;
-}
-
-/* Slide Up Ã¢â‚¬â€ moves up from below */
-main .section.slide-up {
-  transform: translateY(40px);
-}
-
-/* Slide In from Left */
-main .section.slide-left {
-  transform: translateX(-40px);
-}
-
-/* Slide In from Right */
-main .section.slide-right {
-  transform: translateX(40px);
-}
-
-/* Visible state Ã¢â‚¬â€ added by IntersectionObserver in scripts.js */
-main .section.animate.visible {
-  opacity: 1;
-  transform: none;
-}
-
-/* === SKIP TO CONTENT === */
-.skip-to-content {
-  position: absolute;
-  top: -100%;
-  left: var(--spacing-m);
-  z-index: 10000;
-  padding: var(--spacing-s) var(--spacing-m);
-  background: var(--color-primary);
-  color: var(--color-text-inverse);
-  border-radius: var(--radius-md);
-  font-weight: var(--font-weight-medium);
-  text-decoration: none;
-  transition: top var(--duration-fast) var(--easing-out);
-}
-
-.skip-to-content:focus {
-  top: var(--spacing-s);
-}
-
-/* === HIGH CONTRAST MODE === */
-@media (prefers-contrast: more) {
-  :root {
-    --color-primary: #00c;
-    --color-primary-hover: #009;
-    --color-text: #000;
-    --color-text-muted: #333;
-    --color-background: #fff;
-    --color-border: #000;
-    --color-surface: #f0f0f0;
-  }
-
-  a:any-link {
-    text-decoration: underline;
-  }
-
-  a.button:any-link,
-  button.button {
-    border-width: 3px;
-    border-color: currentcolor;
-  }
-}
-
-/* === REDUCED MOTION === */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  main .section.animate {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* === DARK MODE === */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #1a1a2e;
-    --color-surface: #16213e;
-    --color-surface-alt: #0f3460;
-    --color-text: #e8e8e8;
-    --color-text-muted: #9ca3af;
-    --color-text-inverse: #1a1a2e;
-    --color-border: #374151;
-    --color-border-strong: #4b5563;
-    --color-primary-light: #93b4ff;
-  }
-}
-
-/* === FOCUS VISIBLE === */
-:focus-visible {
-  outline: 3px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
-
-/* === SMOOTH SCROLLING === */
-html {
-  scroll-behavior: smooth;
-}
-
-/* === SELECTION === */
-::selection {
-  background-color: var(--color-primary);
-  color: var(--color-text-inverse);
-}
-
-/* === RTL SUPPORT (Phase 7) === */
-
-/* When dir="rtl" is set on <html> by decorateI18n(), these rules mirror the layout.
-   CSS logical properties (inline-start/end) flip automatically with dir.
-   Block-level properties (block-start/end = top/bottom) stay the same. */
-
-/* Flip text alignment for RTL */
-[dir="rtl"] body {
-  text-align: right;
-}
-
-/* Flip button padding so icon spacing is correct in RTL */
-[dir="rtl"] a.button,
-[dir="rtl"] button.button {
-  flex-direction: row-reverse;
-}
-
-/* Flip section content padding direction */
-[dir="rtl"] main > .section > div {
-  padding-inline: var(--content-padding-inline, 16px) var(--content-padding-inline, 16px);
-}
-
-/* Flip border-left accent (e.g. hello-world block) to border-right in RTL */
-[dir="rtl"] .section.accent {
-  border-inline-start: none;
-  border-inline-end: 4px solid var(--color-primary, #3b63fb);
-}
-
-/* === CONSENT BANNER (Phase 6) === */
-
-/* Slides up from bottom of screen after 3s delay (via delayed.js) */
-.consent-banner {
-  position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--spacing-m, 16px);
-  padding: var(--spacing-m, 16px) var(--spacing-l, 24px);
-  background: var(--color-text, #131313);
-  color: var(--color-text-inverse, #fff);
-  box-shadow: 0 -4px 20px rgb(0 0 0 / 20%);
-  transform: translateY(100%);
-  transition:
-    transform var(--duration-normal, 300ms) var(--easing-out, cubic-bezier(0, 0, 0.2, 1));
+  height: 4px;
+  background-color: var(--tabs-accent);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0;
 }
 
-.consent-banner-visible {
-  transform: translateY(0);
+.tabs-container .tabs-animated .tabs-indicator {
+  opacity: 1;
 }
 
-.consent-banner-hiding {
-  transform: translateY(100%);
+/* --- Tab panels (each is a section) --- */
+.tabs-container .tabs-panel {
+  padding: 0;
+  margin-top: var(--gap-md);
 }
 
-.consent-banner-text {
-  margin: 0;
-  flex: 1;
-  min-width: 200px;
-  font-size: var(--body-font-size-xs, 14px);
-  line-height: var(--line-height-normal, 1.6);
+.tabs-container .tabs-panel[aria-hidden='true'] {
+  display: none;
 }
 
-.consent-banner-actions {
-  display: flex;
-  gap: var(--spacing-s, 8px);
-  flex-shrink: 0;
+/* Remove section padding from panels — container handles it */
+.tabs-container .section.tabs-panel {
+  padding: 0;
 }
 
-@media (width <= 600px) {
-  .consent-banner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .consent-banner-actions {
-    width: 100%;
-  }
-
-  .consent-banner-actions .button {
-    flex: 1;
-    justify-content: center;
+@media (width >= 768px) {
+  .tabs-container .tabs-list button {
+    font-size: 20px;
   }
 }
-

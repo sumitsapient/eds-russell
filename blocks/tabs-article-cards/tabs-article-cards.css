@@ -1,0 +1,371 @@
+/* stylelint-disable no-descending-specificity */
+
+/* Russell .cmp-recent-articles: Insights | Research toggle with article cards */
+
+/* --- HEADER: eyebrow + tab toggle --- */
+
+.tabs-article-cards .tabs-article-cards-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gap-md);
+  margin-bottom: var(--gap-xl);
+}
+
+.tabs-article-cards .tabs-article-cards-eyebrow {
+  margin: 0;
+  font-family: var(--heading-font-family);
+  font-size: var(--eyebrow-font-size);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #dd6814;
+}
+
+.tabs-article-cards .tabs-article-cards-eyebrow[hidden] {
+  display: none;
+}
+
+/* pill toggle with a sliding navy indicator behind the active tab */
+.tabs-article-cards .tabs-article-cards-tablist {
+  position: relative;
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  padding: 2px;
+  border: 1px solid #e6e6e6;
+  border-radius: 50px;
+  background-color: var(--white);
+  overflow: hidden;
+}
+
+.tabs-article-cards .tabs-article-cards-tablist::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / var(--tab-count, 2));
+  border-radius: 50px;
+  background-color: var(--navy-dark);
+  transform: translateX(calc(var(--tab-index, 0) * 100%));
+  transition: transform 0.3s;
+}
+
+.tabs-article-cards .tabs-article-cards-tab {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 6px 16px;
+  border: 0;
+  border-radius: 50px;
+  background: none;
+  font-family: var(--heading-font-family);
+  font-size: var(--body-font-size-m);
+  font-weight: 300;
+  line-height: 1.4;
+  color: var(--navy);
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.tabs-article-cards .tabs-article-cards-tab[aria-selected='true'] {
+  color: var(--white);
+}
+
+.tabs-article-cards .tabs-article-cards-tab:focus-visible {
+  outline-offset: -2px;
+}
+
+/* --- PANELS --- */
+
+.tabs-article-cards .tabs-article-cards-panel[hidden] {
+  display: none;
+}
+
+.tabs-article-cards .tabs-article-cards-panel:focus-visible {
+  outline-offset: 4px;
+}
+
+.tabs-article-cards .tabs-article-cards-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap-xl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* --- INSIGHT CARD: image, title, subtitle, description, arrow link --- */
+
+.tabs-article-cards .tabs-article-cards-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--white);
+  clip-path: polygon(100% 0, 100% calc(100% - 15px), calc(100% - 9px) 100%, 0 100%, 0 0);
+}
+
+.tabs-article-cards .tabs-article-cards-card-image picture {
+  display: block;
+}
+
+.tabs-article-cards .tabs-article-cards-card-image img {
+  display: block;
+  width: 100%;
+  max-height: 250px;
+  aspect-ratio: 20 / 9;
+  object-fit: cover;
+}
+
+.tabs-article-cards .tabs-article-cards-card-body {
+  padding: 32px;
+}
+
+/* Universal Editor only: the text field's wrapper lays out like the card body itself */
+.tabs-article-cards .tabs-article-cards-card-text {
+  display: inherit;
+  flex-direction: inherit;
+}
+
+.tabs-article-cards .tabs-article-cards-card-title {
+  margin: 0 0 10.72px;
+  font-size: calc(1.25 * clamp(19px, -1.28px + 1.185rem + 0.4vw, 28px));
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--navy);
+}
+
+.tabs-article-cards .tabs-article-cards-card-subtitle {
+  margin: 0 0 10.72px;
+  font-size: calc(0.7 * clamp(28px, -0.5184px + 1.743rem + 0.162vw, 40px));
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--navy);
+}
+
+.tabs-article-cards .tabs-article-cards-card-description {
+  margin: 1em 0;
+  font-size: var(--body-font-size-m);
+  line-height: var(--body-line-height);
+}
+
+.tabs-article-cards .tabs-article-cards-card-cta {
+  margin: 16px 0 0;
+}
+
+/* .link-arrow utility (32px circle incl. border); source arrow glyph is 20px */
+.tabs-article-cards .tabs-article-cards-card-cta .link-arrow:any-link {
+  line-height: 28px;
+}
+
+.tabs-article-cards .tabs-article-cards-card-cta .link-arrow:any-link::after {
+  background-size: 20px;
+}
+
+/* --- FEATURED (RESEARCH) LIST: lead card + compact cards with bylines --- */
+
+.tabs-article-cards .tabs-article-cards-list-featured {
+  gap: var(--gap-lg);
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card {
+  position: relative;
+  clip-path: none;
+  box-shadow: 0 0 0 0 rgb(0 0 0 / 8%);
+  transition: box-shadow 0.3s;
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:hover {
+  box-shadow: 0 0 12px 5px rgb(0 0 0 / 30%);
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card-image img {
+  object-position: center top;
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 40px;
+}
+
+.tabs-article-cards .tabs-article-cards-card-meta {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card-title {
+  margin: 10.72px 0 0;
+  font-size: calc(1.35 * clamp(19px, -1.28px + 1.185rem + 0.4vw, 28px));
+  line-height: 1.2;
+}
+
+.tabs-article-cards .tabs-article-cards-card-title a:any-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* whole card is clickable, as in the source */
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card-title a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.tabs-article-cards .tabs-article-cards-card-author {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  margin-top: auto;
+  padding-top: var(--gap-xl);
+}
+
+.tabs-article-cards .tabs-article-cards-card-avatar {
+  flex: none;
+}
+
+.tabs-article-cards .tabs-article-cards-card-avatar img {
+  display: block;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.tabs-article-cards .tabs-article-cards-card-author-text p {
+  margin: 0;
+  font-size: var(--body-font-size-m);
+  line-height: 1.4;
+}
+
+.tabs-article-cards .tabs-article-cards-card-author-text p:first-child {
+  font-weight: 600;
+}
+
+/* compact cards: image left (1/3), text right (2/3) */
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:not(:first-child) {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:not(:first-child) .tabs-article-cards-card-image picture,
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:not(:first-child) .tabs-article-cards-card-image img {
+  height: 100%;
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:not(:first-child) .tabs-article-cards-card-image img {
+  max-height: none;
+  aspect-ratio: auto;
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:not(:first-child) .tabs-article-cards-card-body {
+  justify-content: center;
+  padding: 24px;
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:not(:first-child) .tabs-article-cards-card-title {
+  font-size: clamp(19px, -1.28px + 1.185rem + 0.4vw, 28px);
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:not(:first-child) .tabs-article-cards-card-author {
+  gap: 10.72px;
+  margin-top: 16px;
+  padding-top: 0;
+}
+
+.tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:not(:first-child) .tabs-article-cards-card-author-text p {
+  font-size: 0.8em;
+}
+
+/* --- PANEL FOOTER: outline pill link with arrow (source .cmp-button--secondary) --- */
+
+.tabs-article-cards .tabs-article-cards-panel-footer {
+  display: flex;
+  margin-top: 38.4px;
+}
+
+.tabs-article-cards .tabs-article-cards-panel-footer p {
+  margin: 0;
+}
+
+.tabs-article-cards .tabs-article-cards-panel-footer a:any-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  min-height: var(--button-min-height);
+  padding: 8.8px 24px;
+  border: 2px solid var(--blue);
+  border-radius: var(--button-border-radius);
+  font-family: var(--heading-font-family);
+  font-size: var(--button-font-size);
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--blue);
+  text-decoration: none;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.tabs-article-cards .tabs-article-cards-panel-footer a:any-link::after {
+  content: '';
+  flex: none;
+  width: 20px;
+  height: 20px;
+  background-color: currentcolor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 3.333 8.825 4.508l4.65 4.659H3.333v1.666h10.142l-4.65 4.659L10 16.667 16.667 10z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.tabs-article-cards .tabs-article-cards-panel-footer a:hover {
+  background-color: var(--blue);
+  color: var(--white);
+  text-decoration: none;
+}
+
+/* --- RESPONSIVE --- */
+
+@media (width >= 900px) {
+  .tabs-article-cards .tabs-article-cards-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .tabs-article-cards .tabs-article-cards-tablist {
+    margin-left: auto;
+  }
+}
+
+@media (width >= 1200px) {
+  .tabs-article-cards .tabs-article-cards-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tabs-article-cards .tabs-article-cards-list-featured {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px;
+  }
+
+  .tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:first-child {
+    grid-row: span 2;
+  }
+
+  .tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:not(:first-child) {
+    grid-column: 2;
+  }
+
+  .tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:first-child .tabs-article-cards-card-avatar img {
+    width: 98px;
+    height: 98px;
+  }
+
+  .tabs-article-cards .tabs-article-cards-list-featured .tabs-article-cards-card:not(:first-child) .tabs-article-cards-card-avatar img {
+    width: 66px;
+    height: 66px;
+  }
+}

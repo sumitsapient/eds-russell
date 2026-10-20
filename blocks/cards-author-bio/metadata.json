@@ -1,0 +1,34 @@
+{
+  "variantName": "cards-author-bio",
+  "baseBlock": "cards",
+  "canonicalModel": "cards",
+  "visualCharacteristics": {
+    "purpose": "Article author bios with photo, name, role and expandable bio",
+    "description": "Light grey #f3f3f3 panel, 30px padding: 30px/36px heading, then per author a 162px circular photo, 20px/500 name, 16px role and a 14px/19px bio clamped with an inline bold blue 'Read more' toggle."
+  },
+  "contentPattern": {
+    "description": "Heading 'Author bio' + 2 authors (Nick Zylkowski, CFA; Christina Shockley)",
+    "structure": "row 1: heading text (block field); then one row per author: cell 1 photo, cell 2 name (H3), role paragraph, bio paragraphs",
+    "rows": [
+      [
+        "Heading text (optional)"
+      ],
+      [
+        "Author photo",
+        "Name (H3), role paragraph, bio paragraphs"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": {
+    "description": "Article sidebar author bios.",
+    "pagesUsing": [
+      "/us/en/insights/blog-article"
+    ],
+    "reuseCount": 1,
+    "lastUsed": "2026-10-19"
+  },
+  "reuseGuidance": "The heading is a block-level field so it sits inside the grey panel. The Read more toggle appears only when a bio exceeds about 6 lines (plus one paragraph gap); short bios show in full.",
+  "sourceUrl": "figma:66RO6MCqlbGMo3YXvtFRpE/5878:2862"
+}

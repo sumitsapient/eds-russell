@@ -1,0 +1,31 @@
+{
+  "variantName": "columns-overlay",
+  "baseBlock": "columns",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "White text panel overlapping a full-bleed background photo; stacked below the photo on mobile",
+    "description": "Text panel layered over a full-bleed image is a side-by-side/overlay layout an author cannot produce with default content."
+  },
+  "contentPattern": {
+    "description": "Background image + panel: H2 'Why our ETFs', lead 'Access decades of investment experience...', bold 'Designed with purpose'/'Specialist insight'/'Broader access' each with a paragraph, CTA 'See How We Build Portfolios Designed to Do More'",
+    "structure": "one row, two cells (either order): image cell (background photo) and text cell (heading, lead paragraph, bold sub-heading + paragraph pairs or lists/links, CTA link as the last link-only paragraph)",
+    "rows": [
+      [
+        "Image (full-bleed background)",
+        "H2, lead paragraph, bold sub-heading + paragraph pairs, CTA link"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": {
+    "description": "Value-proposition or 'why us' panels over a brand photo.",
+    "pagesUsing": [
+      "/content/ri/us/en/individual-investor/investments/models-and-products/exchange-traded-funds"
+    ],
+    "reuseCount": 0,
+    "lastUsed": "2026-10-20"
+  },
+  "reuseGuidance": "Use when one text panel should overlap a full-width photo. For text beside (not over) an image use columns-promo-panel; for a page-opening H1 hero use hero-image-overlay. The paragraph right after the heading renders as the lead, bold-only paragraphs render as sub-headings, and the last link-only paragraph becomes an outlined pill CTA.",
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/individual-investor/investments/models-and-products/exchange-traded-funds.html"
+}

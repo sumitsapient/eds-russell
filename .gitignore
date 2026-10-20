@@ -11,3 +11,8 @@ helix-importer-ui
 # Ensure these files are tracked
 !CLAUDE.md
 !AGENTS.md
+
+# Migration working files (not part of the site)
+tools/importer/reports/
+migration-work/
+dist/

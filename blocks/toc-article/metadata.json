@@ -1,0 +1,30 @@
+{
+  "variantName": "toc-article",
+  "baseBlock": "toc",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Sticky article table of contents linking to the article's H2 sections",
+    "description": "White card (36px padding, 6px radius, two-layer shadow) with an uppercase 18px heading and a vertical list of 20px blue links on a 3px #e5e5e5 left rail; the active section is navy with an orange (#dd6814) rail segment."
+  },
+  "contentPattern": {
+    "description": "Optional heading only; the list is generated from the page's default-content H2s",
+    "structure": "single row, single cell: heading text (optional, defaults to 'Table of contents')",
+    "rows": [
+      [
+        "Heading text (optional)"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": {
+    "description": "Left sidebar (aside) of blog/insight articles, beside the article body.",
+    "pagesUsing": [
+      "/us/en/insights/blog-article"
+    ],
+    "reuseCount": 1,
+    "lastUsed": "2026-10-19"
+  },
+  "reuseGuidance": "Place once per article. Only H2s in default content are listed (H2s inside blocks are skipped); missing ids are generated from the heading text. Sticky from 900px when its section column is taller than the card.",
+  "sourceUrl": "figma:66RO6MCqlbGMo3YXvtFRpE/5878:1200"
+}

@@ -1,0 +1,37 @@
+{
+  "variantName": "callout-takeaways",
+  "baseBlock": "callout-takeaways",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Highlighted callout inside an article body: key takeaways panel, chart panel, or a ruled closing section",
+    "description": "Default: #e6f0fa panel, 40px padding, 20px gap, heading Neulis Sans 500 28px/36px, disc list Compatil Fact 20px/28px. chart: #f3f3f3 panel, 30px padding, title 30px/36px, subtitle 20px/25px, bold label 600 20px/25px, full-width chart image, 11px/15px disclaimer note. rule: no panel, 3px #e4761b top rule, 40px vertical padding, heading 42px/50px, text 18px/25px."
+  },
+  "contentPattern": {
+    "description": "H2 'Key takeaways' + 3-item bullet list | H3 'Savings Unlocked' + subtitle + bold label + chart image + disclaimer | H2 'The bottom line' + paragraph",
+    "structure": "row 1: rich text (heading, paragraphs, list; a fully bold paragraph is a label); row 2: optional image; row 3: optional note shown below the image. An image authored inside the text also works: content after it becomes the note.",
+    "rows": [
+      [
+        "Rich text: heading, paragraphs and/or list"
+      ],
+      [
+        "Image (optional)"
+      ],
+      [
+        "Note / disclaimer (optional)"
+      ]
+    ]
+  },
+  "options": [
+    {
+      "class": "chart",
+      "label": "Chart"
+    },
+    {
+      "class": "rule",
+      "label": "Rule"
+    }
+  ],
+  "memberVariantIds": [],
+  "usage": "Article body callouts: key takeaways summary, chart/infographic panel with disclaimer, closing 'bottom line' section.",
+  "reuseGuidance": "Default for a light-blue summary panel (heading + bullets). Use chart for a grey panel holding a chart image with title, subtitle, bold label and disclaimer note. Use rule for a closing section separated by an orange top rule."
+}

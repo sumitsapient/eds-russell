@@ -1,0 +1,24 @@
+{
+  "variantName": "accordion-faq",
+  "baseBlock": "accordion",
+  "canonicalModel": "container",
+  "visualCharacteristics": {
+    "purpose": "Expandable FAQ list of question/answer rows",
+    "description": "Rows separated by 1px #e5e5e5 lines (above each row and after the last). Each row: 20px/500 navy question on the left, 20px blue plus icon on the right that rotates into a minus when open; answer revealed below. Native details/summary. Section heading stays as default content above the block."
+  },
+  "contentPattern": {
+    "description": "FAQ Heading with 4 placeholder rows titled 'FAQ Title'; the Figma has no answers, placeholder answers are authored.",
+    "structure": "container block, one row per question; cells: summary (text: question) | text (richtext: answer)",
+    "rows": [
+      [
+        "Question",
+        "Answer paragraph(s)"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": "FAQ section at the end of a blog article.",
+  "reuseGuidance": "Keep the FAQ section heading as default content above the block. Author one row per question; the answer may contain paragraphs, lists and links.",
+  "sourceUrl": "figma:5878:1287"
+}
