@@ -70,6 +70,7 @@ Today every page carries about 1.2 MB of JavaScript, whether it needs it or not.
 ### 3. Speed of change (time to market)
 
 **Proof from this project:**
+
 - **7 seconds** from merging code on GitHub (09:33:22 UTC) to the new header code being live on Edge Delivery (09:33:29 UTC). There is no build, no pipeline and no deployment window.
 - The POC itself went from first analysis to 6 migrated pages plus header and footer in about 1.5 days (18–20 October), with AI-assisted migration.
 - A block is a small, self-contained JavaScript and CSS pair (for example, the link cards are about 130 lines of JS). There is no Java, Sling model, HTL or OSGi bundle to build.
