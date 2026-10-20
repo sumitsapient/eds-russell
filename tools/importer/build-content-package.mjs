@@ -68,6 +68,13 @@ for (const file of findPages(CONTENT_DIR)) {
   const pageDir = path.dirname(file);
   let html = fs.readFileSync(file, 'utf8');
 
+  // A paragraph holding only a linked image (e.g. the nav logo) becomes a Button component
+  // in AEM, which drops the image. Split it into an image paragraph and a text link instead.
+  html = html.replace(/<p>\s*<a ([^>]*)>\s*(<img [^>]*>)\s*<\/a>\s*<\/p>/g, (m, linkAttrs, img) => {
+    const alt = (img.match(/alt="([^"]*)"/) || [])[1] || '';
+    return `<p>${img}</p>\n<p><a ${linkAttrs}>${alt}</a></p>`;
+  });
+
   // Point local images/... and ./images/... references at the DAM folder authors will upload them to
   html = html.replace(/src="(?:\.\/)?images\/([^"]+)"/g, (m, imgRel) => {
     damUploads.push({ from: path.join(pageDir, 'images', imgRel), to: imgRel });
@@ -98,11 +105,53 @@ for (const rel of [...pagePaths]) {
   }
 }
 
-// "update" mode adds/updates the migrated pages without deleting anything else on the site
+// Images go into the same package as dam:Asset nodes, so one install adds pages and images
+const MIME_TYPES = {
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+};
+const assets = new Map(damUploads.map((u) => [u.to, u]));
+const assetFolders = new Set();
+for (const { from, to } of assets.values()) {
+  const assetDir = `jcr_root${DAM_ROOT}/${to}`;
+  const mimeType = MIME_TYPES[path.extname(to).toLowerCase()] || 'application/octet-stream';
+  zip.file(`${assetDir}/.content.xml`, `<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:dam="http://www.day.com/dam/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:dc="http://purl.org/dc/elements/1.1/" jcr:primaryType="dam:Asset">
+  <jcr:content jcr:primaryType="dam:AssetContent">
+    <metadata jcr:primaryType="nt:unstructured" dc:format="${mimeType}"/>
+    <renditions jcr:primaryType="nt:folder">
+      <original/>
+    </renditions>
+  </jcr:content>
+</jcr:root>
+`);
+  zip.file(`${assetDir}/_jcr_content/renditions/original`, fs.readFileSync(from));
+  zip.file(`${assetDir}/_jcr_content/renditions/original.dir/.content.xml`, `<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" jcr:primaryType="nt:file">
+  <jcr:content jcr:primaryType="nt:resource" jcr:mimeType="${mimeType}"/>
+</jcr:root>
+`);
+  const segments = to.split('/').slice(0, -1);
+  segments.forEach((s, i) => assetFolders.add(segments.slice(0, i + 1).join('/')));
+}
+// Subfolders (e.g. blog-article) are created as DAM folders; the DAM root itself is left as-is
+for (const folder of assetFolders) {
+  zip.file(`jcr_root${DAM_ROOT}/${folder}/.content.xml`, `<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:sling="http://sling.apache.org/jcr/sling/1.0" jcr:primaryType="sling:Folder"/>
+`);
+}
+
+// "update" mode adds/updates the migrated pages and images without deleting anything else
 const roots = [...new Set([...pagePaths].map((p) => p.split('/')[0]))];
+const damRoots = [...new Set([...assets.keys()].map((p) => p.split('/')[0]))];
 zip.file('META-INF/vault/filter.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter version="1.0">
 ${roots.map((r) => `  <filter root="${SITE_ROOT}/${r}" mode="update"/>`).join('\n')}
+${damRoots.map((r) => `  <filter root="${DAM_ROOT}/${r}" mode="update"/>`).join('\n')}
 </workspaceFilter>
 `);
 zip.file('META-INF/vault/properties.xml', `<?xml version="1.0" encoding="UTF-8"?>
@@ -124,5 +173,11 @@ damUploads.forEach(({ from, to }) => {
   fs.copyFileSync(from, dest);
 });
 
-console.log(`\npackage ${zipPath}`);
-console.log(`images  ${OUT_DIR}/dam-upload/ (${damUploads.length} files) -> upload to ${DAM_ROOT}`);
+// The same images as one zip, for anyone who prefers to upload them in AEM Assets by hand
+const imagesZip = new JSZip();
+assets.forEach(({ from, to }) => imagesZip.file(to, fs.readFileSync(from)));
+const imagesZipPath = path.join(OUT_DIR, `eds-russell-images-${VERSION}.zip`);
+fs.writeFileSync(imagesZipPath, await imagesZip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }));
+
+console.log(`\npackage ${zipPath} (${pagePaths.size} pages, ${assets.size} images in ${DAM_ROOT})`);
+console.log(`images  ${OUT_DIR}/dam-upload/ and ${imagesZipPath} (${assets.size} files) -> ${DAM_ROOT}`);
