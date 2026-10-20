@@ -20,47 +20,80 @@
       "id": "section",
       "fields": [
         {
+          "component": "text",
+          "name": "name",
+          "label": "Section Name",
+          "description": "The label shown for this section in the Content Tree"
+        },
+        {
           "component": "multiselect",
           "name": "style",
           "label": "Style",
-          "description": "Visual style applied to this section",
           "options": [
-            { "name": "Highlight", "value": "highlight" },
-            { "name": "Dark", "value": "dark" },
-            { "name": "Accent", "value": "accent" },
-            { "name": "Centered", "value": "centered" },
-            { "name": "Narrow", "value": "narrow" },
-            { "name": "Full Width", "value": "full-width" },
-            { "name": "Spacious", "value": "spacious" },
-            { "name": "Compact", "value": "compact" }
-          ]
-        },
-        {
-          "component": "reference",
-          "name": "background",
-          "label": "Background Image",
-          "description": "Optional background image for this section",
-          "valueType": "string"
-        },
-        {
-          "component": "text",
-          "name": "id",
-          "label": "Section ID (anchor)",
-          "description": "Set a custom ID for anchor links, e.g. 'about-us' → link with #about-us",
-          "valueType": "string"
-        },
-        {
-          "component": "select",
-          "name": "animate",
-          "label": "Scroll Animation",
-          "description": "Animate the section when it enters the viewport",
-          "valueType": "string",
-          "options": [
-            { "name": "None", "value": "" },
-            { "name": "Fade In", "value": "fade-in" },
-            { "name": "Slide Up", "value": "slide-up" },
-            { "name": "Slide In from Left", "value": "slide-left" },
-            { "name": "Slide In from Right", "value": "slide-right" }
+            {
+              "name": "Light gray background",
+              "value": "light"
+            },
+            {
+              "name": "Light blue background",
+              "value": "light-blue"
+            },
+            {
+              "name": "Dark navy background",
+              "value": "dark"
+            },
+            {
+              "name": "Highlight",
+              "value": "highlight"
+            },
+            {
+              "name": "Split (text beside block)",
+              "value": "split"
+            },
+            {
+              "name": "Jump links bar",
+              "value": "jump-links"
+            },
+            {
+              "name": "Intro statement",
+              "value": "intro"
+            },
+            {
+              "name": "Narrow",
+              "value": "narrow"
+            },
+            {
+              "name": "Centered",
+              "value": "center"
+            },
+            {
+              "name": "Article body",
+              "value": "article-body"
+            },
+            {
+              "name": "Article sidebar",
+              "value": "article-aside"
+            },
+            {
+              "name": "Disclosures",
+              "value": "disclosures"
+            },
+            {
+              "name": "Full width (edge to edge, no spacing)",
+              "value": "full-width"
+            },
+            {
+              "name": "Lead paragraph (large text after the heading)",
+              "value": "lead"
+            },
+            {
+              "name": "Stacked buttons",
+              "value": "stack"
+            },
+            {
+              "name": "Screen-reader-only heading",
+              "value": "sr-heading"
+            }
           ]
         }
       ]
@@ -74,25 +107,26 @@
         "image",
         "button",
         "title",
-        "hero",
-        "cards",
-        "columns",
-        "fragment",
-        "accordion",
-        "tabs",
-        "cta-banner",
-        "modal",
-        "video-embed",
-        "breadcrumb",
-        "hello-world",
-        "hello-world-with-child",
-        "language-switcher",
-        "insights-listing",
-        "blog-card",
-        "related-blogs",
-        "blog-banner",
-        "blog-feature",
-        "blog-listing"
+        "hero-image-overlay",
+        "cards-stats",
+        "cards-links",
+        "cards-image-link",
+        "columns-media",
+        "columns-image-trio",
+        "columns-promo-panel",
+        "carousel-timeline",
+        "embed-ceros",
+        "tabs-article-cards",
+        "toc-article",
+        "tags-chips",
+        "newsletter-signup",
+        "cards-author-bio",
+        "article-meta",
+        "callout-takeaways",
+        "cards-research",
+        "accordion-faq",
+        "alert-banner",
+        "columns-overlay"
       ]
     }
   ]

@@ -1,0 +1,155 @@
+/*
+ * columns-overlay — Russell layout container with background image ("Why our ETFs")
+ * Values from russellinvestments.com ETF page computed styles (390 / 768 / 1024 / 1440):
+ * white panel 10/12 wide (7/12 from 900; source switches at 1024), 1/12 left offset, 64px of photo above/below,
+ * inner inset = 1/12 of panel + 10.72px horizontally, 32px + 10.72px vertically.
+ * H2 #041459 neulis-sans 40.24 -> 57.04px; lead 19.24 -> 23.44px; body neulis-sans 16 -> 18.8px.
+ * Mobile (< 600px) stacks the panel below the photo, overlapping its bottom edge.
+ */
+
+main > .section.columns-overlay-container:has(> .columns-overlay-wrapper:only-child) {
+  padding: 0;
+}
+
+main > .section > .columns-overlay-wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+.columns-overlay {
+  --columns-overlay-panel-width: calc(100% * 10 / 12);
+  --columns-overlay-offset: calc(100% / 12);
+}
+
+.columns-overlay .columns-overlay-row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.columns-overlay .columns-overlay-media {
+  line-height: 0;
+}
+
+.columns-overlay .columns-overlay-media picture,
+.columns-overlay .columns-overlay-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.columns-overlay .columns-overlay-media img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.columns-overlay .columns-overlay-panel {
+  position: relative;
+  box-sizing: border-box;
+  width: var(--columns-overlay-panel-width);
+  margin: -64px 0 0 var(--columns-overlay-offset);
+  padding: 42.72px calc(var(--columns-overlay-panel-width) / 12 + 10.72px);
+  background-color: var(--white);
+  color: var(--navy-deep);
+  font-family: var(--heading-font-family);
+
+  /* source panel copy: 16px @390 -> 18.816px @1440 */
+  font-size: clamp(16px, 14.94px + 0.268vw, 18.82px);
+  line-height: var(--body-line-height);
+}
+
+/* text cell authored first: keep the photo on top when stacked */
+.columns-overlay .columns-overlay-panel:first-child {
+  order: 1;
+}
+
+.columns-overlay .columns-overlay-panel > * {
+  margin: 0 0 1em;
+  color: inherit;
+  font-family: inherit;
+}
+
+.columns-overlay .columns-overlay-panel > :last-child {
+  margin-bottom: 0;
+}
+
+.columns-overlay .columns-overlay-heading {
+  margin-bottom: 21.44px;
+  color: var(--navy-deep);
+  font-size: clamp(40.24px, 1.6vw + 34px, 57.04px);
+  font-weight: var(--heading-font-weight);
+  line-height: 1.2;
+}
+
+.columns-overlay .columns-overlay-lead {
+  margin-bottom: 22px;
+  font-size: clamp(19.24px, 0.4vw + 17.68px, 23.44px);
+  line-height: 1.4;
+}
+
+.columns-overlay .columns-overlay-subheading {
+  font-weight: 700;
+}
+
+.columns-overlay .columns-overlay-subheading strong,
+.columns-overlay .columns-overlay-subheading b {
+  font-weight: inherit;
+}
+
+.columns-overlay .columns-overlay-panel ul,
+.columns-overlay .columns-overlay-panel ol {
+  padding-left: 1.25em;
+}
+
+.columns-overlay .columns-overlay-panel a:any-link:not(.button) {
+  color: var(--link-color);
+  text-decoration: underline;
+  text-underline-offset: var(--text-link-underline-offset);
+}
+
+.columns-overlay .columns-overlay-cta {
+  display: block;
+  margin-top: 22px;
+}
+
+/* source pill: 20px label + 20px arrow; long labels may wrap on small screens */
+.columns-overlay .columns-overlay-cta a.button:any-link {
+  line-height: 1.2;
+  text-align: left;
+}
+
+.columns-overlay .columns-overlay-cta a.button:any-link::after {
+  content: '';
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-left: 4px;
+  background-color: currentcolor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 3.33 8.82 4.5l4.65 4.67H3.33v1.66h10.14L8.82 15.5 10 16.67 16.67 10z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* overlay: photo fills the row, panel floats over it with 64px of photo above and below */
+@media (width >= 600px) {
+  .columns-overlay .columns-overlay-media {
+    position: absolute;
+    inset: 0;
+  }
+
+  .columns-overlay .columns-overlay-media img {
+    aspect-ratio: auto;
+  }
+
+  .columns-overlay .columns-overlay-panel {
+    margin: 64px 0 64px var(--columns-overlay-offset);
+  }
+}
+
+@media (width >= 900px) {
+  .columns-overlay {
+    --columns-overlay-panel-width: calc(100% * 7 / 12);
+  }
+
+  .columns-overlay .columns-overlay-cta a.button:any-link {
+    font-size: 20px;
+  }
+}

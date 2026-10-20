@@ -1,0 +1,133 @@
+/*
+ * Russell Investments brand tokens
+ * Extracted from https://russellinvestments.com (computed styles, Oct 2026)
+ */
+
+:root {
+  /* brand palette */
+  --navy: #000060;
+  --navy-deep: #041459;
+  --navy-dark: #020e40;
+  --navy-stripe: #0d3571;
+  --blue: #165eda;
+  --blue-dark: #0f47a8;
+  --orange: #e4761b;
+  --gray-light: #f3f3f3;
+  --blue-light: #e6f1fa;
+  --white: #fff;
+
+  /* semantic colors */
+  --background-color: var(--white);
+  --text-color: var(--navy);
+  --text-color-muted: rgb(0 0 96 / 70%);
+  --text-color-subtle: var(--navy-deep);
+  --accent-color: var(--blue);
+  --highlight-color: var(--orange);
+  --light-color: var(--gray-light);
+  --dark-color: var(--navy-dark);
+  --cream-color: var(--blue-light);
+  --forest-color: var(--navy-stripe);
+  --border-color: #c7cbd9;
+  --border-color-light: #e1e3eb;
+  --link-color: var(--blue);
+  --link-hover-color: var(--navy);
+  --text-on-dark: var(--white);
+  --text-on-dark-muted: rgb(255 255 255 / 70%);
+  --glass-bg: rgb(255 255 255 / 6%);
+  --glass-border: rgb(255 255 255 / 12%);
+  --footer-link-color: var(--white);
+
+  /* fonts */
+  --heading-font-family: neulis-sans, avenir next, neulis-sans-fallback, sans-serif;
+  --body-font-family: compatil fact, compatil-fact-fallback, arial, sans-serif;
+
+  /* body sizes (mobile-first) */
+  --body-font-size-m: 16px;
+  --body-font-size-s: 14px;
+  --body-font-size-xs: 12px;
+  --body-line-height: 1.4;
+
+  /* heading sizes (mobile-first) */
+  --heading-font-size-xxl: 37px;
+  --heading-font-size-xl: 32px;
+  --heading-font-size-l: 25px;
+  --heading-font-size-m: 20px;
+  --heading-font-size-s: 18px;
+  --heading-font-size-xs: 16px;
+  --heading-font-weight: 500;
+  --heading-line-height: 1.2;
+
+  /* eyebrow / pretitle */
+  --eyebrow-font-size: 14px;
+  --eyebrow-letter-spacing: 0.8px;
+
+  /* spacing */
+  --section-padding: 40px 0;
+  --container-max-width: 1200px;
+  --container-narrow-max-width: 800px;
+  --container-padding: 0 24px;
+  --gap-xs: 12px;
+  --gap-sm: 8px;
+  --gap-md: 16px;
+  --gap-lg: 24px;
+  --gap-xl: 32px;
+  --gap-2xl: 48px;
+  --gap-3xl: 64px;
+  --nav-height: 63px;
+
+  /* buttons (pill, heading font) */
+  --button-font-family: var(--heading-font-family);
+  --button-font-size: 18px;
+  --button-font-weight: 500;
+  --button-letter-spacing: normal;
+  --button-border-radius: 50px;
+  --button-padding: 8px 24px;
+  --button-min-height: 44px;
+  --button-transition: background-color 0.3s, border-color 0.2s, color 0.3s;
+  --btn-shadow: transparent;
+
+  /* transitions */
+  --transition-fast: 0.2s;
+  --transition-normal: 0.3s ease;
+
+  /* radii & cards */
+  --border-radius-sm: 8px;
+  --card-border-radius: 0;
+  --card-hover-shadow: 0 8px 24px rgb(0 0 96 / 12%);
+  --card-hover-transition: box-shadow 0.3s, transform 0.3s;
+
+  /* legacy tokens still referenced by shared blocks */
+  --tag-padding: 4px 8px;
+  --tag-font-size: 12px;
+  --tag-letter-spacing: var(--eyebrow-letter-spacing);
+  --text-link-letter-spacing: normal;
+  --text-link-underline-offset: 3px;
+  --logo-icon-size: 32px;
+  --brand-letter-spacing: normal;
+}
+
+@media (width >= 900px) {
+  :root {
+    --body-font-size-m: 18px;
+    --body-font-size-s: 16px;
+    --body-font-size-xs: 14px;
+    --heading-font-size-xxl: 56px;
+    --heading-font-size-xl: 44px;
+    --heading-font-size-l: 26px;
+    --heading-font-size-m: 22px;
+    --heading-font-size-s: 20px;
+    --heading-font-size-xs: 18px;
+    --eyebrow-font-size: 18px;
+    --button-font-size: 20px;
+    --section-padding: 64px 0;
+    --container-padding: 0 32px;
+  }
+}
+
+@media (width >= 1200px) {
+  :root {
+    --heading-font-size-xxl: 78px;
+    --heading-font-size-xl: 57px;
+    --nav-height: 126px;
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "variantName": "cards-stats",
+  "baseBlock": "cards",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Grid of statistic tiles, each a bold value with a short caption",
+    "description": "Repeating structure of tiles; stat values are kept as bold paragraphs, not headings."
+  },
+  "contentPattern": {
+    "description": "6 stat tiles ($964B, $418B, $2.0T, 90 years, 31 countries, 15k+) each with caption",
+    "structure": "one row per tile; single cell with a bold value paragraph and a caption paragraph",
+    "rows": [
+      [
+        "Per card: text cell - (stats) bold value paragraph + caption paragraph; (links) title, description, CTA link"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": "Key figures / \"by the numbers\" grids.",
+  "reuseGuidance": "Use for any set of headline numbers with captions. Keep values as bold paragraphs, not headings.",
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/about-us.html",
+  "sectionMetadata": {
+    "style": "light"
+  }
+}

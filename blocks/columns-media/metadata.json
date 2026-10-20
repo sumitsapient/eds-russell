@@ -1,0 +1,29 @@
+{
+  "variantName": "columns-media",
+  "baseBlock": "columns",
+  "canonicalModel": "standalone",
+  "visualCharacteristics": {
+    "purpose": "Text column (subheadings, descriptions, CTA) side by side with a photo",
+    "description": "Side-by-side text and image layout."
+  },
+  "contentPattern": {
+    "description": "Text column (3 feature subheadings + descriptions + CTA) beside photo 'business meeting'",
+    "structure": "one row; cells: text cell (h3 + paragraphs + CTA link) and image cell, in either order",
+    "rows": [
+      [
+        "section-4: text cell (h3 x3 + p x3 + CTA link)",
+        "image cell"
+      ],
+      [
+        "section-6: image cell",
+        "text cell (h3 + CTA link)",
+        "image cell"
+      ]
+    ]
+  },
+  "options": [],
+  "memberVariantIds": [],
+  "usage": "Feature lists or explanatory copy paired with a supporting image.",
+  "reuseGuidance": "Use when a block of rich text sits beside a single image. Image cell order controls left/right placement.",
+  "sourceUrl": "https://russellinvestments.com/content/ri/us/en/about-us.html"
+}

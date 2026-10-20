@@ -1,0 +1,543 @@
+{
+  "templates": [
+    {
+      "name": "detail-page",
+      "urls": [
+        "https://russellinvestments.com/content/ri/us/en/about-us/contact-us.html",
+        "https://russellinvestments.com/content/ri/us/en/individual-investor/investments/models-and-products/exchange-traded-funds.html"
+      ],
+      "representativeUrl": "https://russellinvestments.com/content/ri/us/en/about-us/contact-us.html",
+      "description": "Detail pages (Contact Us, ETF product page): page title, tile card grids, alert banner, Ceros embeds, overlay/promo columns, FAQ accordion, page disclosures",
+      "blocks": [
+        {
+          "name": "alert-banner",
+          "instances": [
+            ".alertbanner"
+          ]
+        },
+        {
+          "name": "embed-ceros",
+          "instances": [
+            ".embed:has(iframe[src*=\"ceros\"])"
+          ]
+        },
+        {
+          "name": "cards-links",
+          "instances": [
+            ".cmp-layout-container--white-bg > .aem-Grid:not(:has(> .verticalcard)):not(:has(> .responsivegrid > .aem-Grid > .title)):has(> .responsivegrid > .aem-Grid > .verticalcard)",
+            ".aem-Grid:has(> .verticalcard):not(:has(a.cmp-vertical-card__link))"
+          ]
+        },
+        {
+          "name": "columns-overlay",
+          "instances": [
+            ".responsivegrid:has(> .aem-Grid > .layoutcontainerimage)"
+          ]
+        },
+        {
+          "name": "columns-promo-panel",
+          "instances": [
+            ".verticalcardimageright"
+          ]
+        },
+        {
+          "name": "accordion-faq",
+          "instances": [
+            ".faqCFDisplay"
+          ]
+        }
+      ],
+      "urlPattern": "/content/ri/us/en/*",
+      "sections": [
+        {
+          "id": "section-1",
+          "name": "Page title",
+          "selector": [
+            ".title:has(h1)"
+          ],
+          "style": null,
+          "blocks": [],
+          "defaultContent": [
+            "h1.cmp-title__text",
+            ".text.cmp-text--bold p"
+          ]
+        },
+        {
+          "id": "section-2",
+          "name": "Contact choices (tile grid)",
+          "selector": [
+            ".cmp-layout-container--white-bg:has(.verticalcard):not(:has(.cmp-button--tertiary))"
+          ],
+          "style": null,
+          "blocks": [
+            "cards-links"
+          ],
+          "defaultContent": []
+        },
+        {
+          "id": "section-3",
+          "name": "US office locations",
+          "selector": [
+            ".cmp-layout-container--blue-bg:has(.verticalcard)"
+          ],
+          "style": "light-blue",
+          "blocks": [
+            "cards-links"
+          ],
+          "defaultContent": [
+            "h2.cmp-title__text"
+          ]
+        },
+        {
+          "id": "etf-section-1",
+          "name": "US-only audience alert",
+          "selector": [
+            ".alertbanner"
+          ],
+          "style": null,
+          "blocks": [
+            "alert-banner"
+          ],
+          "defaultContent": []
+        },
+        {
+          "id": "etf-section-2",
+          "name": "ETF hero banner (Ceros embed)",
+          "selector": [
+            ".embed:has(iframe[src*=\"ceros\"])"
+          ],
+          "style": "full-width",
+          "blocks": [
+            "embed-ceros"
+          ],
+          "defaultContent": []
+        },
+        {
+          "id": "etf-section-3",
+          "name": "Jump links",
+          "selector": [
+            ".anchortab"
+          ],
+          "style": "light, jump-links",
+          "blocks": [],
+          "defaultContent": [
+            "a.cmp-anchor-tab__tab"
+          ]
+        },
+        {
+          "id": "etf-section-4",
+          "name": "Our funds (fund tile groups)",
+          "selector": [
+            ".cmp-layout-container--white-bg:has(.verticalcard .cmp-button--tertiary)"
+          ],
+          "style": null,
+          "blocks": [
+            "cards-links"
+          ],
+          "defaultContent": [
+            "h3.cmp-title__text"
+          ]
+        },
+        {
+          "id": "etf-section-5",
+          "name": "Why our ETFs",
+          "selector": [
+            ".responsivegrid:has(> .aem-Grid > .layoutcontainerimage)"
+          ],
+          "style": null,
+          "blocks": [
+            "columns-overlay"
+          ],
+          "defaultContent": []
+        },
+        {
+          "id": "etf-section-6",
+          "name": "Active vs passive comparison (Ceros)",
+          "selector": [
+            ".embed:has(iframe[src*=\"ceros\"])"
+          ],
+          "style": "full-width",
+          "blocks": [
+            "embed-ceros"
+          ],
+          "defaultContent": []
+        },
+        {
+          "id": "etf-section-7",
+          "name": "Build a portfolio",
+          "selector": [
+            ".cmp-layout-container--white-bg:has(.embed iframe[src*=\"ceros\"])"
+          ],
+          "style": "lead",
+          "blocks": [
+            "embed-ceros"
+          ],
+          "defaultContent": [
+            "h2.cmp-title__text",
+            ".cmp-text p"
+          ]
+        },
+        {
+          "id": "etf-section-8",
+          "name": "Start investing today",
+          "selector": [
+            ".cmp-layout-container--blue-bg:has(.button):not(:has(.verticalcard))"
+          ],
+          "style": "light-blue, lead, stack",
+          "blocks": [],
+          "defaultContent": [
+            ".cmp-text p",
+            ".button a"
+          ]
+        },
+        {
+          "id": "etf-section-9",
+          "name": "Ask your financial advisor",
+          "selector": [
+            ".verticalcardimageright"
+          ],
+          "style": "full-width",
+          "blocks": [
+            "columns-promo-panel"
+          ],
+          "defaultContent": []
+        },
+        {
+          "id": "etf-section-10",
+          "name": "FAQs",
+          "selector": [
+            ".cmp-layout-container--white-bg:has(.faqCFDisplay)"
+          ],
+          "style": null,
+          "blocks": [
+            "accordion-faq"
+          ],
+          "defaultContent": [
+            "h3.cmp-faq-cf-display__title"
+          ]
+        },
+        {
+          "id": "disclosures",
+          "name": "Page disclosures",
+          "selector": [
+            ".footerdisclosures",
+            ".cmp-disclosure-cf",
+            ".cmp-footer-disclosures"
+          ],
+          "style": "disclosures",
+          "blocks": [],
+          "defaultContent": [
+            "p"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "landing-page",
+      "urls": [
+        "https://russellinvestments.com/content/ri/us/en/about-us.html",
+        "https://russellinvestments.com/content/ri/us/en/individual-investor.html",
+        "https://russellinvestments.com/content/ri/us/en/insights.html"
+      ],
+      "representativeUrl": "https://russellinvestments.com/content/ri/us/en/about-us.html",
+      "description": "Landing pages (homepage, About Us, Insights hub): hero, card grids, promos, carousels",
+      "blocks": [
+        {
+          "name": "hero-image-overlay",
+          "instances": [
+            ".herovideoheader",
+            ".heroimageheader:has(section[style*=\"background-image\"])"
+          ]
+        },
+        {
+          "name": "cards-stats",
+          "instances": [
+            ".aem-Grid:has(> .datadisplay)"
+          ]
+        },
+        {
+          "name": "columns-media",
+          "instances": [
+            ".aem-Grid:has(> .title):has(> .responsivegrid .cmp-image):has(> .responsivegrid .cmp-ri-btn-wrapper)"
+          ]
+        },
+        {
+          "name": "carousel-timeline",
+          "instances": [
+            ".verticalcardcarousel"
+          ]
+        },
+        {
+          "name": "columns-image-trio",
+          "instances": [
+            ".fullbleedimagesdouble"
+          ]
+        },
+        {
+          "name": "cards-links",
+          "instances": [
+            ".aem-Grid:has(> .verticalcard):not(:has(a.cmp-vertical-card__link))"
+          ]
+        },
+        {
+          "name": "embed-ceros",
+          "instances": [
+            ".embed:has(iframe[src*=\"ceros\"])"
+          ]
+        },
+        {
+          "name": "tabs-article-cards",
+          "instances": [
+            ".recentArticles"
+          ]
+        },
+        {
+          "name": "columns-promo-panel",
+          "instances": [
+            ".verticalcardimageright"
+          ]
+        },
+        {
+          "name": "cards-image-link",
+          "instances": [
+            ".aem-Grid:has(> .verticalcard a.cmp-vertical-card__link)"
+          ]
+        }
+      ],
+      "urlPattern": "/content/ri/us/en/*",
+      "sections": [
+        {
+          "id": "section-1",
+          "name": "Hero",
+          "selector": [
+            ".heroimageheader:has(section[style*=\"background-image\"])",
+            ".herovideoheader"
+          ],
+          "style": null,
+          "blocks": [
+            "hero-image-overlay"
+          ],
+          "defaultContent": []
+        },
+        {
+          "id": "section-2",
+          "name": "Intro statement",
+          "selector": [
+            ".cmp-layout-container--bg-graphic-top-right:not(:has(.verticalcard))"
+          ],
+          "style": "intro",
+          "blocks": [],
+          "defaultContent": [
+            ".cmp-text p"
+          ]
+        },
+        {
+          "id": "section-3",
+          "name": "By the numbers",
+          "selector": [
+            ".cmp-layout-container--off-white-bg:has(.datadisplay)"
+          ],
+          "style": "light",
+          "blocks": [
+            "cards-stats"
+          ],
+          "defaultContent": [
+            "h2.cmp-title__text"
+          ]
+        },
+        {
+          "id": "section-4",
+          "name": "What sets us apart",
+          "selector": [
+            ".cmp-layout-container--white-bg:has(.cmp-image):has(.cmp-ri-btn-wrapper)"
+          ],
+          "style": null,
+          "blocks": [
+            "columns-media"
+          ],
+          "defaultContent": [
+            "h2.cmp-title__text"
+          ]
+        },
+        {
+          "id": "section-5",
+          "name": "A history of innovation",
+          "selector": [
+            ".cmp-layout-container--blue-bg:has(.verticalcardcarousel)"
+          ],
+          "style": "light-blue, split",
+          "blocks": [
+            "carousel-timeline"
+          ],
+          "defaultContent": [
+            "h2.cmp-title__text",
+            ".cmp-text p"
+          ]
+        },
+        {
+          "id": "section-6",
+          "name": "Guiding every journey",
+          "selector": [
+            ".responsivegrid:has(> .aem-Grid > .fullbleedimagesdouble)"
+          ],
+          "style": null,
+          "blocks": [
+            "columns-image-trio"
+          ],
+          "defaultContent": []
+        },
+        {
+          "id": "section-7",
+          "name": "Invest without boundaries",
+          "selector": [
+            ".cmp-layout-container--bg-graphic-bottom-right"
+          ],
+          "style": null,
+          "blocks": [
+            "cards-links"
+          ],
+          "defaultContent": [
+            "h2.cmp-title__text"
+          ]
+        },
+        {
+          "id": "home-section-2",
+          "name": "ETF promo banner",
+          "selector": [
+            ".cmp-layout-container--white-bg:has(.embed iframe[src*=\"ceros\"])"
+          ],
+          "style": null,
+          "blocks": [
+            "embed-ceros"
+          ],
+          "defaultContent": []
+        },
+        {
+          "id": "home-section-3",
+          "name": "Recent insights / research",
+          "selector": [
+            ".cmp-layout-container--off-white-bg:has(.recentArticles)"
+          ],
+          "style": "light",
+          "blocks": [
+            "tabs-article-cards"
+          ],
+          "defaultContent": [
+            ".cmp-recent-articles__heading"
+          ]
+        },
+        {
+          "id": "home-section-4",
+          "name": "We help invest without boundaries",
+          "selector": [
+            ".cmp-layout-container--bg-graphic-top-right:has(.verticalcard)"
+          ],
+          "style": null,
+          "blocks": [
+            "cards-links"
+          ],
+          "defaultContent": [
+            ".cmp-text p",
+            "h2.cmp-title__text"
+          ]
+        },
+        {
+          "id": "insights-section-1",
+          "name": "Page header",
+          "selector": [
+            ".heroimageheader:not(:has(section[style*=\"background-image\"]))"
+          ],
+          "style": "dark",
+          "blocks": [],
+          "defaultContent": [
+            "h1",
+            ".cmp-hero-image-header__subheading"
+          ]
+        },
+        {
+          "id": "insights-section-2",
+          "name": "Jump-link nav",
+          "selector": [
+            ".anchortab"
+          ],
+          "style": "light, jump-links",
+          "blocks": [],
+          "defaultContent": [
+            "a"
+          ]
+        },
+        {
+          "id": "insights-section-3",
+          "name": "Insights",
+          "selector": [
+            ".cmp-layout-container--white-bg:has(.aem-Grid > .verticalcard):not(:has(a.cmp-vertical-card__link)):not(.cmp-layout-container--bg-graphic-bottom-right):not(.cmp-layout-container--bg-graphic-top-right):not(.cmp-layout-container--bg-graphic-bottom-right *):not(.cmp-layout-container--bg-graphic-top-right *)"
+          ],
+          "style": null,
+          "blocks": [
+            "cards-links"
+          ],
+          "defaultContent": [
+            "h2.cmp-title__text"
+          ]
+        },
+        {
+          "id": "insights-section-4",
+          "name": "Market Forecast",
+          "selector": [
+            ".cmp-layout-container--white-bg:has(.verticalcardimageright:not(.cmp-vertical-card-image-right--navy-full-bleed))"
+          ],
+          "style": null,
+          "blocks": [
+            "columns-promo-panel"
+          ],
+          "defaultContent": [
+            "h2.cmp-title__text"
+          ]
+        },
+        {
+          "id": "insights-section-5",
+          "name": "Interactive tools",
+          "selector": [
+            ".cmp-layout-container--blue-bg:has(a.cmp-vertical-card__link)"
+          ],
+          "style": "light-blue",
+          "blocks": [
+            "cards-image-link"
+          ],
+          "defaultContent": [
+            "h2.cmp-title__text"
+          ]
+        },
+        {
+          "id": "insights-section-6",
+          "name": "Market volatility resources",
+          "selector": [
+            ".verticalcardimageright.cmp-vertical-card-image-right--navy-full-bleed"
+          ],
+          "style": null,
+          "blocks": [
+            "columns-promo-panel"
+          ],
+          "defaultContent": []
+        },
+        {
+          "id": "disclosures",
+          "name": "Page disclosures",
+          "selector": [
+            ".footerdisclosures",
+            ".cmp-disclosure-cf",
+            ".cmp-footer-disclosures"
+          ],
+          "style": "disclosures",
+          "blocks": [],
+          "defaultContent": [
+            "p"
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "projectType": "xwalk"
+  }
+}

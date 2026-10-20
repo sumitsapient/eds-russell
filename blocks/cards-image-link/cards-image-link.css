@@ -1,0 +1,125 @@
+/* cards-image-link: Russell .cmp-vertical-card (white-bg, accent-line, hover-shadow, 2:1 cropped image) */
+.cards-image-link .cards-image-link-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* .cmp-vertical-card: outer gutter + hover drop shadow (follows clipped shape) */
+.cards-image-link .cards-image-link-card {
+  display: flex;
+  min-width: 0;
+  padding: 10.72px;
+  filter: drop-shadow(0 0 9pt rgb(0 0 0 / 0%));
+}
+
+.cards-image-link .cards-image-link-card:hover {
+  filter: drop-shadow(0 0 9pt rgb(0 0 0 / 18%));
+}
+
+/* .cmp-vertical-card__wrapper + __link: white panel with clipped bottom-right corner */
+.cards-image-link .cards-image-link-link {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 48px;
+  background-color: var(--white);
+  clip-path: polygon(100% 0, 100% calc(100% - 15px), calc(100% - 9px) 100%, 0 100%, 0 0);
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.cards-image-link .cards-image-link-link:hover {
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+/* accent line: skewed bar bottom-left, grows orange on hover */
+.cards-image-link .cards-image-link-link::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 3rem;
+  width: 50px;
+  height: 6px;
+  background: var(--blue);
+  transform: skewX(-35deg);
+  transition: 0.3s;
+}
+
+.cards-image-link .cards-image-link-link:hover::before {
+  width: 100%;
+  background-color: var(--orange);
+}
+
+/* clip-path would hide the outline on the link, so draw it on the card */
+.cards-image-link .cards-image-link-link:focus-visible {
+  outline: none;
+}
+
+.cards-image-link .cards-image-link-card:has(.cards-image-link-link:focus-visible) {
+  outline: 2px solid var(--blue);
+  outline-offset: -8px;
+}
+
+.cards-image-link .cards-image-link-image {
+  margin: 0 0 var(--gap-lg);
+}
+
+.cards-image-link .cards-image-link-image picture,
+.cards-image-link .cards-image-link-image img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.cards-image-link .cards-image-link-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+}
+
+/* .cmp-vertical-card__title (36px top = source empty pretitle margins) */
+.cards-image-link .cards-image-link-title {
+  margin: 36px 0 0.75em;
+  color: var(--blue);
+  font-family: var(--heading-font-family);
+  font-size: calc(27.4px + 0.16vw);
+  font-weight: var(--heading-font-weight);
+  line-height: 1.4;
+  scroll-margin: 0;
+}
+
+.cards-image-link .cards-image-link-description,
+.cards-image-link .cards-image-link-body > p {
+  margin: 1em 0;
+  color: var(--text-color);
+  font-family: var(--body-font-family);
+  font-size: calc(11.84px + 0.3vw);
+  line-height: var(--body-line-height);
+}
+
+.cards-image-link .cards-image-link-cta {
+  margin-top: auto;
+}
+
+@media (width >= 900px) {
+  .cards-image-link .cards-image-link-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (width >= 1440px) {
+  .cards-image-link .cards-image-link-description,
+  .cards-image-link .cards-image-link-body > p {
+    font-size: var(--body-font-size-m);
+  }
+}

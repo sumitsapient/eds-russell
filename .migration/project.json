@@ -1,0 +1,16 @@
+{
+  "type": "xwalk",
+  "sites": {
+    "eds-russell": {
+      "libraryUrl": "https://main--sta-xwalk-boilerplate--aemysites.aem.page/tools/sidekick/library.json",
+      "previewOrg": "sumitsapient",
+      "previewSite": "eds-russell",
+      "contentHostUrl": "author-p146753-e1506305.adobeaemcloud.com",
+      "aemSitePath": "/content/eds-site",
+      "aemAssetsFolderPath": "/content/dam/eds-site",
+      "aemSiteName": "eds-site",
+      "aemSiteTitle": "EDS Site"
+    }
+  },
+  "baseUrl": "https://russellinvestments.com"
+}

@@ -1,0 +1,126 @@
+/*
+ * embed-ceros: values from russellinvestments.com computed styles
+ * (source embed component, aem-GridColumn--default--10 offset 1 inside a 1800px grid,
+ * .cmp-embed padding 10.72px, grid padding 32px inside a 64px "large whitespace" container).
+ */
+
+/* source grid spans the viewport up to 1800px; the block takes 10 of 12 columns */
+main > .section > .embed-ceros-wrapper {
+  max-width: 1800px;
+  padding: 56px 0;
+}
+
+.embed-ceros {
+  box-sizing: border-box;
+  width: calc(100% * 10 / 12);
+  margin: 0 auto;
+  padding: 10.72px;
+}
+
+.embed-ceros .embed-ceros-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 291 / 430;
+  overflow: hidden;
+  line-height: 0;
+}
+
+/* the Ceros SDK sizes the iframe (full-height scroll mode) once it is inserted */
+.embed-ceros.embed-ceros-active .embed-ceros-frame {
+  aspect-ratio: auto;
+}
+
+.embed-ceros .embed-ceros-frame iframe {
+  display: block;
+  width: 100%;
+  border: 0;
+}
+
+/* SDK unavailable: plain iframe keeps the source banner proportions */
+.embed-ceros.embed-ceros-static .embed-ceros-frame iframe {
+  aspect-ratio: 291 / 430;
+  height: auto;
+}
+
+.embed-ceros .embed-ceros-poster,
+.embed-ceros .embed-ceros-poster picture,
+.embed-ceros .embed-ceros-poster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.embed-ceros .embed-ceros-poster {
+  position: absolute;
+  inset: 0;
+}
+
+.embed-ceros .embed-ceros-fallback {
+  position: absolute;
+  inset: auto 0 0;
+  padding: var(--gap-md);
+  line-height: var(--body-line-height);
+}
+
+.embed-ceros.embed-ceros-loaded .embed-ceros-poster,
+.embed-ceros.embed-ceros-loaded .embed-ceros-fallback {
+  display: none;
+}
+
+@media (width >= 600px) {
+  .embed-ceros .embed-ceros-frame,
+  .embed-ceros.embed-ceros-static .embed-ceros-frame iframe {
+    aspect-ratio: 1179 / 495;
+  }
+}
+
+/*
+ * classic view.ceros.com experience: fixed aspect ratio at every width
+ * (source embed code: padding-bottom 54.29% = data-aspectRatio 1.842)
+ */
+.embed-ceros.embed-ceros-legacy .embed-ceros-frame,
+.embed-ceros.embed-ceros-legacy.embed-ceros-active .embed-ceros-frame {
+  aspect-ratio: 1.842;
+}
+
+.embed-ceros.embed-ceros-legacy .embed-ceros-frame iframe {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+@media (width >= 900px) {
+  main > .section > .embed-ceros-wrapper {
+    padding-block: 32px;
+  }
+}
+
+/* full-width section style: edge-to-edge experience (source full-bleed hero / comparison embeds,
+   aem-GridColumn--default--12 outside any container: 1440 x 650 / 1440 x 740 @1440) */
+main > .section.full-width > .embed-ceros-wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+main > .section.full-width .embed-ceros {
+  width: 100%;
+  padding: 0;
+}
+
+/* embed inside a text section (heading/copy above, notes below): spans the text column with
+   only the source 10px rhythm (source .embed directly in the 1200px container, no padding) */
+main > .section > .default-content-wrapper + .embed-ceros-wrapper {
+  max-width: var(--container-max-width);
+  margin-top: 11px;
+  padding-block: 0;
+}
+
+main > .section > .default-content-wrapper + .embed-ceros-wrapper .embed-ceros {
+  width: 100%;
+  padding: 0;
+}
+
+main > .section > .embed-ceros-wrapper + .default-content-wrapper {
+  margin-top: 10px;
+}
